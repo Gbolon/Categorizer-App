@@ -2,6 +2,39 @@
 
 A specialized Streamlit application for advanced exercise data processing and performance tracking, leveraging interactive visualizations and comprehensive analytics to provide deep insights into athlete development.
 
+## Installation
+
+When running this application externally (outside of Replit), make sure to install the required dependencies:
+
+```bash
+pip install streamlit pandas numpy plotly openpyxl trafilatura
+```
+
+Or you can create a requirements.txt file with the following content:
+
+```
+streamlit>=1.24.0
+pandas>=1.5.0
+numpy>=1.22.0
+plotly>=5.14.0
+openpyxl>=3.1.0
+trafilatura>=1.5.0
+```
+
+And then run:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Running the App
+
+To run the app:
+
+```bash
+streamlit run app.py
+```
+
 ## Features
 
 - Data validation and preprocessing from CSV/Excel files
@@ -12,7 +45,7 @@ A specialized Streamlit application for advanced exercise data processing and pe
 - Separate interfaces for single-test and multi-test users
 - Visual performance tracking with interactive graphs
 - Comprehensive change metrics between test instances
-- Report generation with distribution visualizations for easy sharing
+- Report generation with distribution visualizations and transition tables for easy sharing
 
 ## Key Components
 
