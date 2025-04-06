@@ -164,7 +164,27 @@ def main():
                     st.write(f"Separate power and acceleration metrics for {region.lower()} region movements (multi-test users only)")
                     
                     # Get detailed region metrics using the generalized function for all regions
-                    power_df, accel_df, power_changes, accel_changes, lowest_power_exercise, lowest_power_value, lowest_accel_exercise, lowest_accel_value = matrix_generator.get_region_metrics(processed_df, region)
+                    region_metrics = matrix_generator.get_region_metrics(processed_df, region)
+                    # Unpack the values carefully, handling different return formats
+                    if region_metrics[0] is None:
+                        # No metrics available
+                        power_df, accel_df, power_changes, accel_changes = None, None, None, None
+                        lowest_power_exercise, lowest_power_value = None, None
+                        lowest_accel_exercise, lowest_accel_value = None, None
+                    else:
+                        # Handle either 4 or 8 returned values
+                        power_df, accel_df = region_metrics[0], region_metrics[1]
+                        power_changes, accel_changes = region_metrics[2], region_metrics[3]
+                        
+                        # Check if we have the additional values for lowest changes
+                        if len(region_metrics) >= 8:
+                            lowest_power_exercise = region_metrics[4]
+                            lowest_power_value = region_metrics[5]
+                            lowest_accel_exercise = region_metrics[6]
+                            lowest_accel_value = region_metrics[7]
+                        else:
+                            lowest_power_exercise, lowest_power_value = None, None
+                            lowest_accel_exercise, lowest_accel_value = None, None
             
                     if power_df is not None and accel_df is not None:
                         # Create two columns for power and acceleration

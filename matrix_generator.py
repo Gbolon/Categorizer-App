@@ -662,7 +662,15 @@ class MatrixGenerator:
             max_tests: Maximum number of tests to include
             
         Returns:
-            power_df, accel_df, power_changes, accel_changes: DataFrames and change dictionaries
+            Tuple containing:
+            - power_df: DataFrame with power development values
+            - accel_df: DataFrame with acceleration development values
+            - power_changes: Dictionary with power change metrics
+            - accel_changes: Dictionary with acceleration change metrics
+            - lowest_power_change_exercise: Exercise name with lowest power change
+            - lowest_power_change_value: Value of the lowest power change
+            - lowest_accel_change_exercise: Exercise name with lowest acceleration change
+            - lowest_accel_change_value: Value of the lowest acceleration change
         """
         # Import constants
         from exercise_constants import VALID_EXERCISES
@@ -671,7 +679,8 @@ class MatrixGenerator:
         region_exercises = VALID_EXERCISES.get(region_name, [])
         
         if not region_exercises:
-            return None, None, None, None  # Return None if region not found
+            # Return None values for all 8 return values
+            return None, None, None, None, None, None, None, None  # Return None if region not found
         
         # Always include Vertical Jump in correct region
         vertical_jump_name = 'Vertical Jump (Countermovement)'
@@ -729,7 +738,8 @@ class MatrixGenerator:
                     multi_test_users.append(user)
                 
         if not multi_test_users:
-            return None, None, None, None  # Return None if no multi-test users
+            # Return None values for all 8 return values
+            return None, None, None, None, None, None, None, None  # Return None if no multi-test users
 
         # Initialize DataFrames for power and acceleration
         power_df = pd.DataFrame(
@@ -868,5 +878,9 @@ class MatrixGenerator:
         """
         Calculate detailed power and acceleration metrics for the Torso region exercises.
         Only includes multi-test users with separate metrics for power and acceleration.
+        
+        Returns:
+            Same as get_region_metrics - a tuple with 8 elements containing power and 
+            acceleration metrics, changes, and lowest change information.
         """
         return self.get_region_metrics(df, 'Torso', max_tests)
