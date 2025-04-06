@@ -71,14 +71,21 @@ def is_valid_exercise_dominance(exercise_name, dominance):
             return True
 
 def get_full_exercise_name(exercise_name, dominance=None):
-    """Generate full exercise name with dominance if required."""
+    """Generate full exercise name with dominance if required or specified."""
     if not exercise_name in EXERCISE_DOMINANCE:
         return None
 
-    if EXERCISE_DOMINANCE[exercise_name]['required']:
-        standardized_dominance = standardize_dominance(dominance)
+    exercise_config = EXERCISE_DOMINANCE[exercise_name]
+    standardized_dominance = standardize_dominance(dominance)
+    
+    # For exercises that require dominance
+    if exercise_config['required']:
         if standardized_dominance:
             return f"{exercise_name} ({standardized_dominance})"
+    # Special case for Vertical Jump - include 'neither' dominance if present
+    elif exercise_name == 'Vertical Jump (Countermovement)' and dominance in ['neither', 'Neither']:
+        return exercise_name  # Return just the base name without dominance
+    
     return exercise_name
 
 # Generate list of all possible exercise variations

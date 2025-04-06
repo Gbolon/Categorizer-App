@@ -354,7 +354,13 @@ class MatrixGenerator:
             exercise = row['full_exercise_name']
             power_value = row['power - high']
             accel_value = row['acceleration - high']
-
+            
+            # For Vertical Jump, ensure we use the standard name without dominance
+            if 'Vertical Jump' in exercise:
+                # Normalize to use just the base name for Vertical Jump
+                exercise = 'Vertical Jump (Countermovement)'
+                print(f"Debug: Standardizing Vertical Jump name to: {exercise}")
+            
             # Debug Shot Put and Vertical Jump exercises
             if 'Shot Put' in exercise:
                 print(f"Debug: Processing Shot Put for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
@@ -638,6 +644,13 @@ class MatrixGenerator:
             for ex in press_pull_exercises:
                 if ex not in variations and ex in self.exercises:
                     variations.append(ex)
+                    
+        # Special handling for Legs - make sure Vertical Jump is included
+        elif region_name == 'Legs':
+            # If Vertical Jump should appear in the region metrics
+            if 'Vertical Jump (Countermovement)' in self.exercises and 'Vertical Jump (Countermovement)' not in variations:
+                print(f"Debug: Adding Vertical Jump to Legs region variations")
+                variations.append('Vertical Jump (Countermovement)')
         
         # Get users with multiple tests
         multi_test_users = []
