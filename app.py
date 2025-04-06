@@ -179,13 +179,17 @@ def main():
                             st.markdown("**Power Improvement Thresholds:**")
                             # Test 1 to Test 2 Power Threshold
                             if not pd.isna(region_thresholds['power_1_to_2']):
-                                st.markdown(f"**Test 1 → Test 2:** <span style='font-size:1.1em;'>{region_thresholds['power_1_to_2']:.1f}%</span>", unsafe_allow_html=True)
+                                power_value = region_thresholds['power_1_to_2']
+                                color = "green" if power_value >= 0 else "red"
+                                st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
                             else:
                                 st.markdown("**Test 1 → Test 2:** Not enough data")
                                 
                             # Test 2 to Test 3 Power Threshold
                             if not pd.isna(region_thresholds['power_2_to_3']):
-                                st.markdown(f"**Test 2 → Test 3:** <span style='font-size:1.1em;'>{region_thresholds['power_2_to_3']:.1f}%</span>", unsafe_allow_html=True)
+                                power_value = region_thresholds['power_2_to_3']
+                                color = "green" if power_value >= 0 else "red"
+                                st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
                             else:
                                 st.markdown("**Test 2 → Test 3:** Not enough data")
                         
@@ -193,13 +197,17 @@ def main():
                             st.markdown("**Acceleration Improvement Thresholds:**")
                             # Test 1 to Test 2 Acceleration Threshold
                             if not pd.isna(region_thresholds['accel_1_to_2']):
-                                st.markdown(f"**Test 1 → Test 2:** <span style='font-size:1.1em;'>{region_thresholds['accel_1_to_2']:.1f}%</span>", unsafe_allow_html=True)
+                                accel_value = region_thresholds['accel_1_to_2']
+                                color = "green" if accel_value >= 0 else "red"
+                                st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
                             else:
                                 st.markdown("**Test 1 → Test 2:** Not enough data")
                                 
                             # Test 2 to Test 3 Acceleration Threshold
                             if not pd.isna(region_thresholds['accel_2_to_3']):
-                                st.markdown(f"**Test 2 → Test 3:** <span style='font-size:1.1em;'>{region_thresholds['accel_2_to_3']:.1f}%</span>", unsafe_allow_html=True)
+                                accel_value = region_thresholds['accel_2_to_3']
+                                color = "green" if accel_value >= 0 else "red"
+                                st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
                             else:
                                 st.markdown("**Test 2 → Test 3:** Not enough data")
                         
