@@ -725,9 +725,12 @@ class MatrixGenerator:
                 # Calculate changes
                 changes['test1_to_test2'] = (valid_rows['Test 2'] - valid_rows['Test 1']).mean()
                 changes['test1_to_test2_pct'] = ((valid_rows['Test 2'] - valid_rows['Test 1']) / valid_rows['Test 1'] * 100).mean()
+                # Store individual user changes for improvement threshold
+                changes['test1_to_test2_individual'] = (valid_rows['Test 2'] - valid_rows['Test 1']) / valid_rows['Test 1'] * 100
             else:
                 changes['test1_to_test2'] = np.nan
                 changes['test1_to_test2_pct'] = np.nan
+                changes['test1_to_test2_individual'] = pd.Series()
         
         # Calculate Test 2 to Test 3 changes
         if 'Test 2' in data_df.columns and 'Test 3' in data_df.columns:
@@ -737,9 +740,12 @@ class MatrixGenerator:
                 # Calculate changes
                 changes['test2_to_test3'] = (valid_rows['Test 3'] - valid_rows['Test 2']).mean()
                 changes['test2_to_test3_pct'] = ((valid_rows['Test 3'] - valid_rows['Test 2']) / valid_rows['Test 2'] * 100).mean()
+                # Store individual user changes for improvement threshold
+                changes['test2_to_test3_individual'] = (valid_rows['Test 3'] - valid_rows['Test 2']) / valid_rows['Test 2'] * 100
             else:
                 changes['test2_to_test3'] = np.nan
                 changes['test2_to_test3_pct'] = np.nan
+                changes['test2_to_test3_individual'] = pd.Series()
         
         return changes
             
@@ -992,3 +998,85 @@ class MatrixGenerator:
             acceleration metrics, changes, and lowest change information.
         """
         return self.get_region_metrics(df, 'Torso', max_tests)
+        
+    def calculate_improvement_thresholds(self, df):
+        """
+        Calculate the improvement thresholds for each body region.
+        
+        The improvement threshold is the average percentage change across all users
+        for a specific body region between consecutive tests. This serves as a
+        reference point to determine which users are underperforming relative to
+        the group average.
+        
+        Args:
+            df: The processed dataframe
+            
+        Returns:
+            Dictionary containing improvement thresholds for each region:
+            {
+                'region_name': {
+                    'power_1_to_2': threshold value,
+                    'power_2_to_3': threshold value,
+                    'accel_1_to_2': threshold value,
+                    'accel_2_to_3': threshold value
+                }
+            }
+        """
+        from exercise_constants import VALID_EXERCISES
+        
+        # Initialize thresholds dictionary
+        thresholds = {}
+        
+        # Process each region
+        for region in VALID_EXERCISES.keys():
+            print(f"Calculating improvement thresholds for {region} region")
+            region_metrics = self.get_region_metrics(df, region)
+            
+            # Skip if no metrics available
+            if region_metrics[0] is None:
+                thresholds[region] = {
+                    'power_1_to_2': np.nan,
+                    'power_2_to_3': np.nan,
+                    'accel_1_to_2': np.nan,
+                    'accel_2_to_3': np.nan
+                }
+                continue
+                
+            # Extract changes
+            power_changes = region_metrics[2]
+            accel_changes = region_metrics[3]
+            
+            # Initialize region thresholds
+            region_thresholds = {
+                'power_1_to_2': np.nan,
+                'power_2_to_3': np.nan,
+                'accel_1_to_2': np.nan,
+                'accel_2_to_3': np.nan
+            }
+            
+            # Process power thresholds
+            if power_changes and 'test1_to_test2_individual' in power_changes:
+                individual_changes = power_changes['test1_to_test2_individual']
+                if not individual_changes.empty:
+                    region_thresholds['power_1_to_2'] = individual_changes.mean()
+                    
+            if power_changes and 'test2_to_test3_individual' in power_changes:
+                individual_changes = power_changes['test2_to_test3_individual']
+                if not individual_changes.empty:
+                    region_thresholds['power_2_to_3'] = individual_changes.mean()
+            
+            # Process acceleration thresholds
+            if accel_changes and 'test1_to_test2_individual' in accel_changes:
+                individual_changes = accel_changes['test1_to_test2_individual']
+                if not individual_changes.empty:
+                    region_thresholds['accel_1_to_2'] = individual_changes.mean()
+                    
+            if accel_changes and 'test2_to_test3_individual' in accel_changes:
+                individual_changes = accel_changes['test2_to_test3_individual']
+                if not individual_changes.empty:
+                    region_thresholds['accel_2_to_3'] = individual_changes.mean()
+            
+            # Store in thresholds dictionary
+            thresholds[region] = region_thresholds
+        
+        return thresholds

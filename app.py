@@ -150,6 +150,9 @@ def main():
                     styled_averages = averages.style.format("{:.1f}%")
                     st.dataframe(styled_averages)
             
+            # Calculate improvement thresholds for all regions
+            improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df)
+            
             # Detailed Body Region Analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Detailed Body Region Analysis</h2>", unsafe_allow_html=True)
             st.write("Detailed exercise metrics by body region (multi-test users only)")
@@ -162,6 +165,45 @@ def main():
                 with region_tabs[i]:
                     st.markdown(f"<h3 style='font-size: 1.5em;'>{region} Region Analysis</h3>", unsafe_allow_html=True)
                     st.write(f"Separate power and acceleration metrics for {region.lower()} region movements (multi-test users only)")
+                    
+                    # Display Improvement Thresholds for this region
+                    if region in improvement_thresholds:
+                        region_thresholds = improvement_thresholds[region]
+                        st.markdown("<h4 style='font-size: 1.3em;'>Group Improvement Thresholds</h4>", unsafe_allow_html=True)
+                        st.write("These thresholds represent the average improvement across all users for this region. Users below these thresholds may be underperforming relative to the group.")
+                        
+                        # Create columns for power and acceleration thresholds
+                        threshold_col1, threshold_col2 = st.columns(2)
+                        
+                        with threshold_col1:
+                            st.markdown("**Power Improvement Thresholds:**")
+                            # Test 1 to Test 2 Power Threshold
+                            if not pd.isna(region_thresholds['power_1_to_2']):
+                                st.markdown(f"**Test 1 → Test 2:** <span style='font-size:1.1em;'>{region_thresholds['power_1_to_2']:.1f}%</span>", unsafe_allow_html=True)
+                            else:
+                                st.markdown("**Test 1 → Test 2:** Not enough data")
+                                
+                            # Test 2 to Test 3 Power Threshold
+                            if not pd.isna(region_thresholds['power_2_to_3']):
+                                st.markdown(f"**Test 2 → Test 3:** <span style='font-size:1.1em;'>{region_thresholds['power_2_to_3']:.1f}%</span>", unsafe_allow_html=True)
+                            else:
+                                st.markdown("**Test 2 → Test 3:** Not enough data")
+                        
+                        with threshold_col2:
+                            st.markdown("**Acceleration Improvement Thresholds:**")
+                            # Test 1 to Test 2 Acceleration Threshold
+                            if not pd.isna(region_thresholds['accel_1_to_2']):
+                                st.markdown(f"**Test 1 → Test 2:** <span style='font-size:1.1em;'>{region_thresholds['accel_1_to_2']:.1f}%</span>", unsafe_allow_html=True)
+                            else:
+                                st.markdown("**Test 1 → Test 2:** Not enough data")
+                                
+                            # Test 2 to Test 3 Acceleration Threshold
+                            if not pd.isna(region_thresholds['accel_2_to_3']):
+                                st.markdown(f"**Test 2 → Test 3:** <span style='font-size:1.1em;'>{region_thresholds['accel_2_to_3']:.1f}%</span>", unsafe_allow_html=True)
+                            else:
+                                st.markdown("**Test 2 → Test 3:** Not enough data")
+                        
+                        st.markdown("<hr>", unsafe_allow_html=True)
                     
                     # Get detailed region metrics using the generalized function for all regions
                     region_metrics = matrix_generator.get_region_metrics(processed_df, region)
@@ -192,7 +234,36 @@ def main():
                         
                         with col1:
                             st.write(f"**{region} Region Power Development (%)**")
+                            
+                            # Check if we have improvement thresholds for this region
+                            region_threshold_power_1_2 = None
+                            if region in improvement_thresholds:
+                                region_threshold_power_1_2 = improvement_thresholds[region]['power_1_to_2']
+                            
+                            # Function to highlight underperforming users (below threshold)
+                            def highlight_power_underperformers(s):
+                                # Create a Series of empty strings with same index as s
+                                ret = pd.Series('', index=s.index)
+                                
+                                # Only apply if we have Test 1 and Test 2 columns and a valid threshold
+                                if 'Test 1' in power_df.columns and 'Test 2' in power_df.columns and not pd.isna(region_threshold_power_1_2):
+                                    # Calculate percent change for this row
+                                    if pd.notna(s['Test 1']) and pd.notna(s['Test 2']) and s['Test 1'] > 0:
+                                        change_pct = ((s['Test 2'] - s['Test 1']) / s['Test 1']) * 100
+                                        
+                                        # If change is below threshold, highlight in orange
+                                        if change_pct < region_threshold_power_1_2:
+                                            ret['Test 2'] = 'background-color: #FFCCCB'  # Light red for underperforming
+                                
+                                return ret
+                            
+                            # Apply formatting
                             styled_power = power_df.style.format("{:.1f}%")
+                            
+                            # Only apply highlighting if we have improvement thresholds
+                            if region in improvement_thresholds and not pd.isna(improvement_thresholds[region]['power_1_to_2']):
+                                styled_power = styled_power.apply(highlight_power_underperformers, axis=1)
+                                
                             st.dataframe(styled_power)
                             
                             # Display power changes if available
@@ -230,7 +301,36 @@ def main():
                         
                         with col2:
                             st.write(f"**{region} Region Acceleration Development (%)**")
+                            
+                            # Check if we have improvement thresholds for this region
+                            region_threshold_accel_1_2 = None
+                            if region in improvement_thresholds:
+                                region_threshold_accel_1_2 = improvement_thresholds[region]['accel_1_to_2']
+                            
+                            # Function to highlight underperforming users (below threshold)
+                            def highlight_accel_underperformers(s):
+                                # Create a Series of empty strings with same index as s
+                                ret = pd.Series('', index=s.index)
+                                
+                                # Only apply if we have Test 1 and Test 2 columns and a valid threshold
+                                if 'Test 1' in accel_df.columns and 'Test 2' in accel_df.columns and not pd.isna(region_threshold_accel_1_2):
+                                    # Calculate percent change for this row
+                                    if pd.notna(s['Test 1']) and pd.notna(s['Test 2']) and s['Test 1'] > 0:
+                                        change_pct = ((s['Test 2'] - s['Test 1']) / s['Test 1']) * 100
+                                        
+                                        # If change is below threshold, highlight in light red
+                                        if change_pct < region_threshold_accel_1_2:
+                                            ret['Test 2'] = 'background-color: #FFCCCB'  # Light red for underperforming
+                                
+                                return ret
+                            
+                            # Apply formatting
                             styled_accel = accel_df.style.format("{:.1f}%")
+                            
+                            # Only apply highlighting if we have improvement thresholds
+                            if region in improvement_thresholds and not pd.isna(improvement_thresholds[region]['accel_1_to_2']):
+                                styled_accel = styled_accel.apply(highlight_accel_underperformers, axis=1)
+                                
                             st.dataframe(styled_accel)
                             
                             # Display acceleration changes if available
