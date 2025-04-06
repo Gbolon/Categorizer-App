@@ -77,6 +77,10 @@ for sex in ['male', 'female']:
 
 def get_base_exercise_name(full_exercise_name):
     """Extract base exercise name from full name including dominance."""
+    # Special case for Vertical Jump
+    if 'Vertical Jump (Countermovement)' in full_exercise_name:
+        return 'Vertical Jump (Countermovement)'
+        
     # Handle exercises with "One Hand" in the name differently
     if 'One Hand' in full_exercise_name and '(' in full_exercise_name:
         # For exercises like "Horizontal Row (One Hand) (Dominant)"
