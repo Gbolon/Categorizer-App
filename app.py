@@ -177,11 +177,23 @@ def main():
                         
                         with threshold_col1:
                             st.markdown("**Power Improvement Thresholds:**")
+                            
                             # Test 1 to Test 2 Power Threshold
                             if not pd.isna(region_thresholds['power_1_to_2']):
                                 power_value = region_thresholds['power_1_to_2']
                                 color = "green" if power_value >= 0 else "red"
                                 st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
+                                
+                                # Get region metrics with underperforming users
+                                region_metrics = matrix_generator.get_region_metrics(processed_df, region)
+                                if region_metrics[2] and 'underperformers_1_to_2' in region_metrics[2]:
+                                    underperformers = region_metrics[2]['underperformers_1_to_2']
+                                    if underperformers:
+                                        st.markdown("**Underperforming Users:**")
+                                        for user, change in underperformers:
+                                            st.markdown(f"- {user}: <span style='color:red'>{change:.1f}%</span>", unsafe_allow_html=True)
+                                    else:
+                                        st.markdown("*No underperforming users*")
                             else:
                                 st.markdown("**Test 1 → Test 2:** Not enough data")
                                 
@@ -190,16 +202,39 @@ def main():
                                 power_value = region_thresholds['power_2_to_3']
                                 color = "green" if power_value >= 0 else "red"
                                 st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
+                                
+                                # Get region metrics with underperforming users
+                                region_metrics = matrix_generator.get_region_metrics(processed_df, region)
+                                if region_metrics[2] and 'underperformers_2_to_3' in region_metrics[2]:
+                                    underperformers = region_metrics[2]['underperformers_2_to_3']
+                                    if underperformers:
+                                        st.markdown("**Underperforming Users:**")
+                                        for user, change in underperformers:
+                                            st.markdown(f"- {user}: <span style='color:red'>{change:.1f}%</span>", unsafe_allow_html=True)
+                                    else:
+                                        st.markdown("*No underperforming users*")
                             else:
                                 st.markdown("**Test 2 → Test 3:** Not enough data")
                         
                         with threshold_col2:
                             st.markdown("**Acceleration Improvement Thresholds:**")
+                            
                             # Test 1 to Test 2 Acceleration Threshold
                             if not pd.isna(region_thresholds['accel_1_to_2']):
                                 accel_value = region_thresholds['accel_1_to_2']
                                 color = "green" if accel_value >= 0 else "red"
                                 st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
+                                
+                                # Get region metrics with underperforming users
+                                region_metrics = matrix_generator.get_region_metrics(processed_df, region)
+                                if region_metrics[3] and 'underperformers_1_to_2' in region_metrics[3]:
+                                    underperformers = region_metrics[3]['underperformers_1_to_2']
+                                    if underperformers:
+                                        st.markdown("**Underperforming Users:**")
+                                        for user, change in underperformers:
+                                            st.markdown(f"- {user}: <span style='color:red'>{change:.1f}%</span>", unsafe_allow_html=True)
+                                    else:
+                                        st.markdown("*No underperforming users*")
                             else:
                                 st.markdown("**Test 1 → Test 2:** Not enough data")
                                 
@@ -208,6 +243,17 @@ def main():
                                 accel_value = region_thresholds['accel_2_to_3']
                                 color = "green" if accel_value >= 0 else "red"
                                 st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
+                                
+                                # Get region metrics with underperforming users
+                                region_metrics = matrix_generator.get_region_metrics(processed_df, region)
+                                if region_metrics[3] and 'underperformers_2_to_3' in region_metrics[3]:
+                                    underperformers = region_metrics[3]['underperformers_2_to_3']
+                                    if underperformers:
+                                        st.markdown("**Underperforming Users:**")
+                                        for user, change in underperformers:
+                                            st.markdown(f"- {user}: <span style='color:red'>{change:.1f}%</span>", unsafe_allow_html=True)
+                                    else:
+                                        st.markdown("*No underperforming users*")
                             else:
                                 st.markdown("**Test 2 → Test 3:** Not enough data")
                         

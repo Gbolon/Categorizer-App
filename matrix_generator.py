@@ -710,10 +710,16 @@ class MatrixGenerator:
 
         return body_region_averages
         
-    def calculate_test_changes(self, data_df):
+    def calculate_test_changes(self, data_df, include_users=False):
         """
         Calculate average changes between tests for the provided DataFrame.
-        Returns a dictionary with change metrics.
+        
+        Args:
+            data_df: DataFrame containing test values
+            include_users: Whether to include user-specific data for identifying underperformers
+            
+        Returns:
+            Dictionary with change metrics and lists of underperforming users if requested
         """
         changes = {}
         
@@ -727,10 +733,24 @@ class MatrixGenerator:
                 changes['test1_to_test2_pct'] = ((valid_rows['Test 2'] - valid_rows['Test 1']) / valid_rows['Test 1'] * 100).mean()
                 # Store individual user changes for improvement threshold
                 changes['test1_to_test2_individual'] = (valid_rows['Test 2'] - valid_rows['Test 1']) / valid_rows['Test 1'] * 100
+                
+                # If requested, track underperforming users
+                if include_users and 'User' in valid_rows.index.names:
+                    threshold = changes['test1_to_test2_pct']
+                    underperformers = []
+                    for user in valid_rows.index.get_level_values('User').unique():
+                        user_rows = valid_rows.xs(user, level='User', drop_level=False)
+                        if not user_rows.empty:
+                            user_change_pct = ((user_rows['Test 2'] - user_rows['Test 1']) / user_rows['Test 1'] * 100).mean()
+                            if user_change_pct < threshold:
+                                underperformers.append((user, user_change_pct))
+                    changes['underperformers_1_to_2'] = sorted(underperformers, key=lambda x: x[1])
             else:
                 changes['test1_to_test2'] = np.nan
                 changes['test1_to_test2_pct'] = np.nan
                 changes['test1_to_test2_individual'] = pd.Series()
+                if include_users:
+                    changes['underperformers_1_to_2'] = []
         
         # Calculate Test 2 to Test 3 changes
         if 'Test 2' in data_df.columns and 'Test 3' in data_df.columns:
@@ -742,10 +762,24 @@ class MatrixGenerator:
                 changes['test2_to_test3_pct'] = ((valid_rows['Test 3'] - valid_rows['Test 2']) / valid_rows['Test 2'] * 100).mean()
                 # Store individual user changes for improvement threshold
                 changes['test2_to_test3_individual'] = (valid_rows['Test 3'] - valid_rows['Test 2']) / valid_rows['Test 2'] * 100
+                
+                # If requested, track underperforming users
+                if include_users and 'User' in valid_rows.index.names:
+                    threshold = changes['test2_to_test3_pct']
+                    underperformers = []
+                    for user in valid_rows.index.get_level_values('User').unique():
+                        user_rows = valid_rows.xs(user, level='User', drop_level=False)
+                        if not user_rows.empty:
+                            user_change_pct = ((user_rows['Test 3'] - user_rows['Test 2']) / user_rows['Test 2'] * 100).mean()
+                            if user_change_pct < threshold:
+                                underperformers.append((user, user_change_pct))
+                    changes['underperformers_2_to_3'] = sorted(underperformers, key=lambda x: x[1])
             else:
                 changes['test2_to_test3'] = np.nan
                 changes['test2_to_test3_pct'] = np.nan
                 changes['test2_to_test3_individual'] = pd.Series()
+                if include_users:
+                    changes['underperformers_2_to_3'] = []
         
         return changes
             
@@ -926,9 +960,96 @@ class MatrixGenerator:
                 else:
                     accel_df.loc[idx, col] = np.nan
 
-        # Calculate change metrics
-        power_changes = self.calculate_test_changes(power_df)
-        accel_changes = self.calculate_test_changes(accel_df)
+        # Calculate change metrics with user tracking
+        power_changes = self.calculate_test_changes(power_df, include_users=True)
+        accel_changes = self.calculate_test_changes(accel_df, include_users=True)
+        
+        # Track user-specific data to identify underperformers
+        power_user_data = pd.DataFrame(index=multi_test_users, columns=['Test 1', 'Test 2', 'Test 3', 'Test 4'][:max_tests])
+        accel_user_data = pd.DataFrame(index=multi_test_users, columns=['Test 1', 'Test 2', 'Test 3', 'Test 4'][:max_tests])
+        
+        # Calculate average development per user across all exercises in this region
+        for user in multi_test_users:
+            # Generate matrices for user
+            matrices = self.generate_user_matrices(df, user)
+            if matrices[2] is not None:  # If development matrices exist
+                power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
+                
+                # For each test, calculate the average development across all region exercises
+                for test_col in power_dev.columns:
+                    if test_col in power_user_data.columns:
+                        # Get power values for region exercises
+                        power_values = []
+                        for exercise in variations:
+                            if exercise in power_dev.index and pd.notna(power_dev.loc[exercise, test_col]):
+                                power_values.append(power_dev.loc[exercise, test_col])
+                        
+                        # Calculate average if there are values
+                        if power_values:
+                            power_user_data.loc[user, test_col] = sum(power_values) / len(power_values)
+                
+                # Do the same for acceleration
+                for test_col in accel_dev.columns:
+                    if test_col in accel_user_data.columns:
+                        # Get acceleration values for region exercises
+                        accel_values = []
+                        for exercise in variations:
+                            if exercise in accel_dev.index and pd.notna(accel_dev.loc[exercise, test_col]):
+                                accel_values.append(accel_dev.loc[exercise, test_col])
+                        
+                        # Calculate average if there are values
+                        if accel_values:
+                            accel_user_data.loc[user, test_col] = sum(accel_values) / len(accel_values)
+        
+        # Find underperforming users (below average improvement)
+        power_underperformers_1_to_2 = []
+        power_underperformers_2_to_3 = []
+        accel_underperformers_1_to_2 = []
+        accel_underperformers_2_to_3 = []
+        
+        # For power
+        if not pd.isna(power_changes.get('test1_to_test2_pct')):
+            threshold = power_changes['test1_to_test2_pct']
+            for user in power_user_data.index:
+                if pd.notna(power_user_data.loc[user, 'Test 1']) and pd.notna(power_user_data.loc[user, 'Test 2']):
+                    change = ((power_user_data.loc[user, 'Test 2'] - power_user_data.loc[user, 'Test 1']) / 
+                              power_user_data.loc[user, 'Test 1'] * 100)
+                    if change < threshold:
+                        power_underperformers_1_to_2.append((user, change))
+        
+        if not pd.isna(power_changes.get('test2_to_test3_pct')):
+            threshold = power_changes['test2_to_test3_pct']
+            for user in power_user_data.index:
+                if pd.notna(power_user_data.loc[user, 'Test 2']) and pd.notna(power_user_data.loc[user, 'Test 3']):
+                    change = ((power_user_data.loc[user, 'Test 3'] - power_user_data.loc[user, 'Test 2']) / 
+                              power_user_data.loc[user, 'Test 2'] * 100)
+                    if change < threshold:
+                        power_underperformers_2_to_3.append((user, change))
+        
+        # For acceleration
+        if not pd.isna(accel_changes.get('test1_to_test2_pct')):
+            threshold = accel_changes['test1_to_test2_pct']
+            for user in accel_user_data.index:
+                if pd.notna(accel_user_data.loc[user, 'Test 1']) and pd.notna(accel_user_data.loc[user, 'Test 2']):
+                    change = ((accel_user_data.loc[user, 'Test 2'] - accel_user_data.loc[user, 'Test 1']) / 
+                              accel_user_data.loc[user, 'Test 1'] * 100)
+                    if change < threshold:
+                        accel_underperformers_1_to_2.append((user, change))
+        
+        if not pd.isna(accel_changes.get('test2_to_test3_pct')):
+            threshold = accel_changes['test2_to_test3_pct']
+            for user in accel_user_data.index:
+                if pd.notna(accel_user_data.loc[user, 'Test 2']) and pd.notna(accel_user_data.loc[user, 'Test 3']):
+                    change = ((accel_user_data.loc[user, 'Test 3'] - accel_user_data.loc[user, 'Test 2']) / 
+                              accel_user_data.loc[user, 'Test 2'] * 100)
+                    if change < threshold:
+                        accel_underperformers_2_to_3.append((user, change))
+        
+        # Sort underperformers by change value (lowest first)
+        power_changes['underperformers_1_to_2'] = sorted(power_underperformers_1_to_2, key=lambda x: x[1])
+        power_changes['underperformers_2_to_3'] = sorted(power_underperformers_2_to_3, key=lambda x: x[1])
+        accel_changes['underperformers_1_to_2'] = sorted(accel_underperformers_1_to_2, key=lambda x: x[1])
+        accel_changes['underperformers_2_to_3'] = sorted(accel_underperformers_2_to_3, key=lambda x: x[1])
         
         # Find exercise with lowest change for Test 1 to Test 2
         # We want to prioritize negative changes, then smallest positive changes
