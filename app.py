@@ -235,35 +235,8 @@ def main():
                         with col1:
                             st.write(f"**{region} Region Power Development (%)**")
                             
-                            # Check if we have improvement thresholds for this region
-                            region_threshold_power_1_2 = None
-                            if region in improvement_thresholds:
-                                region_threshold_power_1_2 = improvement_thresholds[region]['power_1_to_2']
-                            
-                            # Function to highlight underperforming users (below threshold)
-                            def highlight_power_underperformers(s):
-                                # Create a Series of empty strings with same index as s
-                                ret = pd.Series('', index=s.index)
-                                
-                                # Only apply if we have Test 1 and Test 2 columns and a valid threshold
-                                if 'Test 1' in power_df.columns and 'Test 2' in power_df.columns and not pd.isna(region_threshold_power_1_2):
-                                    # Calculate percent change for this row
-                                    if pd.notna(s['Test 1']) and pd.notna(s['Test 2']) and s['Test 1'] > 0:
-                                        change_pct = ((s['Test 2'] - s['Test 1']) / s['Test 1']) * 100
-                                        
-                                        # If change is below threshold, highlight in orange
-                                        if change_pct < region_threshold_power_1_2:
-                                            ret['Test 2'] = 'background-color: #FFCCCB'  # Light red for underperforming
-                                
-                                return ret
-                            
-                            # Apply formatting
+                            # Apply formatting without highlighting
                             styled_power = power_df.style.format("{:.1f}%")
-                            
-                            # Only apply highlighting if we have improvement thresholds
-                            if region in improvement_thresholds and not pd.isna(improvement_thresholds[region]['power_1_to_2']):
-                                styled_power = styled_power.apply(highlight_power_underperformers, axis=1)
-                                
                             st.dataframe(styled_power)
                             
                             # Display power changes if available
@@ -302,35 +275,8 @@ def main():
                         with col2:
                             st.write(f"**{region} Region Acceleration Development (%)**")
                             
-                            # Check if we have improvement thresholds for this region
-                            region_threshold_accel_1_2 = None
-                            if region in improvement_thresholds:
-                                region_threshold_accel_1_2 = improvement_thresholds[region]['accel_1_to_2']
-                            
-                            # Function to highlight underperforming users (below threshold)
-                            def highlight_accel_underperformers(s):
-                                # Create a Series of empty strings with same index as s
-                                ret = pd.Series('', index=s.index)
-                                
-                                # Only apply if we have Test 1 and Test 2 columns and a valid threshold
-                                if 'Test 1' in accel_df.columns and 'Test 2' in accel_df.columns and not pd.isna(region_threshold_accel_1_2):
-                                    # Calculate percent change for this row
-                                    if pd.notna(s['Test 1']) and pd.notna(s['Test 2']) and s['Test 1'] > 0:
-                                        change_pct = ((s['Test 2'] - s['Test 1']) / s['Test 1']) * 100
-                                        
-                                        # If change is below threshold, highlight in light red
-                                        if change_pct < region_threshold_accel_1_2:
-                                            ret['Test 2'] = 'background-color: #FFCCCB'  # Light red for underperforming
-                                
-                                return ret
-                            
-                            # Apply formatting
+                            # Apply formatting without highlighting
                             styled_accel = accel_df.style.format("{:.1f}%")
-                            
-                            # Only apply highlighting if we have improvement thresholds
-                            if region in improvement_thresholds and not pd.isna(improvement_thresholds[region]['accel_1_to_2']):
-                                styled_accel = styled_accel.apply(highlight_accel_underperformers, axis=1)
-                                
                             st.dataframe(styled_accel)
                             
                             # Display acceleration changes if available
