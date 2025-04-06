@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from exercise_constants import ALL_EXERCISES, VALID_EXERCISES
-from goal_standards import calculate_development_score
+from goal_standards import calculate_development_score, get_base_exercise_name, POWER_STANDARDS, ACCELERATION_STANDARDS
 
 class MatrixGenerator:
     def __init__(self):
@@ -488,13 +488,45 @@ class MatrixGenerator:
     def _calculate_development_matrix(self, metric_df, sex, metric_type):
         """Calculate development scores for each value in the matrix."""
         dev_matrix = metric_df.copy()
+        
+        # Special debugging for development matrix calculation
+        print(f"DEBUG: Calculating {metric_type} development matrix with sex={sex}")
+        print(f"DEBUG: Input matrix has shape {metric_df.shape} with columns {metric_df.columns.tolist()}")
+        print(f"DEBUG: Input matrix index/exercises: {metric_df.index.tolist()}")
+        
+        # Check for Vertical Jump
+        if 'Vertical Jump (Countermovement)' in metric_df.index:
+            print(f"DEBUG: Vertical Jump IS in input matrix with values: {metric_df.loc['Vertical Jump (Countermovement)'].values}")
+        else:
+            print(f"DEBUG: Vertical Jump NOT found in input matrix!")
 
         # Calculate development scores
         for col in dev_matrix.columns:
             for idx in dev_matrix.index:
                 value = metric_df.loc[idx, col]
+                base_exercise = get_base_exercise_name(idx)
                 dev_score = calculate_development_score(value, idx, sex, metric_type)
+                
+                # Debug Vertical Jump specifically
+                if 'Vertical Jump' in idx:
+                    print(f"DEBUG: Calculating development score for {idx}, value={value}, base={base_exercise}")
+                    print(f"DEBUG: Development score result: {dev_score}")
+                    
+                    # Add extra check for standards lookup
+                    standards = POWER_STANDARDS if metric_type == 'power' else ACCELERATION_STANDARDS
+                    if sex in standards and base_exercise in standards[sex]:
+                        goal_std = standards[sex][base_exercise]
+                        print(f"DEBUG: Found goal standard: {goal_std}")
+                    else:
+                        print(f"DEBUG: No goal standard found for {base_exercise} in {sex} {metric_type} standards")
+                
                 dev_matrix.loc[idx, col] = dev_score
+
+        # Check for Vertical Jump in output
+        if 'Vertical Jump (Countermovement)' in dev_matrix.index:
+            print(f"DEBUG: Vertical Jump IS in development matrix with values: {dev_matrix.loc['Vertical Jump (Countermovement)'].values}")
+        else:
+            print(f"DEBUG: Vertical Jump STILL NOT in development matrix after calculation!")
 
         return dev_matrix
 
