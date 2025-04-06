@@ -5,7 +5,14 @@ from goal_standards import calculate_development_score
 
 class MatrixGenerator:
     def __init__(self):
-        self.exercises = ALL_EXERCISES
+        # Create a modified exercise list that includes proper handling for all exercises
+        self.exercises = ALL_EXERCISES.copy()
+        
+        # Explicitly ensure Vertical Jump is included
+        if 'Vertical Jump (Countermovement)' not in self.exercises:
+            print("Adding Vertical Jump (Countermovement) to exercises list")
+            self.exercises.append('Vertical Jump (Countermovement)')
+            
         self.development_brackets = {
             'Goal Hit': (100, float('inf')),
             'Elite': (90, 99.99),
@@ -397,8 +404,21 @@ class MatrixGenerator:
                 elif 'Horizontal Row' in exercise or 'Chest Press' in exercise:
                     print(f"Debug: Added to matrices - Test {target_instance}, Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
 
+        # Check for Vertical Jump in the matrices
+        has_vertical_jump = False
+        for instance in power_matrix:
+            if 'Vertical Jump (Countermovement)' in power_matrix[instance]:
+                has_vertical_jump = True
+                break
+        
         # Fill empty cells with NaN
         for instance in power_matrix:
+            # Ensure Vertical Jump is added if it exists for this user
+            if has_vertical_jump and 'Vertical Jump (Countermovement)' not in power_matrix[instance]:
+                power_matrix[instance]['Vertical Jump (Countermovement)'] = np.nan
+                accel_matrix[instance]['Vertical Jump (Countermovement)'] = np.nan
+                
+            # Fill remaining exercises from the exercises list
             for exercise in self.exercises:
                 if exercise not in power_matrix[instance]:
                     power_matrix[instance][exercise] = np.nan
@@ -424,14 +444,38 @@ class MatrixGenerator:
 
     def _convert_to_dataframes(self, power_matrix, accel_matrix):
         """Convert dictionary matrices to pandas DataFrames."""
-        # Create DataFrame for power
+        # Get all exercises present in the matrices
+        all_matrix_exercises = set()
+        for instance in power_matrix:
+            all_matrix_exercises.update(power_matrix[instance].keys())
+        for instance in accel_matrix:
+            all_matrix_exercises.update(accel_matrix[instance].keys())
+            
+        # Create a combined exercise list that includes both the predefined list and anything in the matrices
+        combined_exercises = list(self.exercises)
+        for exercise in all_matrix_exercises:
+            if exercise not in combined_exercises:
+                print(f"DEBUG: Adding matrix exercise to combined list: {exercise}")
+                combined_exercises.append(exercise)
+                
+        # Explicitly ensure Vertical Jump is in the combined list
+        if 'Vertical Jump (Countermovement)' not in combined_exercises:
+            print(f"DEBUG: Explicitly adding Vertical Jump to combined exercises list")
+            combined_exercises.append('Vertical Jump (Countermovement)')
+            
+        # Debug what's in the matrices for Vertical Jump
+        for instance in power_matrix:
+            if 'Vertical Jump (Countermovement)' in power_matrix[instance]:
+                print(f"DEBUG: Vertical Jump found in power_matrix[{instance}] with value: {power_matrix[instance]['Vertical Jump (Countermovement)']}")
+        
+        # Create DataFrame for power with the combined exercise list
         power_df = pd.DataFrame(power_matrix)
-        power_df = power_df.reindex(self.exercises)
+        power_df = power_df.reindex(combined_exercises)
         power_df.columns = [f"Test {i}" for i in range(1, len(power_df.columns) + 1)]
 
-        # Create DataFrame for acceleration
+        # Create DataFrame for acceleration with the combined exercise list
         accel_df = pd.DataFrame(accel_matrix)
-        accel_df = accel_df.reindex(self.exercises)
+        accel_df = accel_df.reindex(combined_exercises)
         accel_df.columns = [f"Test {i}" for i in range(1, len(accel_df.columns) + 1)]
         
         return power_df, accel_df
