@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import io
+import csv
 from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
 from report_generator import ReportGenerator
@@ -14,6 +16,35 @@ st.set_page_config(
     layout="wide",  # This will make the page wider
     initial_sidebar_state="auto"
 )
+
+def generate_underperformers_csv(region, type_metric, period, underperformers):
+    """
+    Generate a CSV report for underperforming users.
+    
+    Args:
+        region: The body region name
+        type_metric: 'Power' or 'Acceleration'
+        period: '1_to_2' or '2_to_3'
+        underperformers: List of tuples containing (user_name, change_percentage)
+        
+    Returns:
+        Bytes object containing CSV data
+    """
+    # Create StringIO object to write CSV data
+    csv_buffer = io.StringIO()
+    csv_writer = csv.writer(csv_buffer)
+    
+    # Write header
+    period_text = "Test 1 to Test 2" if period == "1_to_2" else "Test 2 to Test 3"
+    csv_writer.writerow([f"{region} Region Underperforming Users - {type_metric} ({period_text})"])
+    csv_writer.writerow(["User Name", "Change Percentage"])
+    
+    # Write user data
+    for user, change in underperformers:
+        csv_writer.writerow([user, f"{change:.1f}%"])
+    
+    # Return bytes for download
+    return csv_buffer.getvalue()
 
 def main():
     st.markdown("<h1 style='font-size: 3em;'>Site Development Bracketer</h1>", unsafe_allow_html=True)
@@ -189,9 +220,18 @@ def main():
                                 if region_metrics[2] and 'underperformers_1_to_2' in region_metrics[2]:
                                     underperformers = region_metrics[2]['underperformers_1_to_2']
                                     if underperformers:
-                                        st.markdown("**Underperforming Users:**")
-                                        for user, change in underperformers:
-                                            st.markdown(f"- {user}: <span style='color:red'>{change:.1f}%</span>", unsafe_allow_html=True)
+                                        # Create downloadable CSV for underperforming users
+                                        csv_data = generate_underperformers_csv(
+                                            region, "Power", "1_to_2", underperformers)
+                                        
+                                        # Display download button and count
+                                        st.write(f"**Underperforming Users:** {len(underperformers)}")
+                                        st.download_button(
+                                            label="Download Underperformers List",
+                                            data=csv_data,
+                                            file_name=f"{region}_power_underperformers_test1to2.csv",
+                                            mime="text/csv"
+                                        )
                                     else:
                                         st.markdown("*No underperforming users*")
                             else:
@@ -208,9 +248,18 @@ def main():
                                 if region_metrics[2] and 'underperformers_2_to_3' in region_metrics[2]:
                                     underperformers = region_metrics[2]['underperformers_2_to_3']
                                     if underperformers:
-                                        st.markdown("**Underperforming Users:**")
-                                        for user, change in underperformers:
-                                            st.markdown(f"- {user}: <span style='color:red'>{change:.1f}%</span>", unsafe_allow_html=True)
+                                        # Create downloadable CSV for underperforming users
+                                        csv_data = generate_underperformers_csv(
+                                            region, "Power", "2_to_3", underperformers)
+                                        
+                                        # Display download button and count
+                                        st.write(f"**Underperforming Users:** {len(underperformers)}")
+                                        st.download_button(
+                                            label="Download Underperformers List",
+                                            data=csv_data,
+                                            file_name=f"{region}_power_underperformers_test2to3.csv",
+                                            mime="text/csv"
+                                        )
                                     else:
                                         st.markdown("*No underperforming users*")
                             else:
@@ -230,9 +279,18 @@ def main():
                                 if region_metrics[3] and 'underperformers_1_to_2' in region_metrics[3]:
                                     underperformers = region_metrics[3]['underperformers_1_to_2']
                                     if underperformers:
-                                        st.markdown("**Underperforming Users:**")
-                                        for user, change in underperformers:
-                                            st.markdown(f"- {user}: <span style='color:red'>{change:.1f}%</span>", unsafe_allow_html=True)
+                                        # Create downloadable CSV for underperforming users
+                                        csv_data = generate_underperformers_csv(
+                                            region, "Acceleration", "1_to_2", underperformers)
+                                        
+                                        # Display download button and count
+                                        st.write(f"**Underperforming Users:** {len(underperformers)}")
+                                        st.download_button(
+                                            label="Download Underperformers List",
+                                            data=csv_data,
+                                            file_name=f"{region}_accel_underperformers_test1to2.csv",
+                                            mime="text/csv"
+                                        )
                                     else:
                                         st.markdown("*No underperforming users*")
                             else:
@@ -249,9 +307,18 @@ def main():
                                 if region_metrics[3] and 'underperformers_2_to_3' in region_metrics[3]:
                                     underperformers = region_metrics[3]['underperformers_2_to_3']
                                     if underperformers:
-                                        st.markdown("**Underperforming Users:**")
-                                        for user, change in underperformers:
-                                            st.markdown(f"- {user}: <span style='color:red'>{change:.1f}%</span>", unsafe_allow_html=True)
+                                        # Create downloadable CSV for underperforming users
+                                        csv_data = generate_underperformers_csv(
+                                            region, "Acceleration", "2_to_3", underperformers)
+                                        
+                                        # Display download button and count
+                                        st.write(f"**Underperforming Users:** {len(underperformers)}")
+                                        st.download_button(
+                                            label="Download Underperformers List",
+                                            data=csv_data,
+                                            file_name=f"{region}_accel_underperformers_test2to3.csv",
+                                            mime="text/csv"
+                                        )
                                     else:
                                         st.markdown("*No underperforming users*")
                             else:
