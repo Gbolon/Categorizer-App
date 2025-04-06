@@ -264,6 +264,27 @@ def main():
                 # Display raw value matrices
                 st.subheader("Raw Value Matrices")
 
+                # Special handling to ensure Vertical Jump is visible
+                if 'Vertical Jump (Countermovement)' not in power_matrix.index:
+                    print("DEBUG: Vertical Jump missing from power_matrix index - attempting to add it")
+                    # Try to add it if it's missing
+                    try:
+                        # Create a new row with NaN values for all columns
+                        new_row = pd.Series([np.nan] * len(power_matrix.columns), index=power_matrix.columns, name='Vertical Jump (Countermovement)')
+                        # Add the row to the DataFrame
+                        power_matrix = pd.concat([power_matrix, pd.DataFrame(new_row).T])
+                        # Same for acceleration matrix
+                        new_row_accel = pd.Series([np.nan] * len(accel_matrix.columns), index=accel_matrix.columns, name='Vertical Jump (Countermovement)')
+                        accel_matrix = pd.concat([accel_matrix, pd.DataFrame(new_row_accel).T])
+                    except Exception as e:
+                        print(f"ERROR: Failed to add Vertical Jump row: {e}")
+
+                # Ensure Vertical Jump is always shown, even if it has NaN values
+                if 'Vertical Jump (Countermovement)' in power_matrix.index:
+                    print(f"DEBUG: Vertical Jump IS in power_matrix index with values: {power_matrix.loc['Vertical Jump (Countermovement)'].values}")
+                else:
+                    print("DEBUG: Vertical Jump still missing from power_matrix after attempted fix")
+
                 st.write("Power Matrix (Raw Values)")
                 st.dataframe(power_matrix)
 
@@ -273,6 +294,20 @@ def main():
                 # Display development matrices if available
                 if power_dev_matrix is not None and accel_dev_matrix is not None:
                     st.subheader("Development Score Matrices (%)")
+
+                    # Special handling to ensure Vertical Jump is visible in development matrices too
+                    if 'Vertical Jump (Countermovement)' not in power_dev_matrix.index:
+                        print("DEBUG: Vertical Jump missing from power_dev_matrix index - attempting to add it")
+                        try:
+                            # Create a new row with NaN values for all columns
+                            new_row = pd.Series([np.nan] * len(power_dev_matrix.columns), index=power_dev_matrix.columns, name='Vertical Jump (Countermovement)')
+                            # Add the row to the DataFrame
+                            power_dev_matrix = pd.concat([power_dev_matrix, pd.DataFrame(new_row).T])
+                            # Same for acceleration matrix
+                            new_row_accel = pd.Series([np.nan] * len(accel_dev_matrix.columns), index=accel_dev_matrix.columns, name='Vertical Jump (Countermovement)')
+                            accel_dev_matrix = pd.concat([accel_dev_matrix, pd.DataFrame(new_row_accel).T])
+                        except Exception as e:
+                            print(f"ERROR: Failed to add Vertical Jump row to dev matrices: {e}")
 
                     st.write("Power Development Matrix")
                     styled_power_dev = power_dev_matrix.style.format("{:.1f}%")

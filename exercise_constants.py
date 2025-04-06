@@ -93,9 +93,20 @@ ALL_EXERCISES = []
 for exercises in VALID_EXERCISES.values():
     for exercise in exercises:
         if EXERCISE_DOMINANCE[exercise]['required']:
+            # Add dominant and non-dominant variations
             ALL_EXERCISES.extend([
                 get_full_exercise_name(exercise, "Dominant"),
                 get_full_exercise_name(exercise, "Non-Dominant")
             ])
         else:
+            # For exercises that don't require dominance (like Vertical Jump)
+            # just add the base name
             ALL_EXERCISES.append(exercise)
+            
+# Ensure Vertical Jump is explicitly included
+if 'Vertical Jump (Countermovement)' not in ALL_EXERCISES:
+    print("DEBUG: Explicitly adding Vertical Jump to ALL_EXERCISES list")
+    ALL_EXERCISES.append('Vertical Jump (Countermovement)')
+    
+# Print the exercise list for debugging
+print(f"DEBUG: ALL_EXERCISES list generated: {ALL_EXERCISES}")

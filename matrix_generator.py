@@ -327,6 +327,9 @@ class MatrixGenerator:
         power_matrix = {}
         accel_matrix = {}
         test_instances = {}
+        
+        # Explicitly track if Vertical Jump is present for this user
+        has_vertical_jump = False
 
         # Get user's sex for development calculations
         if user_data.empty:
@@ -346,6 +349,7 @@ class MatrixGenerator:
         vertical_jump_exercises = user_data[user_data['full_exercise_name'].str.contains('Vertical Jump', na=False)]
         if not vertical_jump_exercises.empty:
             print(f"Debug: User '{user_name}' has {len(vertical_jump_exercises)} Vertical Jump exercises")
+            has_vertical_jump = True  # Mark that user has Vertical Jump exercises
             for _, row in vertical_jump_exercises.iterrows():
                 print(f"Debug: Vertical Jump Exercise: {row['full_exercise_name']}, Power: {row['power - high']}, Accel: {row['acceleration - high']}")
 
@@ -366,6 +370,7 @@ class MatrixGenerator:
             if 'Vertical Jump' in exercise:
                 # Normalize to use just the base name for Vertical Jump
                 exercise = 'Vertical Jump (Countermovement)'
+                has_vertical_jump = True  # Mark that user has Vertical Jump exercises
                 print(f"Debug: Standardizing Vertical Jump name to: {exercise}")
             
             # Debug Shot Put and Vertical Jump exercises
@@ -668,12 +673,27 @@ class MatrixGenerator:
         if not region_exercises:
             return None, None, None, None  # Return None if region not found
         
+        # Always include Vertical Jump in correct region
+        vertical_jump_name = 'Vertical Jump (Countermovement)'
+        if region_name == 'Legs' and vertical_jump_name not in region_exercises:
+            print(f"Debug: Explicitly adding Vertical Jump to region_exercises for Legs region")
+            region_exercises.append(vertical_jump_name)
+        
         # Get all exercise variations including dominance
         variations = []
         for exercise in region_exercises:
-            # Include base exercises and variations with dominance
-            matching = [ex for ex in self.exercises if exercise in ex]
-            variations.extend(matching)
+            print(f"DEBUG: Finding variations for '{exercise}' in region {region_name}")
+            # Include base exercises
+            if exercise == vertical_jump_name:
+                # For Vertical Jump, just add the exercise itself without looking for variations
+                if exercise not in variations:
+                    variations.append(exercise)
+                    print(f"DEBUG: Added '{exercise}' directly to variations list")
+            else:
+                # For other exercises, look for variations with dominance
+                matching = [ex for ex in self.exercises if exercise in ex]
+                print(f"DEBUG: Found {len(matching)} matching variations: {matching}")
+                variations.extend(matching)
         
         # Special handling for Press/Pull exercises - make sure all variants are included
         if region_name == 'Press/Pull':
@@ -688,13 +708,13 @@ class MatrixGenerator:
             for ex in press_pull_exercises:
                 if ex not in variations and ex in self.exercises:
                     variations.append(ex)
-                    
-        # Special handling for Legs - make sure Vertical Jump is included
-        elif region_name == 'Legs':
-            # If Vertical Jump should appear in the region metrics
-            if 'Vertical Jump (Countermovement)' in self.exercises and 'Vertical Jump (Countermovement)' not in variations:
-                print(f"Debug: Adding Vertical Jump to Legs region variations")
-                variations.append('Vertical Jump (Countermovement)')
+        
+        # Special handling for Legs - ALWAYS ensure Vertical Jump is included regardless
+        if region_name == 'Legs' and vertical_jump_name not in variations:
+            print(f"Debug: FORCING Vertical Jump into Legs region variations")
+            variations.append(vertical_jump_name)
+            
+        print(f"DEBUG: Final variations list for {region_name}: {variations}")
         
         # Get users with multiple tests
         multi_test_users = []
