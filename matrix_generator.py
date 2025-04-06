@@ -13,6 +13,11 @@ class MatrixGenerator:
             print("Adding Vertical Jump (Countermovement) to exercises list")
             self.exercises.append('Vertical Jump (Countermovement)')
             
+        # Explicitly ensure Shot Put is included
+        if 'Shot Put (Countermovement)' not in self.exercises:
+            print("DEBUG: Adding Shot Put (Countermovement) to exercises list")
+            self.exercises.append('Shot Put (Countermovement)')
+            
         self.development_brackets = {
             'Goal Hit': (100, float('inf')),
             'Elite': (90, 99.99),
@@ -372,10 +377,16 @@ class MatrixGenerator:
                 exercise = 'Vertical Jump (Countermovement)'
                 has_vertical_jump = True  # Mark that user has Vertical Jump exercises
                 print(f"Debug: Standardizing Vertical Jump name to: {exercise}")
+                
+            # For Shot Put, ensure we use the standard name
+            if 'Shot Put' in exercise:
+                # Normalize to use just the base name for Shot Put
+                exercise = 'Shot Put (Countermovement)'
+                print(f"DEBUG: Standardizing Shot Put name to: {exercise}")
             
             # Debug Shot Put and Vertical Jump exercises
             if 'Shot Put' in exercise:
-                print(f"Debug: Processing Shot Put for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
+                print(f"DEBUG: Processing Shot Put for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
             elif 'Vertical Jump' in exercise:
                 print(f"Debug: Processing Vertical Jump for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
             # Debug Press/Pull exercises
@@ -499,6 +510,12 @@ class MatrixGenerator:
             print(f"DEBUG: Vertical Jump IS in input matrix with values: {metric_df.loc['Vertical Jump (Countermovement)'].values}")
         else:
             print(f"DEBUG: Vertical Jump NOT found in input matrix!")
+            
+        # Check for Shot Put
+        if 'Shot Put (Countermovement)' in metric_df.index:
+            print(f"DEBUG: Shot Put IS in input matrix with values: {metric_df.loc['Shot Put (Countermovement)'].values}")
+        else:
+            print(f"DEBUG: Shot Put NOT found in input matrix!")
 
         # Calculate development scores
         for col in dev_matrix.columns:
@@ -507,7 +524,7 @@ class MatrixGenerator:
                 base_exercise = get_base_exercise_name(idx)
                 dev_score = calculate_development_score(value, idx, sex, metric_type)
                 
-                # Debug Vertical Jump specifically
+                # Debug specific exercises
                 if 'Vertical Jump' in idx:
                     print(f"DEBUG: Calculating development score for {idx}, value={value}, base={base_exercise}")
                     print(f"DEBUG: Development score result: {dev_score}")
@@ -520,6 +537,19 @@ class MatrixGenerator:
                     else:
                         print(f"DEBUG: No goal standard found for {base_exercise} in {sex} {metric_type} standards")
                 
+                # Debug Shot Put specifically
+                if 'Shot Put' in idx:
+                    print(f"DEBUG: Calculating development score for {idx}, value={value}, base={base_exercise}")
+                    print(f"DEBUG: Development score result: {dev_score}")
+                    
+                    # Add extra check for standards lookup
+                    standards = POWER_STANDARDS if metric_type == 'power' else ACCELERATION_STANDARDS
+                    if sex in standards and base_exercise in standards[sex]:
+                        goal_std = standards[sex][base_exercise]
+                        print(f"DEBUG: Found goal standard for Shot Put: {goal_std}")
+                    else:
+                        print(f"DEBUG: No goal standard found for Shot Put {base_exercise} in {sex} {metric_type} standards")
+                
                 dev_matrix.loc[idx, col] = dev_score
 
         # Check for Vertical Jump in output
@@ -527,6 +557,12 @@ class MatrixGenerator:
             print(f"DEBUG: Vertical Jump IS in development matrix with values: {dev_matrix.loc['Vertical Jump (Countermovement)'].values}")
         else:
             print(f"DEBUG: Vertical Jump STILL NOT in development matrix after calculation!")
+            
+        # Check for Shot Put in output
+        if 'Shot Put (Countermovement)' in dev_matrix.index:
+            print(f"DEBUG: Shot Put IS in development matrix with values: {dev_matrix.loc['Shot Put (Countermovement)'].values}")
+        else:
+            print(f"DEBUG: Shot Put NOT in development matrix after calculation!")
 
         return dev_matrix
 
@@ -719,6 +755,12 @@ class MatrixGenerator:
         if region_name == 'Legs' and vertical_jump_name not in region_exercises:
             print(f"Debug: Explicitly adding Vertical Jump to region_exercises for Legs region")
             region_exercises.append(vertical_jump_name)
+            
+        # Always include Shot Put in Torso region
+        shot_put_name = 'Shot Put (Countermovement)'
+        if region_name == 'Torso' and shot_put_name not in region_exercises:
+            print(f"DEBUG: Explicitly adding Shot Put to region_exercises for Torso region")
+            region_exercises.append(shot_put_name)
         
         # Get all exercise variations including dominance
         variations = []
@@ -727,6 +769,11 @@ class MatrixGenerator:
             # Include base exercises
             if exercise == vertical_jump_name:
                 # For Vertical Jump, just add the exercise itself without looking for variations
+                if exercise not in variations:
+                    variations.append(exercise)
+                    print(f"DEBUG: Added '{exercise}' directly to variations list")
+            elif exercise == shot_put_name:
+                # For Shot Put, just add the exercise itself without looking for variations
                 if exercise not in variations:
                     variations.append(exercise)
                     print(f"DEBUG: Added '{exercise}' directly to variations list")
@@ -754,6 +801,11 @@ class MatrixGenerator:
         if region_name == 'Legs' and vertical_jump_name not in variations:
             print(f"Debug: FORCING Vertical Jump into Legs region variations")
             variations.append(vertical_jump_name)
+            
+        # Special handling for Torso - ALWAYS ensure Shot Put is included regardless
+        if region_name == 'Torso' and shot_put_name not in variations:
+            print(f"DEBUG: FORCING Shot Put into Torso region variations")
+            variations.append(shot_put_name)
             
         print(f"DEBUG: Final variations list for {region_name}: {variations}")
         

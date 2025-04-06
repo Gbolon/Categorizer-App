@@ -81,6 +81,11 @@ def get_base_exercise_name(full_exercise_name):
     if 'Vertical Jump (Countermovement)' in full_exercise_name:
         return 'Vertical Jump (Countermovement)'
         
+    # Special case for Shot Put
+    if 'Shot Put (Countermovement)' in full_exercise_name:
+        print(f"DEBUG: Shot Put special case handling for: {full_exercise_name}")
+        return 'Shot Put (Countermovement)'
+        
     # Handle exercises with "One Hand" in the name differently
     if 'One Hand' in full_exercise_name and '(' in full_exercise_name:
         # For exercises like "Horizontal Row (One Hand) (Dominant)"
