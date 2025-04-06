@@ -329,6 +329,19 @@ class MatrixGenerator:
         if not isinstance(user_sex, str) or user_sex.lower() not in ['male', 'female']:
             return power_matrix, accel_matrix, None, None, None, None, None
 
+        # Debug for Shot Put and Vertical Jump exercises
+        shot_put_exercises = user_data[user_data['full_exercise_name'].str.contains('Shot Put', na=False)]
+        if not shot_put_exercises.empty:
+            print(f"Debug: User '{user_name}' has {len(shot_put_exercises)} Shot Put exercises")
+            for _, row in shot_put_exercises.iterrows():
+                print(f"Debug: Shot Put Exercise: {row['full_exercise_name']}, Power: {row['power - high']}, Accel: {row['acceleration - high']}")
+                
+        vertical_jump_exercises = user_data[user_data['full_exercise_name'].str.contains('Vertical Jump', na=False)]
+        if not vertical_jump_exercises.empty:
+            print(f"Debug: User '{user_name}' has {len(vertical_jump_exercises)} Vertical Jump exercises")
+            for _, row in vertical_jump_exercises.iterrows():
+                print(f"Debug: Vertical Jump Exercise: {row['full_exercise_name']}, Power: {row['power - high']}, Accel: {row['acceleration - high']}")
+
         # Debug for Press/Pull exercises
         press_pull_exercises = user_data[user_data['full_exercise_name'].str.contains('Horizontal Row|Chest Press', na=False)]
         if not press_pull_exercises.empty:
@@ -342,8 +355,13 @@ class MatrixGenerator:
             power_value = row['power - high']
             accel_value = row['acceleration - high']
 
+            # Debug Shot Put and Vertical Jump exercises
+            if 'Shot Put' in exercise:
+                print(f"Debug: Processing Shot Put for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
+            elif 'Vertical Jump' in exercise:
+                print(f"Debug: Processing Vertical Jump for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
             # Debug Press/Pull exercises
-            if 'Horizontal Row' in exercise or 'Chest Press' in exercise:
+            elif 'Horizontal Row' in exercise or 'Chest Press' in exercise:
                 print(f"Debug: Processing Press/Pull for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
 
             # Only process if both power and acceleration are present
@@ -364,8 +382,13 @@ class MatrixGenerator:
                 accel_matrix[target_instance][exercise] = accel_value
                 test_instances[target_instance].add(exercise)
                 
+                # Debug Shot Put and Vertical Jump exercises
+                if 'Shot Put' in exercise:
+                    print(f"Debug: Added Shot Put to matrices - Test {target_instance}, Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
+                elif 'Vertical Jump' in exercise:
+                    print(f"Debug: Added Vertical Jump to matrices - Test {target_instance}, Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
                 # Debug Press/Pull exercises
-                if 'Horizontal Row' in exercise or 'Chest Press' in exercise:
+                elif 'Horizontal Row' in exercise or 'Chest Press' in exercise:
                     print(f"Debug: Added to matrices - Test {target_instance}, Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
 
         # Fill empty cells with NaN
