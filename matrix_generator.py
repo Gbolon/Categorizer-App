@@ -427,12 +427,26 @@ class MatrixGenerator:
                 has_vertical_jump = True
                 break
         
+        # Check for Shot Put in the matrices
+        has_shot_put = False
+        for instance in power_matrix:
+            if 'Shot Put (Countermovement)' in power_matrix[instance]:
+                has_shot_put = True
+                print(f"DEBUG: Shot Put found in power_matrix[{instance}] with value: {power_matrix[instance]['Shot Put (Countermovement)']}")
+                break
+        
         # Fill empty cells with NaN
         for instance in power_matrix:
             # Ensure Vertical Jump is added if it exists for this user
             if has_vertical_jump and 'Vertical Jump (Countermovement)' not in power_matrix[instance]:
                 power_matrix[instance]['Vertical Jump (Countermovement)'] = np.nan
                 accel_matrix[instance]['Vertical Jump (Countermovement)'] = np.nan
+                
+            # Ensure Shot Put is added if it exists for this user
+            if has_shot_put and 'Shot Put (Countermovement)' not in power_matrix[instance]:
+                print(f"DEBUG: Adding Shot Put placeholder to instance {instance}")
+                power_matrix[instance]['Shot Put (Countermovement)'] = np.nan
+                accel_matrix[instance]['Shot Put (Countermovement)'] = np.nan
                 
             # Fill remaining exercises from the exercises list
             for exercise in self.exercises:
@@ -479,10 +493,20 @@ class MatrixGenerator:
             print(f"DEBUG: Explicitly adding Vertical Jump to combined exercises list")
             combined_exercises.append('Vertical Jump (Countermovement)')
             
+        # Explicitly ensure Shot Put is in the combined list
+        if 'Shot Put (Countermovement)' not in combined_exercises:
+            print(f"DEBUG: Explicitly adding Shot Put to combined exercises list")
+            combined_exercises.append('Shot Put (Countermovement)')
+            
         # Debug what's in the matrices for Vertical Jump
         for instance in power_matrix:
             if 'Vertical Jump (Countermovement)' in power_matrix[instance]:
                 print(f"DEBUG: Vertical Jump found in power_matrix[{instance}] with value: {power_matrix[instance]['Vertical Jump (Countermovement)']}")
+                
+        # Debug what's in the matrices for Shot Put
+        for instance in power_matrix:
+            if 'Shot Put (Countermovement)' in power_matrix[instance]:
+                print(f"DEBUG: Shot Put found in power_matrix[{instance}] with value: {power_matrix[instance]['Shot Put (Countermovement)']}")
         
         # Create DataFrame for power with the combined exercise list
         power_df = pd.DataFrame(power_matrix)

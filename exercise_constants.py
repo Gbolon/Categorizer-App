@@ -23,7 +23,7 @@ VALID_EXERCISES = {
 # Define which exercises require dominance and valid dominance values
 EXERCISE_DOMINANCE = {
     'Straight Arm Trunk Rotation': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
-    'Shot Put (Countermovement)': {'required': False, 'values': ['neither', None, '']},
+    'Shot Put (Countermovement)': {'required': False, 'values': ['neither', None, '', 'Dominant', 'Non-Dominant']},
     'PNF D2 Flexion': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
     'PNF D2 Extension': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
     'Biceps Curl (One Hand)': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
@@ -85,6 +85,12 @@ def get_full_exercise_name(exercise_name, dominance=None):
     # Special case for Vertical Jump - include 'neither' dominance if present
     elif exercise_name == 'Vertical Jump (Countermovement)' and dominance in ['neither', 'Neither']:
         return exercise_name  # Return just the base name without dominance
+    # Special case for Shot Put with dominance
+    elif exercise_name == 'Shot Put (Countermovement)':
+        if standardized_dominance in ['Dominant', 'Non-Dominant']:
+            return f"{exercise_name} ({standardized_dominance})"
+        else:
+            return exercise_name  # Return base name for other dominance values
     
     return exercise_name
 
@@ -107,6 +113,22 @@ for exercises in VALID_EXERCISES.values():
 if 'Vertical Jump (Countermovement)' not in ALL_EXERCISES:
     print("DEBUG: Explicitly adding Vertical Jump to ALL_EXERCISES list")
     ALL_EXERCISES.append('Vertical Jump (Countermovement)')
+    
+# Ensure Shot Put variations are included
+if 'Shot Put (Countermovement)' not in ALL_EXERCISES:
+    print("DEBUG: Explicitly adding Shot Put to ALL_EXERCISES list")
+    ALL_EXERCISES.append('Shot Put (Countermovement)')
+    
+# Add Shot Put with dominance variations
+shot_put_dominant = 'Shot Put (Countermovement) (Dominant)'
+if shot_put_dominant not in ALL_EXERCISES:
+    print(f"DEBUG: Adding {shot_put_dominant} to ALL_EXERCISES list")
+    ALL_EXERCISES.append(shot_put_dominant)
+    
+shot_put_non_dominant = 'Shot Put (Countermovement) (Non-Dominant)'
+if shot_put_non_dominant not in ALL_EXERCISES:
+    print(f"DEBUG: Adding {shot_put_non_dominant} to ALL_EXERCISES list")
+    ALL_EXERCISES.append(shot_put_non_dominant)
     
 # Print the exercise list for debugging
 print(f"DEBUG: ALL_EXERCISES list generated: {ALL_EXERCISES}")
