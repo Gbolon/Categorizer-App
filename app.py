@@ -360,38 +360,13 @@ def main():
                             styled_power = power_df.style.format("{:.1f}%")
                             st.dataframe(styled_power)
                             
-                            # Display power changes if available
-                            if power_changes:
-                                st.write("**Average Changes in Power Development:**")
-                                metrics_col1, metrics_col2 = st.columns(2)
-                                
-                                # Test 1 to Test 2 changes
-                                if 'test1_to_test2_pct' in power_changes and not pd.isna(power_changes['test1_to_test2_pct']):
-                                    change = power_changes['test1_to_test2_pct']
-                                    with metrics_col1:
-                                        st.write("**Test 1 → Test 2**")
-                                        if change < 0:
-                                            st.markdown(f"<span style='color:red; font-size:1.2em;'>{change:.1f}%</span>", unsafe_allow_html=True)
-                                        else:
-                                            st.markdown(f"<span style='color:green; font-size:1.2em;'>{change:.1f}%</span>", unsafe_allow_html=True)
-                                
-                                # Test 2 to Test 3 changes
-                                if 'test2_to_test3_pct' in power_changes and not pd.isna(power_changes['test2_to_test3_pct']):
-                                    change = power_changes['test2_to_test3_pct']
-                                    with metrics_col2:
-                                        st.write("**Test 2 → Test 3**")
-                                        if change < 0:
-                                            st.markdown(f"<span style='color:red; font-size:1.2em;'>{change:.1f}%</span>", unsafe_allow_html=True)
-                                        else:
-                                            st.markdown(f"<span style='color:green; font-size:1.2em;'>{change:.1f}%</span>", unsafe_allow_html=True)
-                                
-                                # Display exercise with lowest change (if available)
-                                if lowest_power_exercise is not None and lowest_power_value is not None:
-                                    st.write("**Exercise with Lowest Change:**")
-                                    if lowest_power_value < 0:
-                                        st.markdown(f"**{lowest_power_exercise}**: <span style='color:red'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
-                                    else:
-                                        st.markdown(f"**{lowest_power_exercise}**: <span style='color:green'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
+                            # Display only the lowest change exercise (removing duplicate average changes)
+                            if lowest_power_exercise is not None and lowest_power_value is not None:
+                                st.write("**Exercise with Lowest Change:**")
+                                if lowest_power_value < 0:
+                                    st.markdown(f"**{lowest_power_exercise}**: <span style='color:red'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
+                                else:
+                                    st.markdown(f"**{lowest_power_exercise}**: <span style='color:green'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
                         
                         with col2:
                             st.write(f"**{region} Region Acceleration Development (%)**")
@@ -400,38 +375,13 @@ def main():
                             styled_accel = accel_df.style.format("{:.1f}%")
                             st.dataframe(styled_accel)
                             
-                            # Display acceleration changes if available
-                            if accel_changes:
-                                st.write("**Average Changes in Acceleration Development:**")
-                                metrics_col1, metrics_col2 = st.columns(2)
-                                
-                                # Test 1 to Test 2 changes
-                                if 'test1_to_test2_pct' in accel_changes and not pd.isna(accel_changes['test1_to_test2_pct']):
-                                    change = accel_changes['test1_to_test2_pct']
-                                    with metrics_col1:
-                                        st.write("**Test 1 → Test 2**")
-                                        if change < 0:
-                                            st.markdown(f"<span style='color:red; font-size:1.2em;'>{change:.1f}%</span>", unsafe_allow_html=True)
-                                        else:
-                                            st.markdown(f"<span style='color:green; font-size:1.2em;'>{change:.1f}%</span>", unsafe_allow_html=True)
-                                
-                                # Test 2 to Test 3 changes
-                                if 'test2_to_test3_pct' in accel_changes and not pd.isna(accel_changes['test2_to_test3_pct']):
-                                    change = accel_changes['test2_to_test3_pct']
-                                    with metrics_col2:
-                                        st.write("**Test 2 → Test 3**")
-                                        if change < 0:
-                                            st.markdown(f"<span style='color:red; font-size:1.2em;'>{change:.1f}%</span>", unsafe_allow_html=True)
-                                        else:
-                                            st.markdown(f"<span style='color:green; font-size:1.2em;'>{change:.1f}%</span>", unsafe_allow_html=True)
-                                        
-                                # Display exercise with lowest change (if available)
-                                if lowest_accel_exercise is not None and lowest_accel_value is not None:
-                                    st.write("**Exercise with Lowest Change:**")
-                                    if lowest_accel_value < 0:
-                                        st.markdown(f"**{lowest_accel_exercise}**: <span style='color:red'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
-                                    else:
-                                        st.markdown(f"**{lowest_accel_exercise}**: <span style='color:green'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
+                            # Display only the lowest change exercise (removing duplicate average changes)
+                            if lowest_accel_exercise is not None and lowest_accel_value is not None:
+                                st.write("**Exercise with Lowest Change:**")
+                                if lowest_accel_value < 0:
+                                    st.markdown(f"**{lowest_accel_exercise}**: <span style='color:red'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
+                                else:
+                                    st.markdown(f"**{lowest_accel_exercise}**: <span style='color:green'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
                     else:
                         st.info(f"Not enough multi-test user data to display detailed {region.lower()} region analysis.")
 
