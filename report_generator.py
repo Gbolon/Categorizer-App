@@ -606,7 +606,7 @@ class ReportGenerator:
                     <h2>Power Development (%)</h2>
                     """
                     # Convert to HTML with formatting directly - using two decimal places
-                    power_styled = power_df.style.format("{:.2f}%").to_html()
+                    power_styled = power_df.style.format("{:.2f}%").to_html(classes='table')
                     region_page += power_styled
                     
                     # Acceleration development table
@@ -614,7 +614,7 @@ class ReportGenerator:
                     <h2>Acceleration Development (%)</h2>
                     """
                     # Convert to HTML with formatting directly - using two decimal places
-                    accel_styled = accel_df.style.format("{:.2f}%").to_html()
+                    accel_styled = accel_df.style.format("{:.2f}%").to_html(classes='table')
                     region_page += accel_styled
                     
                     # Display lowest change exercises if available
