@@ -626,11 +626,6 @@ def main():
                         mime="text/html",
                     )
                 
-                # Display a preview of the chart
-                fig = report_generator.create_distribution_chart(power_counts, accel_counts)
-                st.plotly_chart(fig, use_container_width=True)
-                st.caption("Preview of distribution chart included in both reports")
-                
                 # Add an explanation about the reports
                 st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")
                 st.write("**Complete Report**: Includes distribution data, visualization, and transition tables")
