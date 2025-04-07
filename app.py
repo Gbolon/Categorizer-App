@@ -561,6 +561,39 @@ def main():
             with report_tab1:
                 st.write("Generate reports with power and acceleration distribution data")
                 
+                # Comprehensive report section first (moved to the top)
+                st.subheader("Comprehensive Interactive Report")
+                st.write("This report includes detailed analysis with separate pages for each body region and interactive navigation")
+                
+                # Prompt for site name
+                site_name = st.text_input("Site Name", placeholder="Enter site name for report header")
+                
+                # First collect region metrics for all regions
+                region_metrics = {}
+                for region in VALID_EXERCISES.keys():
+                    region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
+                
+                # Create comprehensive report
+                comprehensive_report = report_generator.generate_comprehensive_report(
+                    power_counts,
+                    accel_counts,
+                    power_transitions_detail,
+                    accel_transitions_detail,
+                    body_region_averages,
+                    improvement_thresholds,
+                    region_metrics,
+                    site_name=site_name
+                )
+                st.download_button(
+                    label="Download Comprehensive Report",
+                    data=comprehensive_report,
+                    file_name="comprehensive_report.html",
+                    mime="text/html",
+                )
+                
+                # Add a separator
+                st.markdown("---")
+                
                 # Basic reports section with two columns
                 st.subheader("Basic Reports")
                 basic_col1, basic_col2 = st.columns(2)
@@ -593,48 +626,15 @@ def main():
                         mime="text/html",
                     )
                 
-                # Add a separator
-                st.markdown("---")
-                
-                # Comprehensive report section
-                st.subheader("Comprehensive Interactive Report")
-                st.write("This report includes detailed analysis with separate pages for each body region and interactive navigation")
-                
-                # Prompt for site name
-                site_name = st.text_input("Site Name", placeholder="Enter site name for report header")
-                
-                # First collect region metrics for all regions
-                region_metrics = {}
-                for region in VALID_EXERCISES.keys():
-                    region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
-                
-                # Create comprehensive report
-                comprehensive_report = report_generator.generate_comprehensive_report(
-                    power_counts,
-                    accel_counts,
-                    power_transitions_detail,
-                    accel_transitions_detail,
-                    body_region_averages,
-                    improvement_thresholds,
-                    region_metrics,
-                    site_name=site_name
-                )
-                st.download_button(
-                    label="Download Comprehensive Report",
-                    data=comprehensive_report,
-                    file_name="comprehensive_report.html",
-                    mime="text/html",
-                )
-                
                 # Display a preview of the chart
                 fig = report_generator.create_distribution_chart(power_counts, accel_counts)
                 st.plotly_chart(fig, use_container_width=True)
                 st.caption("Preview of distribution chart included in both reports")
                 
                 # Add an explanation about the reports
+                st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")
                 st.write("**Complete Report**: Includes distribution data, visualization, and transition tables")
                 st.write("**Simple Report**: Includes only distribution data and visualization")
-                st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")
             
             with report_tab2:
                 st.info("Custom report generation will be available in a future update.")
