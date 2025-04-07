@@ -6,7 +6,6 @@ import csv
 from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
 from report_generator import ReportGenerator
-from pdf_report_generator import generate_pdf_report
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
 
@@ -555,7 +554,7 @@ def main():
             st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
             st.write("Generate reports with visualizations of distribution data for easy sharing")
             
-            report_tab1, report_tab2, report_tab3 = st.tabs(["Distribution Reports", "PDF Reports", "Custom Reports (Coming Soon)"])
+            report_tab1, report_tab2 = st.tabs(["Distribution Reports", "Custom Reports (Coming Soon)"])
             
             with report_tab1:
                 st.write("Generate a report with power and acceleration distribution data")
@@ -601,77 +600,6 @@ def main():
                 st.write("**Simple Report**: Includes only distribution data and visualization")
             
             with report_tab2:
-                st.write("Generate a professional PDF report with all analysis data")
-                
-                # Create a description of the PDF report contents
-                st.markdown("""
-                ### PDF Report Contents
-                - **Title Page**: Professional cover with date and title
-                - **Summary**: Overall metrics and averages
-                - **Group Development**: Distribution charts and tables
-                - **Transition Analysis**: Detailed matrices showing movement between brackets
-                - **Body Region Analysis**: Region-specific performance metrics
-                """)
-                
-                # Create columns for the PDF report generation
-                pdf_col1, pdf_col2 = st.columns(2)
-                
-                with pdf_col1:
-                    # Button to generate comprehensive PDF report
-                    if st.button("Generate Comprehensive PDF Report", use_container_width=True):
-                        with st.spinner("Generating PDF report... This may take a moment"):
-                            # Prepare region data for the report
-                            region_data = {}
-                            for region in VALID_EXERCISES.keys():
-                                region_metrics = matrix_generator.get_region_metrics(processed_df, region)
-                                # Only include regions with data
-                                if region_metrics[0] is not None and not region_metrics[0].empty:
-                                    region_data[region] = {
-                                        'power_df': region_metrics[0],
-                                        'accel_df': region_metrics[1],
-                                        'power_changes': region_metrics[2],
-                                        'accel_changes': region_metrics[3]
-                                    }
-                            
-                            # Generate the PDF report
-                            pdf_buffer = generate_pdf_report(
-                                power_counts=power_counts,
-                                accel_counts=accel_counts,
-                                power_transitions=power_transitions_detail,
-                                accel_transitions=accel_transitions_detail,
-                                power_average=power_average,
-                                accel_average=accel_average,
-                                avg_power_change_1_2=avg_power_change_1_2,
-                                avg_accel_change_1_2=avg_accel_change_1_2,
-                                avg_power_change_2_3=avg_power_change_2_3,
-                                avg_accel_change_2_3=avg_accel_change_2_3,
-                                avg_days_between_tests=avg_days_between_tests,
-                                region_data=region_data
-                            )
-                            
-                            # Provide download button for the PDF
-                            st.download_button(
-                                label="Download PDF Report",
-                                data=pdf_buffer,
-                                file_name="site_development_report.pdf",
-                                mime="application/pdf",
-                            )
-                
-                with pdf_col2:
-                    st.info("""
-                    **PDF Report Benefits**
-                    
-                    ✓ Professional formatting with sections and headers
-                    ✓ Embedded charts and data visualizations
-                    ✓ Complete analysis in a shareable format
-                    ✓ Ideal for presentations and stakeholder reviews
-                    """)
-                
-                # Preview image
-                st.subheader("Report Preview")
-                st.image("attached_assets/Screenshot 2025-03-19 150422.png", caption="Sample PDF report page with development distribution", use_column_width=True)
-            
-            with report_tab3:
                 st.info("Custom report generation will be available in a future update.")
 
             # Display exercise information with standards
