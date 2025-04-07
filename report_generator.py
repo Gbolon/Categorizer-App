@@ -619,14 +619,16 @@ class ReportGenerator:
                     region_page += """
                     <h2>Power Development (%)</h2>
                     """
-                    power_styled = power_df.style.format("{:.1f}%").render()
+                    # Convert to HTML with formatting directly
+                    power_styled = power_df.style.format("{:.1f}%").to_html()
                     region_page += power_styled
                     
                     # Acceleration development table
                     region_page += """
                     <h2>Acceleration Development (%)</h2>
                     """
-                    accel_styled = accel_df.style.format("{:.1f}%").render()
+                    # Convert to HTML with formatting directly
+                    accel_styled = accel_df.style.format("{:.1f}%").to_html()
                     region_page += accel_styled
                     
                     # Display lowest change exercises if available
