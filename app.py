@@ -44,7 +44,40 @@ def generate_underperformers_csv(region, type_metric, period, underperformers):
         csv_writer.writerow([user, f"{change:.1f}%"])
     
     # Return bytes for download
-    return csv_buffer.getvalue()
+    return csv_buffer.getvalue().encode('utf-8')
+
+def create_underperformers_table(region, period, power_underperformers, accel_underperformers):
+    """
+    Create a DataFrame containing underperforming users with checkboxes for power and acceleration.
+    
+    Args:
+        region: The body region name
+        period: '1_to_2' or '2_to_3'
+        power_underperformers: List of tuples containing power underperformers (user_name, change_percentage)
+        accel_underperformers: List of tuples containing acceleration underperformers (user_name, change_percentage)
+        
+    Returns:
+        DataFrame with columns 'Name', 'Power', 'Acceleration'
+    """
+    # Get all unique user names
+    all_users = set()
+    power_users = {user for user, _ in power_underperformers} if power_underperformers else set()
+    accel_users = {user for user, _ in accel_underperformers} if accel_underperformers else set()
+    all_users = power_users.union(accel_users)
+    
+    # Create data for the table
+    table_data = []
+    for user in all_users:
+        power_check = "✓" if user in power_users else ""
+        accel_check = "✓" if user in accel_users else ""
+        table_data.append({
+            "Name": user,
+            "Power": power_check,
+            "Acceleration": accel_check
+        })
+    
+    # Sort by name and create DataFrame
+    return pd.DataFrame(table_data).sort_values(by="Name").reset_index(drop=True) if table_data else None
 
 def main():
     st.markdown("<h1 style='font-size: 3em;'>Site Development Bracketer</h1>", unsafe_allow_html=True)
@@ -215,25 +248,11 @@ def main():
                                 color = "green" if power_value >= 0 else "red"
                                 st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
                                 
-                                # Get region metrics with underperforming users
+                                # Get power underperformers for this period
+                                power_underperformers_1_to_2 = None
                                 region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                                 if region_metrics[2] and 'underperformers_1_to_2' in region_metrics[2]:
-                                    underperformers = region_metrics[2]['underperformers_1_to_2']
-                                    if underperformers:
-                                        # Create downloadable CSV for underperforming users
-                                        csv_data = generate_underperformers_csv(
-                                            region, "Power", "1_to_2", underperformers)
-                                        
-                                        # Display download button and count
-                                        st.write(f"**Underperforming Users:** {len(underperformers)}")
-                                        st.download_button(
-                                            label="Download Underperformers List",
-                                            data=csv_data,
-                                            file_name=f"{region}_power_underperformers_test1to2.csv",
-                                            mime="text/csv"
-                                        )
-                                    else:
-                                        st.markdown("*No underperforming users*")
+                                    power_underperformers_1_to_2 = region_metrics[2]['underperformers_1_to_2']
                             else:
                                 st.markdown("**Test 1 → Test 2:** Not enough data")
                                 
@@ -243,25 +262,11 @@ def main():
                                 color = "green" if power_value >= 0 else "red"
                                 st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
                                 
-                                # Get region metrics with underperforming users
+                                # Get power underperformers for this period
+                                power_underperformers_2_to_3 = None
                                 region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                                 if region_metrics[2] and 'underperformers_2_to_3' in region_metrics[2]:
-                                    underperformers = region_metrics[2]['underperformers_2_to_3']
-                                    if underperformers:
-                                        # Create downloadable CSV for underperforming users
-                                        csv_data = generate_underperformers_csv(
-                                            region, "Power", "2_to_3", underperformers)
-                                        
-                                        # Display download button and count
-                                        st.write(f"**Underperforming Users:** {len(underperformers)}")
-                                        st.download_button(
-                                            label="Download Underperformers List",
-                                            data=csv_data,
-                                            file_name=f"{region}_power_underperformers_test2to3.csv",
-                                            mime="text/csv"
-                                        )
-                                    else:
-                                        st.markdown("*No underperforming users*")
+                                    power_underperformers_2_to_3 = region_metrics[2]['underperformers_2_to_3']
                             else:
                                 st.markdown("**Test 2 → Test 3:** Not enough data")
                         
@@ -274,25 +279,11 @@ def main():
                                 color = "green" if accel_value >= 0 else "red"
                                 st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
                                 
-                                # Get region metrics with underperforming users
+                                # Get acceleration underperformers for this period
+                                accel_underperformers_1_to_2 = None
                                 region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                                 if region_metrics[3] and 'underperformers_1_to_2' in region_metrics[3]:
-                                    underperformers = region_metrics[3]['underperformers_1_to_2']
-                                    if underperformers:
-                                        # Create downloadable CSV for underperforming users
-                                        csv_data = generate_underperformers_csv(
-                                            region, "Acceleration", "1_to_2", underperformers)
-                                        
-                                        # Display download button and count
-                                        st.write(f"**Underperforming Users:** {len(underperformers)}")
-                                        st.download_button(
-                                            label="Download Underperformers List",
-                                            data=csv_data,
-                                            file_name=f"{region}_accel_underperformers_test1to2.csv",
-                                            mime="text/csv"
-                                        )
-                                    else:
-                                        st.markdown("*No underperforming users*")
+                                    accel_underperformers_1_to_2 = region_metrics[3]['underperformers_1_to_2']
                             else:
                                 st.markdown("**Test 1 → Test 2:** Not enough data")
                                 
@@ -302,28 +293,85 @@ def main():
                                 color = "green" if accel_value >= 0 else "red"
                                 st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
                                 
-                                # Get region metrics with underperforming users
+                                # Get acceleration underperformers for this period
+                                accel_underperformers_2_to_3 = None
                                 region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                                 if region_metrics[3] and 'underperformers_2_to_3' in region_metrics[3]:
-                                    underperformers = region_metrics[3]['underperformers_2_to_3']
-                                    if underperformers:
-                                        # Create downloadable CSV for underperforming users
+                                    accel_underperformers_2_to_3 = region_metrics[3]['underperformers_2_to_3']
+                            else:
+                                st.markdown("**Test 2 → Test 3:** Not enough data")
+                        
+                        # Create combined underperformers table with checkboxes
+                        st.markdown("<h4 style='font-size: 1.3em;'>Underperforming Users</h4>", unsafe_allow_html=True)
+                        
+                        # Test 1 to Test 2
+                        if (not pd.isna(region_thresholds['power_1_to_2']) and not pd.isna(region_thresholds['accel_1_to_2']) and 
+                            (power_underperformers_1_to_2 or accel_underperformers_1_to_2)):
+                            st.write("**Test 1 → Test 2 Underperformers:**")
+                            underperformers_table_1_to_2 = create_underperformers_table(
+                                region, "1_to_2", power_underperformers_1_to_2, accel_underperformers_1_to_2)
+                            if underperformers_table_1_to_2 is not None:
+                                st.dataframe(underperformers_table_1_to_2)
+                                
+                                # Add download buttons for detailed CSV data
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    if power_underperformers_1_to_2:
                                         csv_data = generate_underperformers_csv(
-                                            region, "Acceleration", "2_to_3", underperformers)
-                                        
-                                        # Display download button and count
-                                        st.write(f"**Underperforming Users:** {len(underperformers)}")
+                                            region, "Power", "1_to_2", power_underperformers_1_to_2)
                                         st.download_button(
-                                            label="Download Underperformers List",
+                                            label="Download Power Details",
+                                            data=csv_data,
+                                            file_name=f"{region}_power_underperformers_test1to2.csv",
+                                            mime="text/csv"
+                                        )
+                                with col2:
+                                    if accel_underperformers_1_to_2:
+                                        csv_data = generate_underperformers_csv(
+                                            region, "Acceleration", "1_to_2", accel_underperformers_1_to_2)
+                                        st.download_button(
+                                            label="Download Acceleration Details",
+                                            data=csv_data,
+                                            file_name=f"{region}_accel_underperformers_test1to2.csv",
+                                            mime="text/csv"
+                                        )
+                            else:
+                                st.info("No underperforming users")
+                        
+                        # Test 2 to Test 3
+                        if (not pd.isna(region_thresholds['power_2_to_3']) and not pd.isna(region_thresholds['accel_2_to_3']) and 
+                            (power_underperformers_2_to_3 or accel_underperformers_2_to_3)):
+                            st.write("**Test 2 → Test 3 Underperformers:**")
+                            underperformers_table_2_to_3 = create_underperformers_table(
+                                region, "2_to_3", power_underperformers_2_to_3, accel_underperformers_2_to_3)
+                            if underperformers_table_2_to_3 is not None:
+                                st.dataframe(underperformers_table_2_to_3)
+                                
+                                # Add download buttons for detailed CSV data
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    if power_underperformers_2_to_3:
+                                        csv_data = generate_underperformers_csv(
+                                            region, "Power", "2_to_3", power_underperformers_2_to_3)
+                                        st.download_button(
+                                            label="Download Power Details",
+                                            data=csv_data,
+                                            file_name=f"{region}_power_underperformers_test2to3.csv",
+                                            mime="text/csv"
+                                        )
+                                with col2:
+                                    if accel_underperformers_2_to_3:
+                                        csv_data = generate_underperformers_csv(
+                                            region, "Acceleration", "2_to_3", accel_underperformers_2_to_3)
+                                        st.download_button(
+                                            label="Download Acceleration Details",
                                             data=csv_data,
                                             file_name=f"{region}_accel_underperformers_test2to3.csv",
                                             mime="text/csv"
                                         )
-                                    else:
-                                        st.markdown("*No underperforming users*")
                             else:
-                                st.markdown("**Test 2 → Test 3:** Not enough data")
-                        
+                                st.info("No underperforming users")
+                                
                         st.markdown("<hr>", unsafe_allow_html=True)
                     
                     # Get detailed region metrics using the generalized function for all regions
