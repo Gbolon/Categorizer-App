@@ -115,9 +115,8 @@ class ReportGenerator:
         Returns:
             str: HTML content
         """
-        # Create a chart and convert to HTML
-        fig = self.create_distribution_chart(power_counts, accel_counts)
-        chart_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+        # No distribution chart visualization
+        chart_html = ""  # Empty string since we're not using the chart
         
         # Convert dataframes to HTML tables
         power_table = power_counts.to_html(classes='table table-striped', index=True)
@@ -213,11 +212,6 @@ class ReportGenerator:
                 
                 <h2>Acceleration Development Distribution</h2>
                 {accel_table}
-                
-                <h2>Distribution Visualization</h2>
-                <div class="chart-container">
-                    {chart_html}
-                </div>
                 
                 {transitions_html}
             </div>
@@ -403,9 +397,8 @@ class ReportGenerator:
         </style>
         """
         
-        # Create a chart for distribution visualization
-        fig = self.create_distribution_chart(power_counts, accel_counts)
-        chart_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+        # No distribution chart visualization
+        chart_html = ""  # Empty string since we're not using the chart
         
         # Create HTML content with navigation bar
         # Set document title with site name if provided
@@ -464,15 +457,8 @@ class ReportGenerator:
         """
         overview_page += accel_counts.to_html(classes='table table-striped', index=True)
         
-        # Add distribution chart
+        # Body region averages section
         overview_page += """
-            <h2>Distribution Visualization</h2>
-            <div class="chart-container">
-        """
-        overview_page += chart_html
-        overview_page += """
-            </div>
-            
             <h2>Body Region Averages Summary</h2>
         """
         
