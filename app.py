@@ -59,21 +59,28 @@ def create_underperformers_table(region, period, power_underperformers, accel_un
     Returns:
         DataFrame with columns 'Name', 'Power', 'Acceleration'
     """
+    # Convert underperformers lists to dictionaries for easier lookup
+    power_dict = {user: change for user, change in power_underperformers} if power_underperformers else {}
+    accel_dict = {user: change for user, change in accel_underperformers} if accel_underperformers else {}
+    
     # Get all unique user names
-    all_users = set()
-    power_users = {user for user, _ in power_underperformers} if power_underperformers else set()
-    accel_users = {user for user, _ in accel_underperformers} if accel_underperformers else set()
-    all_users = power_users.union(accel_users)
+    all_users = set(power_dict.keys()).union(set(accel_dict.keys()))
     
     # Create data for the table
     table_data = []
     for user in all_users:
-        power_check = "✓" if user in power_users else ""
-        accel_check = "✓" if user in accel_users else ""
+        # Get change values if they exist
+        power_change = power_dict.get(user, None)
+        accel_change = accel_dict.get(user, None)
+        
+        # Create display strings with checkmarks and percentages
+        power_display = f"✓ ({power_change:.1f}%)" if power_change is not None else ""
+        accel_display = f"✓ ({accel_change:.1f}%)" if accel_change is not None else ""
+        
         table_data.append({
             "Name": user,
-            "Power": power_check,
-            "Acceleration": accel_check
+            "Power": power_display,
+            "Acceleration": accel_display
         })
     
     # Sort by name and create DataFrame
