@@ -568,23 +568,29 @@ def main():
             for region in VALID_EXERCISES.keys():
                 region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
             
-            # Create comprehensive report
-            comprehensive_report = report_generator.generate_comprehensive_report(
-                power_counts,
-                accel_counts,
-                power_transitions_detail,
-                accel_transitions_detail,
-                body_region_averages,
-                improvement_thresholds,
-                region_metrics,
-                site_name=site_name
-            )
-            st.download_button(
-                label="Download Comprehensive Report",
-                data=comprehensive_report,
-                file_name="comprehensive_report.html",
-                mime="text/html",
-            )
+            # Only enable the download button if a site name is provided
+            if site_name.strip() != "":
+                # Create comprehensive report
+                comprehensive_report = report_generator.generate_comprehensive_report(
+                    power_counts,
+                    accel_counts,
+                    power_transitions_detail,
+                    accel_transitions_detail,
+                    body_region_averages,
+                    improvement_thresholds,
+                    region_metrics,
+                    site_name=site_name
+                )
+                st.download_button(
+                    label="Download Comprehensive Report",
+                    data=comprehensive_report,
+                    file_name="comprehensive_report.html",
+                    mime="text/html",
+                )
+            else:
+                # Display disabled button with message
+                st.info("Please enter a site name to enable the report download")
+                st.button("Download Comprehensive Report", disabled=True)
             
             # Add an explanation about the report
             st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")
