@@ -77,7 +77,7 @@ class PDFReport(FPDF):
         # Set text color to gray
         self.set_text_color(*self.neutral_color)
         # Page number
-        self.cell(0, 10, f"Page {self.page_count} / {{nb}}", 0, 0, "C")
+        self.cell(0, 10, f"Page {self.page_count}", 0, 0, "C")
     
     def add_title_page(self):
         """Add a title page to the report."""
@@ -355,13 +355,13 @@ class PDFReport(FPDF):
                 change_text = "Average Changes in Power Development:\n"
                 
                 if "test1_to_test2_pct" in power_changes and not pd.isna(power_changes["test1_to_test2_pct"]):
-                    change = power_changes["test1_to_test2_pct"]
+                    change = float(power_changes["test1_to_test2_pct"])
                     sign = "+" if change >= 0 else ""
                     color = "green" if change >= 0 else "red"
                     change_text += f"Test 1 → Test 2: {sign}{change:.1f}% ({color})\n"
                 
                 if "test2_to_test3_pct" in power_changes and not pd.isna(power_changes["test2_to_test3_pct"]):
-                    change = power_changes["test2_to_test3_pct"]
+                    change = float(power_changes["test2_to_test3_pct"])
                     sign = "+" if change >= 0 else ""
                     color = "green" if change >= 0 else "red"
                     change_text += f"Test 2 → Test 3: {sign}{change:.1f}% ({color})\n"
@@ -374,13 +374,13 @@ class PDFReport(FPDF):
                 change_text = "Average Changes in Acceleration Development:\n"
                 
                 if "test1_to_test2_pct" in accel_changes and not pd.isna(accel_changes["test1_to_test2_pct"]):
-                    change = accel_changes["test1_to_test2_pct"]
+                    change = float(accel_changes["test1_to_test2_pct"])
                     sign = "+" if change >= 0 else ""
                     color = "green" if change >= 0 else "red"
                     change_text += f"Test 1 → Test 2: {sign}{change:.1f}% ({color})\n"
                 
                 if "test2_to_test3_pct" in accel_changes and not pd.isna(accel_changes["test2_to_test3_pct"]):
-                    change = accel_changes["test2_to_test3_pct"]
+                    change = float(accel_changes["test2_to_test3_pct"])
                     sign = "+" if change >= 0 else ""
                     color = "green" if change >= 0 else "red"
                     change_text += f"Test 2 → Test 3: {sign}{change:.1f}% ({color})\n"
@@ -469,7 +469,7 @@ class PDFReport(FPDF):
                 
                 avg_data = {
                     "Metric": ["Power Development", "Acceleration Development"],
-                    "Average (%)": [summary["power_average"], summary["accel_average"]]
+                    "Average (%)": [float(summary["power_average"]), float(summary["accel_average"])]
                 }
                 avg_df = pd.DataFrame(avg_data)
                 self.add_table(avg_df)
@@ -487,11 +487,11 @@ class PDFReport(FPDF):
                         "Accel Change (Test 2→3)"
                     ],
                     "Value": [
-                        summary.get("avg_days_between_tests", "N/A"),
-                        f"{summary.get('avg_power_change_1_2', 0):.1f}%",
-                        f"{summary.get('avg_power_change_2_3', 0):.1f}%",
-                        f"{summary.get('avg_accel_change_1_2', 0):.1f}%",
-                        f"{summary.get('avg_accel_change_2_3', 0):.1f}%"
+                        str(summary.get("avg_days_between_tests", "N/A")),
+                        f"{float(summary.get('avg_power_change_1_2', 0)):.1f}%",
+                        f"{float(summary.get('avg_power_change_2_3', 0)):.1f}%",
+                        f"{float(summary.get('avg_accel_change_1_2', 0)):.1f}%",
+                        f"{float(summary.get('avg_accel_change_2_3', 0)):.1f}%"
                     ]
                 }
                 multi_avg_df = pd.DataFrame(multi_avg_data)
