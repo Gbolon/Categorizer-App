@@ -244,7 +244,7 @@ class ReportGenerator:
         return html_content.encode('utf-8')
         
     def generate_comprehensive_report(self, power_counts, accel_counts, power_transitions, accel_transitions,
-                                    body_region_averages, improvement_thresholds, region_metrics):
+                                    body_region_averages, improvement_thresholds, region_metrics, site_name=""):
         """
         Generate a comprehensive HTML report with separate pages for each section.
         
@@ -256,6 +256,7 @@ class ReportGenerator:
             body_region_averages (dict): Dictionary of body region averages
             improvement_thresholds (dict): Dictionary of improvement thresholds by region
             region_metrics (dict): Dictionary of region metrics including underperformers
+            site_name (str, optional): Name of the site/location for the report header
             
         Returns:
             bytes: Comprehensive HTML report as bytes
@@ -263,13 +264,13 @@ class ReportGenerator:
         # Start building the HTML report
         html_content = self._generate_comprehensive_html(
             power_counts, accel_counts, power_transitions, accel_transitions,
-            body_region_averages, improvement_thresholds, region_metrics
+            body_region_averages, improvement_thresholds, region_metrics, site_name
         )
         
         return html_content.encode('utf-8')
         
     def _generate_comprehensive_html(self, power_counts, accel_counts, power_transitions, accel_transitions,
-                                   body_region_averages, improvement_thresholds, region_metrics):
+                                   body_region_averages, improvement_thresholds, region_metrics, site_name=""):
         """
         Generate comprehensive HTML report content with separate pages.
         
@@ -281,6 +282,7 @@ class ReportGenerator:
             body_region_averages (dict): Dictionary of body region averages
             improvement_thresholds (dict): Dictionary of improvement thresholds by region
             region_metrics (dict): Dictionary of region metrics including underperformers
+            site_name (str, optional): Name of the site/location for the report header
             
         Returns:
             str: HTML content
@@ -386,6 +388,18 @@ class ReportGenerator:
                 width: 90%;
                 margin: 20px auto;
             }
+            .site-name {
+                margin: 20px 0;
+                padding: 10px;
+                background-color: #f8f9fa;
+                border-radius: 5px;
+                border-left: 5px solid #2c3e50;
+            }
+            .site-name h2 {
+                margin: 0;
+                color: #2c3e50;
+                font-size: 1.5em;
+            }
         </style>
         """
         
@@ -394,11 +408,14 @@ class ReportGenerator:
         chart_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
         
         # Create HTML content with navigation bar
+        # Set document title with site name if provided
+        title = f"Exercise Development Report - {site_name}" if site_name else "Comprehensive Exercise Development Report"
+        
         html_header = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Comprehensive Exercise Development Report</title>
+            <title>{title}</title>
             {css_styles}
             <script>
                 function goToPage(pageId) {{
@@ -427,9 +444,13 @@ class ReportGenerator:
         """
         
         # OVERVIEW PAGE
-        overview_page = """
+        # Add site name to the overview if provided
+        site_header = f"<div class='site-name'><h2>Site: {site_name}</h2></div>" if site_name else ""
+        
+        overview_page = f"""
         <div id="overview" class="page container">
             <h1>Exercise Development Overview</h1>
+            {site_header}
             
             <h2>Power Development Distribution</h2>
         """

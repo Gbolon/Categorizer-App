@@ -562,12 +562,13 @@ def main():
             report_tab1, report_tab2 = st.tabs(["Distribution Reports", "Custom Reports (Coming Soon)"])
             
             with report_tab1:
-                st.write("Generate a report with power and acceleration distribution data")
+                st.write("Generate reports with power and acceleration distribution data")
                 
-                # Create columns for buttons
-                report_col1, report_col2, report_col3 = st.columns(3)
+                # Basic reports section with two columns
+                st.subheader("Basic Reports")
+                basic_col1, basic_col2 = st.columns(2)
                 
-                with report_col1:
+                with basic_col1:
                     # HTML Report button with transition matrices (complete report)
                     complete_report = report_generator.generate_downloadable_html(
                         power_counts, 
@@ -582,7 +583,7 @@ def main():
                         mime="text/html",
                     )
                 
-                with report_col2:
+                with basic_col2:
                     # Simple report with just distribution data
                     simple_report = report_generator.generate_downloadable_html(
                         power_counts, 
@@ -594,30 +595,39 @@ def main():
                         file_name="distribution_report.html",
                         mime="text/html",
                     )
-                    
-                with report_col3:
-                    # Comprehensive report with all analysis data
-                    # First collect region metrics for all regions
-                    region_metrics = {}
-                    for region in VALID_EXERCISES.keys():
-                        region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
-                    
-                    # Create comprehensive report
-                    comprehensive_report = report_generator.generate_comprehensive_report(
-                        power_counts,
-                        accel_counts,
-                        power_transitions_detail,
-                        accel_transitions_detail,
-                        body_region_averages,
-                        improvement_thresholds,
-                        region_metrics
-                    )
-                    st.download_button(
-                        label="Download Comprehensive Report",
-                        data=comprehensive_report,
-                        file_name="comprehensive_report.html",
-                        mime="text/html",
-                    )
+                
+                # Add a separator
+                st.markdown("---")
+                
+                # Comprehensive report section
+                st.subheader("Comprehensive Interactive Report")
+                st.write("This report includes detailed analysis with separate pages for each body region and interactive navigation")
+                
+                # Prompt for site name
+                site_name = st.text_input("Site Name", placeholder="Enter site name for report header")
+                
+                # First collect region metrics for all regions
+                region_metrics = {}
+                for region in VALID_EXERCISES.keys():
+                    region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
+                
+                # Create comprehensive report
+                comprehensive_report = report_generator.generate_comprehensive_report(
+                    power_counts,
+                    accel_counts,
+                    power_transitions_detail,
+                    accel_transitions_detail,
+                    body_region_averages,
+                    improvement_thresholds,
+                    region_metrics,
+                    site_name=site_name
+                )
+                st.download_button(
+                    label="Download Comprehensive Report",
+                    data=comprehensive_report,
+                    file_name="comprehensive_report.html",
+                    mime="text/html",
+                )
                 
                 # Display a preview of the chart
                 fig = report_generator.create_distribution_chart(power_counts, accel_counts)
@@ -627,6 +637,7 @@ def main():
                 # Add an explanation about the reports
                 st.write("**Complete Report**: Includes distribution data, visualization, and transition tables")
                 st.write("**Simple Report**: Includes only distribution data and visualization")
+                st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")
             
             with report_tab2:
                 st.info("Custom report generation will be available in a future update.")
