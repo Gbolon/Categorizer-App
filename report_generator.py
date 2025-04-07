@@ -624,19 +624,44 @@ class ReportGenerator:
                         lowest_accel_exercise = metrics[6]
                         lowest_accel_value = metrics[7]
                         
+                        # Create tables for lowest change exercises
+                        region_page += """
+                        <h3>Exercises with Lowest Change</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Exercise</th>
+                                    <th>Change</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                        """
+                            
                         if lowest_power_exercise and lowest_power_value is not None:
                             color_class = "positive" if lowest_power_value >= 0 else "negative"
                             region_page += f"""
-                            <h3>Exercise with Lowest Power Change</h3>
-                            <p><strong>{lowest_power_exercise}</strong>: <span class="{color_class}">{lowest_power_value:.2f}%</span></p>
+                                <tr>
+                                    <td>Power</td>
+                                    <td>{lowest_power_exercise}</td>
+                                    <td class="{color_class}">{lowest_power_value:.2f}%</td>
+                                </tr>
                             """
                             
                         if lowest_accel_exercise and lowest_accel_value is not None:
                             color_class = "positive" if lowest_accel_value >= 0 else "negative"
                             region_page += f"""
-                            <h3>Exercise with Lowest Acceleration Change</h3>
-                            <p><strong>{lowest_accel_exercise}</strong>: <span class="{color_class}">{lowest_accel_value:.2f}%</span></p>
+                                <tr>
+                                    <td>Acceleration</td>
+                                    <td>{lowest_accel_exercise}</td>
+                                    <td class="{color_class}">{lowest_accel_value:.2f}%</td>
+                                </tr>
                             """
+                            
+                        region_page += """
+                            </tbody>
+                        </table>
+                        """
                 
                 # Add underperformers if available
                 power_changes = metrics[2] if len(metrics) > 2 else None
