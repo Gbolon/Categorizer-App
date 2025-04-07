@@ -479,7 +479,7 @@ class ReportGenerator:
         # Add body region averages tables
         for region, averages in body_region_averages.items():
             overview_page += f"<h3>{region} Region</h3>"
-            overview_page += averages.to_html(classes='table', index=True)
+            overview_page += averages.style.format("{:.2f}%").to_html(classes='table', index=True)
             
         overview_page += """
         </div>
