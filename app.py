@@ -119,63 +119,14 @@ def main():
             # Show data preview in collapsed expander
             with st.expander("Data Preview", expanded=False):
                 st.dataframe(processed_df.head())
-                
-            # Generate group-level analysis for use throughout the app
+
+            # Generate group-level analysis
             (power_counts, accel_counts, single_test_distribution,
              power_transitions_detail, accel_transitions_detail,
              power_average, accel_average,
              avg_power_change_1_2, avg_accel_change_1_2,
              avg_power_change_2_3, avg_accel_change_2_3,
              avg_days_between_tests) = matrix_generator.generate_group_analysis(processed_df)
-             
-            # Calculate body region averages for use throughout the app
-            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
-            
-            # Calculate improvement thresholds for all regions
-            improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df)
-                
-            # Report Generator Section - Moved to top
-            st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
-            st.write("Generate comprehensive reports with interactive analysis")
-            
-            # Comprehensive report section
-            st.subheader("Comprehensive Interactive Report")
-            st.write("This report includes detailed analysis with separate pages for each body region and interactive navigation")
-            
-            # Prompt for site name
-            site_name = st.text_input("Site Name", placeholder="Enter site name for report header")
-            
-            # First collect region metrics for all regions
-            region_metrics = {}
-            for region in VALID_EXERCISES.keys():
-                region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
-            
-            # Create comprehensive report
-            comprehensive_report = report_generator.generate_comprehensive_report(
-                power_counts,
-                accel_counts,
-                power_transitions_detail,
-                accel_transitions_detail,
-                body_region_averages,
-                improvement_thresholds,
-                region_metrics,
-                site_name=site_name
-            )
-            st.download_button(
-                label="Download Comprehensive Report",
-                data=comprehensive_report,
-                file_name="comprehensive_report.html",
-                mime="text/html",
-            )
-            
-            # Add an explanation about the report
-            st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")
-            
-            # Future features info
-            with st.expander("Upcoming Features", expanded=False):
-                st.info("Custom report generation will be available in a future update.")
-                
-            st.markdown("---")  # Add a separator
 
             # Display group-level analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Group Development Analysis</h2>", unsafe_allow_html=True)
@@ -257,7 +208,8 @@ def main():
             st.markdown("<h2 style='font-size: 1.875em;'>Body Region Meta Analysis</h2>", unsafe_allow_html=True)
             st.write("Group averages by body region for multi-test users")
 
-            # Use the body region averages calculated earlier
+            # Calculate body region averages
+            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
 
             # Create columns for each body region
             region_cols = st.columns(len(VALID_EXERCISES))
@@ -600,7 +552,46 @@ def main():
                                 mime="text/csv"
                             )
                         
-
+            # Report Generator Section
+            st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
+            st.write("Generate comprehensive reports with interactive analysis")
+            
+            # Comprehensive report section
+            st.subheader("Comprehensive Interactive Report")
+            st.write("This report includes detailed analysis with separate pages for each body region and interactive navigation")
+            
+            # Prompt for site name
+            site_name = st.text_input("Site Name", placeholder="Enter site name for report header")
+            
+            # First collect region metrics for all regions
+            region_metrics = {}
+            for region in VALID_EXERCISES.keys():
+                region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
+            
+            # Create comprehensive report
+            comprehensive_report = report_generator.generate_comprehensive_report(
+                power_counts,
+                accel_counts,
+                power_transitions_detail,
+                accel_transitions_detail,
+                body_region_averages,
+                improvement_thresholds,
+                region_metrics,
+                site_name=site_name
+            )
+            st.download_button(
+                label="Download Comprehensive Report",
+                data=comprehensive_report,
+                file_name="comprehensive_report.html",
+                mime="text/html",
+            )
+            
+            # Add an explanation about the report
+            st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")
+            
+            # Future features info
+            with st.expander("Upcoming Features", expanded=False):
+                st.info("Custom report generation will be available in a future update.")
 
             # Display exercise information with standards
             with st.expander("View Tracked Exercises and Goal Standards"):
