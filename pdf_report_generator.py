@@ -32,12 +32,12 @@ class PDFReport(FPDF):
         self.page_count = 0
         
         # Add fonts
-        self.add_font("Arial", "", "Helvetica", uni=True)
-        self.add_font("Arial", "B", "Helvetica-Bold", uni=True)
-        self.add_font("Arial", "I", "Helvetica-Oblique", uni=True)
+        self.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
+        self.add_font("DejaVu", "B", "DejaVuSans.ttf", uni=True)
+        self.add_font("DejaVu", "I", "DejaVuSans.ttf", uni=True)
         
         # Set default font
-        self.set_font("Arial", "", 10)
+        self.set_font("DejaVu", "", 10)
         
         # Set colors
         self.primary_color = (31, 120, 180)  # Blue
@@ -50,14 +50,14 @@ class PDFReport(FPDF):
         self.page_count += 1
         
         # Set the font for the header
-        self.set_font("Arial", "B", 12)
+        self.set_font("DejaVu", "B", 12)
         self.set_text_color(*self.primary_color)
         
         # Add title
         self.cell(0, 10, "Site Development Bracketer", 0, 0, "L")
         
         # Add date
-        self.set_font("Arial", "I", 10)
+        self.set_font("DejaVu", "I", 10)
         self.set_text_color(*self.neutral_color)
         current_date = datetime.now().strftime("%Y-%m-%d")
         self.cell(0, 10, f"Report Date: {current_date}", 0, 0, "R")
@@ -73,7 +73,7 @@ class PDFReport(FPDF):
         # Position at 1.5 cm from bottom
         self.set_y(-15)
         # Set font
-        self.set_font("Arial", "I", 8)
+        self.set_font("DejaVu", "I", 8)
         # Set text color to gray
         self.set_text_color(*self.neutral_color)
         # Page number
@@ -87,24 +87,24 @@ class PDFReport(FPDF):
         self.ln(40)
         
         # Add title
-        self.set_font("Arial", "B", 24)
+        self.set_font("DejaVu", "B", 24)
         self.set_text_color(*self.primary_color)
         self.cell(0, 20, "Performance Analysis Report", 0, 1, "C")
         
         # Add subtitle
-        self.set_font("Arial", "I", 16)
+        self.set_font("DejaVu", "I", 16)
         self.set_text_color(*self.neutral_color)
         self.cell(0, 15, "Site Development Bracketer", 0, 1, "C")
         
         # Add date
-        self.set_font("Arial", "", 12)
+        self.set_font("DejaVu", "", 12)
         current_date = datetime.now().strftime("%B %d, %Y")
         self.cell(0, 10, f"Generated on {current_date}", 0, 1, "C")
     
     def add_section_header(self, title):
         """Add a section header with the given title."""
         self.ln(5)
-        self.set_font("Arial", "B", 14)
+        self.set_font("DejaVu", "B", 14)
         self.set_text_color(*self.primary_color)
         self.cell(0, 10, title, 0, 1, "L")
         self.set_draw_color(*self.primary_color)
@@ -114,14 +114,14 @@ class PDFReport(FPDF):
     def add_subsection_header(self, title):
         """Add a subsection header with the given title."""
         self.ln(3)
-        self.set_font("Arial", "B", 12)
+        self.set_font("DejaVu", "B", 12)
         self.set_text_color(0, 0, 0)
         self.cell(0, 8, title, 0, 1, "L")
         self.ln(2)
     
     def add_paragraph(self, text):
         """Add a paragraph of text."""
-        self.set_font("Arial", "", 10)
+        self.set_font("DejaVu", "", 10)
         self.set_text_color(0, 0, 0)
         self.multi_cell(0, 5, text)
         self.ln(3)
@@ -142,7 +142,7 @@ class PDFReport(FPDF):
         
         # Ensure DataFrame is not empty
         if df is None or df.empty:
-            self.set_font("Arial", "I", 10)
+            self.set_font("DejaVu", "I", 10)
             self.set_text_color(*self.neutral_color)
             self.cell(0, 10, "No data available for this table.", 0, 1, "L")
             return
@@ -166,7 +166,7 @@ class PDFReport(FPDF):
         
         # Set font for header row
         if has_header:
-            self.set_font("Arial", "B", 10)
+            self.set_font("DejaVu", "B", 10)
             self.set_fill_color(240, 240, 240)  # Light gray background
             
             # Draw header row
@@ -175,7 +175,7 @@ class PDFReport(FPDF):
             self.ln()
         
         # Set font for data rows
-        self.set_font("Arial", "", 9)
+        self.set_font("DejaVu", "", 9)
         
         # Draw data rows
         for i, row in df.iterrows():
@@ -185,12 +185,12 @@ class PDFReport(FPDF):
                 
                 # Redraw header if we have one
                 if has_header:
-                    self.set_font("Arial", "B", 10)
+                    self.set_font("DejaVu", "B", 10)
                     self.set_fill_color(240, 240, 240)
                     for i, col in enumerate(df.columns):
                         self.cell(col_widths[i], 7, str(col), 1, 0, "C", True)
                     self.ln()
-                    self.set_font("Arial", "", 9)
+                    self.set_font("DejaVu", "", 9)
             
             # Alternate row colors for better readability
             fill = i % 2 == 0
