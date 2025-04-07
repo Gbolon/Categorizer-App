@@ -569,13 +569,13 @@ class ReportGenerator:
                 
                 if power_1_to_2 is not None and not pd.isna(power_1_to_2):
                     color_class = "positive" if power_1_to_2 >= 0 else "negative"
-                    region_page += f'<td class="{color_class}">{power_1_to_2:.1f}%</td>'
+                    region_page += f'<td class="{color_class}">{power_1_to_2:.2f}%</td>'
                 else:
                     region_page += '<td>Not enough data</td>'
                     
                 if power_2_to_3 is not None and not pd.isna(power_2_to_3):
                     color_class = "positive" if power_2_to_3 >= 0 else "negative"
-                    region_page += f'<td class="{color_class}">{power_2_to_3:.1f}%</td>'
+                    region_page += f'<td class="{color_class}">{power_2_to_3:.2f}%</td>'
                 else:
                     region_page += '<td>Not enough data</td>'
                 
@@ -591,13 +591,13 @@ class ReportGenerator:
                 
                 if accel_1_to_2 is not None and not pd.isna(accel_1_to_2):
                     color_class = "positive" if accel_1_to_2 >= 0 else "negative"
-                    region_page += f'<td class="{color_class}">{accel_1_to_2:.1f}%</td>'
+                    region_page += f'<td class="{color_class}">{accel_1_to_2:.2f}%</td>'
                 else:
                     region_page += '<td>Not enough data</td>'
                     
                 if accel_2_to_3 is not None and not pd.isna(accel_2_to_3):
                     color_class = "positive" if accel_2_to_3 >= 0 else "negative"
-                    region_page += f'<td class="{color_class}">{accel_2_to_3:.1f}%</td>'
+                    region_page += f'<td class="{color_class}">{accel_2_to_3:.2f}%</td>'
                 else:
                     region_page += '<td>Not enough data</td>'
                 
@@ -619,16 +619,16 @@ class ReportGenerator:
                     region_page += """
                     <h2>Power Development (%)</h2>
                     """
-                    # Convert to HTML with formatting directly
-                    power_styled = power_df.style.format("{:.1f}%").to_html()
+                    # Convert to HTML with formatting directly - using two decimal places
+                    power_styled = power_df.style.format("{:.2f}%").to_html()
                     region_page += power_styled
                     
                     # Acceleration development table
                     region_page += """
                     <h2>Acceleration Development (%)</h2>
                     """
-                    # Convert to HTML with formatting directly
-                    accel_styled = accel_df.style.format("{:.1f}%").to_html()
+                    # Convert to HTML with formatting directly - using two decimal places
+                    accel_styled = accel_df.style.format("{:.2f}%").to_html()
                     region_page += accel_styled
                     
                     # Display lowest change exercises if available
@@ -642,14 +642,14 @@ class ReportGenerator:
                             color_class = "positive" if lowest_power_value >= 0 else "negative"
                             region_page += f"""
                             <h3>Exercise with Lowest Power Change</h3>
-                            <p><strong>{lowest_power_exercise}</strong>: <span class="{color_class}">{lowest_power_value:.1f}%</span></p>
+                            <p><strong>{lowest_power_exercise}</strong>: <span class="{color_class}">{lowest_power_value:.2f}%</span></p>
                             """
                             
                         if lowest_accel_exercise and lowest_accel_value is not None:
                             color_class = "positive" if lowest_accel_value >= 0 else "negative"
                             region_page += f"""
                             <h3>Exercise with Lowest Acceleration Change</h3>
-                            <p><strong>{lowest_accel_exercise}</strong>: <span class="{color_class}">{lowest_accel_value:.1f}%</span></p>
+                            <p><strong>{lowest_accel_exercise}</strong>: <span class="{color_class}">{lowest_accel_value:.2f}%</span></p>
                             """
                 
                 # Add underperformers if available
@@ -691,12 +691,12 @@ class ReportGenerator:
                             region_page += f"<tr><td>{user}</td>"
                             
                             if power_value is not None:
-                                region_page += f'<td>✓ ({power_value:.1f}%)</td>'
+                                region_page += f'<td>✓ ({power_value:.2f}%)</td>'
                             else:
                                 region_page += '<td></td>'
                                 
                             if accel_value is not None:
-                                region_page += f'<td>✓ ({accel_value:.1f}%)</td>'
+                                region_page += f'<td>✓ ({accel_value:.2f}%)</td>'
                             else:
                                 region_page += '<td></td>'
                                 
@@ -740,12 +740,12 @@ class ReportGenerator:
                             region_page += f"<tr><td>{user}</td>"
                             
                             if power_value is not None:
-                                region_page += f'<td>✓ ({power_value:.1f}%)</td>'
+                                region_page += f'<td>✓ ({power_value:.2f}%)</td>'
                             else:
                                 region_page += '<td></td>'
                                 
                             if accel_value is not None:
-                                region_page += f'<td>✓ ({accel_value:.1f}%)</td>'
+                                region_page += f'<td>✓ ({accel_value:.2f}%)</td>'
                             else:
                                 region_page += '<td></td>'
                                 
