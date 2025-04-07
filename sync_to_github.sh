@@ -23,9 +23,9 @@ TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 echo "Committing changes..."
 git commit -m "Update from Replit - ${TIMESTAMP}"
 
-# Push to GitHub
-echo "Pushing to GitHub..."
-git push origin main
+# Force push to GitHub (overwrites remote repository with local changes)
+echo "Force pushing to GitHub (this will overwrite the remote repository)..."
+git push -f origin main
 
 # Clean up credentials for security
 rm ~/.git-credentials
