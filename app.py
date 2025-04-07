@@ -453,9 +453,6 @@ def main():
 
                 power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
 
-                # Display raw value matrices
-                st.subheader("Raw Value Matrices")
-
                 # Special handling to ensure Vertical Jump is visible
                 if 'Vertical Jump (Countermovement)' not in power_matrix.index:
                     print("DEBUG: Vertical Jump missing from power_matrix index - attempting to add it")
@@ -477,16 +474,16 @@ def main():
                 else:
                     print("DEBUG: Vertical Jump still missing from power_matrix after attempted fix")
 
-                st.write("Power Matrix (Raw Values)")
-                st.dataframe(power_matrix)
+                # Display raw value matrices in a collapsible section
+                with st.expander("Raw Value Matrices", expanded=False):
+                    st.write("Power Matrix (Raw Values)")
+                    st.dataframe(power_matrix)
 
-                st.write("Acceleration Matrix (Raw Values)")
-                st.dataframe(accel_matrix)
+                    st.write("Acceleration Matrix (Raw Values)")
+                    st.dataframe(accel_matrix)
 
                 # Display development matrices if available
                 if power_dev_matrix is not None and accel_dev_matrix is not None:
-                    st.subheader("Development Score Matrices (%)")
-
                     # Special handling to ensure Vertical Jump is visible in development matrices too
                     if 'Vertical Jump (Countermovement)' not in power_dev_matrix.index:
                         print("DEBUG: Vertical Jump missing from power_dev_matrix index - attempting to add it")
@@ -501,33 +498,34 @@ def main():
                         except Exception as e:
                             print(f"ERROR: Failed to add Vertical Jump row to dev matrices: {e}")
 
-                    st.write("Power Development Matrix")
-                    styled_power_dev = power_dev_matrix.style.format("{:.1f}%")
-                    st.dataframe(styled_power_dev)
+                    # Display development matrices in a collapsible section
+                    with st.expander("Development Score Matrices (%)", expanded=False):
+                        st.write("Power Development Matrix")
+                        styled_power_dev = power_dev_matrix.style.format("{:.1f}%")
+                        st.dataframe(styled_power_dev)
 
-                    st.write("Acceleration Development Matrix")
-                    styled_accel_dev = accel_dev_matrix.style.format("{:.1f}%")
-                    st.dataframe(styled_accel_dev)
+                        st.write("Acceleration Development Matrix")
+                        styled_accel_dev = accel_dev_matrix.style.format("{:.1f}%")
+                        st.dataframe(styled_accel_dev)
 
                     # Display overall development categorization
                     if overall_dev_matrix is not None:
-                        st.subheader("Overall Development Categorization")
-                        styled_overall_dev = overall_dev_matrix.style.format("{:.1f}%")
-                        st.dataframe(styled_overall_dev)
+                        with st.expander("Overall Development Categorization", expanded=True):
+                            styled_overall_dev = overall_dev_matrix.style.format("{:.1f}%")
+                            st.dataframe(styled_overall_dev)
 
                     # Display development brackets
                     if power_brackets is not None and accel_brackets is not None:
-                        st.subheader("Development Brackets")
+                        with st.expander("Development Brackets", expanded=False):
+                            col1, col2 = st.columns(2)
 
-                        col1, col2 = st.columns(2)
+                            with col1:
+                                st.write("Power Development Brackets")
+                                st.dataframe(power_brackets)
 
-                        with col1:
-                            st.write("Power Development Brackets")
-                            st.dataframe(power_brackets)
-
-                        with col2:
-                            st.write("Acceleration Development Brackets")
-                            st.dataframe(accel_brackets)
+                            with col2:
+                                st.write("Acceleration Development Brackets")
+                                st.dataframe(accel_brackets)
 
                 # Export functionality
                 st.subheader("Export Data")
