@@ -594,6 +594,30 @@ def main():
                         file_name="distribution_report.html",
                         mime="text/html",
                     )
+                    
+                with report_col3:
+                    # Comprehensive report with all analysis data
+                    # First collect region metrics for all regions
+                    region_metrics = {}
+                    for region in VALID_EXERCISES.keys():
+                        region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
+                    
+                    # Create comprehensive report
+                    comprehensive_report = report_generator.generate_comprehensive_report(
+                        power_counts,
+                        accel_counts,
+                        power_transitions_detail,
+                        accel_transitions_detail,
+                        body_region_averages,
+                        improvement_thresholds,
+                        region_metrics
+                    )
+                    st.download_button(
+                        label="Download Comprehensive Report",
+                        data=comprehensive_report,
+                        file_name="comprehensive_report.html",
+                        mime="text/html",
+                    )
                 
                 # Display a preview of the chart
                 fig = report_generator.create_distribution_chart(power_counts, accel_counts)
