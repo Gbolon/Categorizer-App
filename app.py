@@ -527,31 +527,30 @@ def main():
                                 st.write("Acceleration Development Brackets")
                                 st.dataframe(accel_brackets)
 
-                # Export functionality
-                st.subheader("Export Data")
+                # Export functionality in a collapsible section
+                with st.expander("Export Data", expanded=False):
+                    def download_matrix(matrix, name):
+                        return matrix.to_csv().encode('utf-8')
 
-                def download_matrix(matrix, name):
-                    return matrix.to_csv().encode('utf-8')
-
-                for matrix, name in [
-                    (power_matrix, "power"),
-                    (accel_matrix, "acceleration"),
-                    (power_dev_matrix, "power_development"),
-                    (accel_dev_matrix, "acceleration_development"),
-                    (overall_dev_matrix, "overall_development"),
-                    (power_brackets, "power_brackets"),
-                    (accel_brackets, "acceleration_brackets"),
-                    (power_counts, "power_group_analysis"),
-                    (accel_counts, "acceleration_group_analysis"),
-                    (single_test_distribution, "single_test_distribution")
-                ]:
-                    if matrix is not None:
-                        st.download_button(
-                            label=f"Download {name.replace('_', ' ').title()} Matrix CSV",
-                            data=download_matrix(matrix, name),
-                            file_name=f"{selected_user}_{name}_matrix.csv",
-                            mime="text/csv"
-                        )
+                    for matrix, name in [
+                        (power_matrix, "power"),
+                        (accel_matrix, "acceleration"),
+                        (power_dev_matrix, "power_development"),
+                        (accel_dev_matrix, "acceleration_development"),
+                        (overall_dev_matrix, "overall_development"),
+                        (power_brackets, "power_brackets"),
+                        (accel_brackets, "acceleration_brackets"),
+                        (power_counts, "power_group_analysis"),
+                        (accel_counts, "acceleration_group_analysis"),
+                        (single_test_distribution, "single_test_distribution")
+                    ]:
+                        if matrix is not None:
+                            st.download_button(
+                                label=f"Download {name.replace('_', ' ').title()} Matrix CSV",
+                                data=download_matrix(matrix, name),
+                                file_name=f"{selected_user}_{name}_matrix.csv",
+                                mime="text/csv"
+                            )
                         
             # Report Generator Section
             st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
