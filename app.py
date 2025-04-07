@@ -237,6 +237,28 @@ def main():
                     st.markdown(f"<h3 style='font-size: 1.5em;'>{region} Region Analysis</h3>", unsafe_allow_html=True)
                     st.write(f"Separate power and acceleration metrics for {region.lower()} region movements (multi-test users only)")
                     
+                    # Initialize all underperformer variables
+                    power_underperformers_1_to_2 = None
+                    power_underperformers_2_to_3 = None
+                    accel_underperformers_1_to_2 = None
+                    accel_underperformers_2_to_3 = None
+                    
+                    # Get region metrics only once
+                    region_metrics = matrix_generator.get_region_metrics(processed_df, region)
+                    
+                    # Extract underperformers for all periods
+                    if region_metrics[2]:  # Power metrics
+                        if 'underperformers_1_to_2' in region_metrics[2]:
+                            power_underperformers_1_to_2 = region_metrics[2]['underperformers_1_to_2']
+                        if 'underperformers_2_to_3' in region_metrics[2]:
+                            power_underperformers_2_to_3 = region_metrics[2]['underperformers_2_to_3']
+                    
+                    if region_metrics[3]:  # Acceleration metrics
+                        if 'underperformers_1_to_2' in region_metrics[3]:
+                            accel_underperformers_1_to_2 = region_metrics[3]['underperformers_1_to_2']
+                        if 'underperformers_2_to_3' in region_metrics[3]:
+                            accel_underperformers_2_to_3 = region_metrics[3]['underperformers_2_to_3']
+                    
                     # Display Improvement Thresholds for this region
                     if region in improvement_thresholds:
                         region_thresholds = improvement_thresholds[region]
@@ -254,12 +276,6 @@ def main():
                                 power_value = region_thresholds['power_1_to_2']
                                 color = "green" if power_value >= 0 else "red"
                                 st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
-                                
-                                # Get power underperformers for this period
-                                power_underperformers_1_to_2 = None
-                                region_metrics = matrix_generator.get_region_metrics(processed_df, region)
-                                if region_metrics[2] and 'underperformers_1_to_2' in region_metrics[2]:
-                                    power_underperformers_1_to_2 = region_metrics[2]['underperformers_1_to_2']
                             else:
                                 st.markdown("**Test 1 → Test 2:** Not enough data")
                                 
@@ -268,12 +284,6 @@ def main():
                                 power_value = region_thresholds['power_2_to_3']
                                 color = "green" if power_value >= 0 else "red"
                                 st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
-                                
-                                # Get power underperformers for this period
-                                power_underperformers_2_to_3 = None
-                                region_metrics = matrix_generator.get_region_metrics(processed_df, region)
-                                if region_metrics[2] and 'underperformers_2_to_3' in region_metrics[2]:
-                                    power_underperformers_2_to_3 = region_metrics[2]['underperformers_2_to_3']
                             else:
                                 st.markdown("**Test 2 → Test 3:** Not enough data")
                         
@@ -285,12 +295,6 @@ def main():
                                 accel_value = region_thresholds['accel_1_to_2']
                                 color = "green" if accel_value >= 0 else "red"
                                 st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
-                                
-                                # Get acceleration underperformers for this period
-                                accel_underperformers_1_to_2 = None
-                                region_metrics = matrix_generator.get_region_metrics(processed_df, region)
-                                if region_metrics[3] and 'underperformers_1_to_2' in region_metrics[3]:
-                                    accel_underperformers_1_to_2 = region_metrics[3]['underperformers_1_to_2']
                             else:
                                 st.markdown("**Test 1 → Test 2:** Not enough data")
                                 
@@ -299,15 +303,9 @@ def main():
                                 accel_value = region_thresholds['accel_2_to_3']
                                 color = "green" if accel_value >= 0 else "red"
                                 st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
-                                
-                                # Get acceleration underperformers for this period
-                                accel_underperformers_2_to_3 = None
-                                region_metrics = matrix_generator.get_region_metrics(processed_df, region)
-                                if region_metrics[3] and 'underperformers_2_to_3' in region_metrics[3]:
-                                    accel_underperformers_2_to_3 = region_metrics[3]['underperformers_2_to_3']
                             else:
                                 st.markdown("**Test 2 → Test 3:** Not enough data")
-                        
+                            
                         # Create combined underperformers table with checkboxes
                         st.markdown("<h4 style='font-size: 1.3em;'>Underperforming Users</h4>", unsafe_allow_html=True)
                         
