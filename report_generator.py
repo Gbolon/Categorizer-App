@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 import io
+from weasyprint import HTML
 
 class ReportGenerator:
     """Generates reports for exercise data analysis."""
@@ -1051,3 +1052,62 @@ class ReportGenerator:
         """
         
         return html_content
+        
+    def generate_pdf_from_html(self, html_content):
+        """
+        Convert HTML content to PDF format using WeasyPrint.
+        
+        Args:
+            html_content (str): The HTML content to convert
+            
+        Returns:
+            bytes: PDF document as bytes
+        """
+        # Create a BytesIO buffer to store the PDF
+        pdf_buffer = io.BytesIO()
+        
+        # Convert HTML to PDF
+        HTML(string=html_content).write_pdf(pdf_buffer)
+        
+        # Reset buffer position to start
+        pdf_buffer.seek(0)
+        
+        # Return PDF as bytes
+        return pdf_buffer.getvalue()
+        
+    def generate_comprehensive_pdf_report(self, power_counts, accel_counts, power_transitions, accel_transitions,
+                                        body_region_averages, improvement_thresholds, region_metrics, site_name="",
+                                        min_days_between_tests=7, original_avg_days=0, constrained_avg_days=0, 
+                                        resistance_filtering=True):
+        """
+        Generate a comprehensive PDF report by converting the HTML report to PDF.
+        
+        Args:
+            power_counts (DataFrame): Power development distribution
+            accel_counts (DataFrame): Acceleration development distribution
+            power_transitions (dict): Dictionary of power transition matrices by period
+            accel_transitions (dict): Dictionary of acceleration transition matrices by period
+            body_region_averages (dict): Dictionary of body region averages
+            improvement_thresholds (dict): Dictionary of improvement thresholds by region
+            region_metrics (dict): Dictionary of region metrics including underperformers
+            site_name (str, optional): Name of the site/location for the report header
+            min_days_between_tests (int, optional): Minimum days required between test instances
+            original_avg_days (float, optional): Original average days between tests
+            constrained_avg_days (float, optional): Constrained average days between tests after applying min_days filter
+            resistance_filtering (bool, optional): Whether resistance standardization was applied
+            
+        Returns:
+            bytes: PDF report as bytes
+        """
+        # Generate the HTML content first
+        html_content = self._generate_comprehensive_html(
+            power_counts, accel_counts, power_transitions, accel_transitions,
+            body_region_averages, improvement_thresholds, region_metrics, site_name,
+            min_days_between_tests, original_avg_days, constrained_avg_days,
+            resistance_filtering
+        )
+        
+        # Convert the HTML to PDF
+        pdf_content = self.generate_pdf_from_html(html_content)
+        
+        return pdf_content

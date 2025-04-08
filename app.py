@@ -664,18 +664,43 @@ def main():
                     resistance_filtering=apply_resistance_filtering
                 )
                 st.download_button(
-                    label="Download Comprehensive Report",
+                    label="Download Comprehensive Report (HTML)",
                     data=comprehensive_report,
                     file_name="comprehensive_report.html",
                     mime="text/html",
                 )
+                
+                # Generate and provide PDF download option
+                pdf_report = report_generator.generate_comprehensive_pdf_report(
+                    power_counts,
+                    accel_counts,
+                    power_transitions_detail,
+                    accel_transitions_detail,
+                    body_region_averages,
+                    improvement_thresholds,
+                    region_metrics,
+                    site_name=site_name,
+                    min_days_between_tests=min_days_between_tests,
+                    original_avg_days=original_avg_days_between_tests,
+                    constrained_avg_days=constrained_avg_days_between_tests,
+                    resistance_filtering=apply_resistance_filtering
+                )
+                st.download_button(
+                    label="Download Comprehensive Report (PDF)",
+                    data=pdf_report,
+                    file_name="comprehensive_report.pdf",
+                    mime="application/pdf",
+                )
             else:
-                # Display disabled button with message
-                st.info("Please enter a site name to enable the report download")
-                st.button("Download Comprehensive Report", disabled=True)
+                # Display disabled buttons with message
+                st.info("Please enter a site name to enable the report downloads")
+                st.button("Download Comprehensive Report (HTML)", disabled=True)
+                st.button("Download Comprehensive Report (PDF)", disabled=True)
             
             # Add an explanation about the report
-            st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")
+            st.write("**Comprehensive Report**: Includes all analysis data with site identification and detailed region-specific metrics")
+            st.write("- **HTML Version**: Features interactive navigation between pages for better user experience")
+            st.write("- **PDF Version**: Provides a static, print-friendly document ideal for sharing and archiving")
             
             # Future features info
             with st.expander("Upcoming Features", expanded=False):
