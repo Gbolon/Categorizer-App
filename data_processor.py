@@ -45,8 +45,17 @@ class DataProcessor:
 
         return True, "Data validation successful"
 
-    def preprocess_data(self, df):
-        """Clean and prepare the data for matrix generation."""
+    def preprocess_data(self, df, apply_resistance_filtering=True):
+        """
+        Clean and prepare the data for matrix generation.
+        
+        Args:
+            df: DataFrame containing the raw exercise data
+            apply_resistance_filtering: Boolean flag to determine whether to filter by resistance values
+            
+        Returns:
+            Processed DataFrame ready for analysis
+        """
         # Create a copy to avoid modifying original data
         processed_df = df.copy()
 
@@ -144,10 +153,12 @@ class DataProcessor:
         # Sort by user and timestamp
         processed_df = processed_df.sort_values(['user name', 'exercise createdAt'])
         
-        # Apply resistance filtering if the column exists
-        if 'resistance' in processed_df.columns:
+        # Apply resistance filtering if enabled and the column exists
+        if apply_resistance_filtering and 'resistance' in processed_df.columns:
             print("INFO: Applying resistance filtering...")
             processed_df = self.filter_by_resistance(processed_df)
+        elif 'resistance' in processed_df.columns:
+            print("INFO: Resistance filtering is disabled. Using all data regardless of resistance values.")
 
         return processed_df
 
