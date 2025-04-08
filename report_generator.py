@@ -917,6 +917,30 @@ class ReportGenerator:
             <p>Test instances for the same exercise that don't meet the minimum days requirement are skipped in the analysis. This means that if a user has multiple tests for the same exercise within the minimum time window, only the earliest test is included in the analysis.</p>
             <p>The minimum days between tests setting is reflected in the Overview page, along with both the original average days between tests (before filtering) and the constrained average days (after applying the minimum days filter).</p>
             
+            <h2>Resistance Standardization</h2>
+            <p>To ensure accurate and comparable measurements across users, each exercise is performed with a standardized resistance value (in pounds):</p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Exercise</th>
+                        <th>Required Resistance (lbs)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Chest Press (One Hand)</td><td>12</td></tr>
+                    <tr><td>Horizontal Row (One Hand)</td><td>12</td></tr>
+                    <tr><td>Biceps Curl (One Hand)</td><td>6</td></tr>
+                    <tr><td>Triceps Extension (One Hand)</td><td>6</td></tr>
+                    <tr><td>PNF D2 Flexion</td><td>6</td></tr>
+                    <tr><td>PNF D2 Extension</td><td>6</td></tr>
+                    <tr><td>Straight Arm Trunk Rotation</td><td>12</td></tr>
+                    <tr><td>Lateral Bound</td><td>6</td></tr>
+                    <tr><td>Shot Put (Countermovement)</td><td>18</td></tr>
+                    <tr><td>Vertical Jump (Countermovement)</td><td>6</td></tr>
+                </tbody>
+            </table>
+            <p>The analysis only includes exercise data performed at these exact resistance values. This standardization ensures that performance comparisons between users and across time are valid and meaningful.</p>
+            
             <p style="margin-top: 30px;">Please proceed to the Overview page to view the report results.</p>
         </div>
         """
