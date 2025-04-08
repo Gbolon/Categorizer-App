@@ -136,7 +136,7 @@ def main():
              power_average, accel_average,
              avg_power_change_1_2, avg_accel_change_1_2,
              avg_power_change_2_3, avg_accel_change_2_3,
-             original_avg_days_between_tests, constrained_avg_days_between_tests) = matrix_generator.generate_group_analysis(processed_df, min_days=min_days_between_tests)
+             avg_days_between_tests) = matrix_generator.generate_group_analysis(processed_df, min_days=min_days_between_tests)
 
             # Display group-level analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Group Development Analysis</h2>", unsafe_allow_html=True)
@@ -158,15 +158,7 @@ def main():
 
             # Display Multi-Test User Averages
             st.markdown("<h2 style='font-size: 1.875em;'>Multi-Test User Averages</h2>", unsafe_allow_html=True)
-            
-            # Create two columns for the averages
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.metric("Original Average Days Between Tests", f"{original_avg_days_between_tests:.1f}")
-            
-            with col2:
-                st.metric("Constrained Average Days Between Tests", f"{constrained_avg_days_between_tests:.1f}")
+            st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
 
             # Display Power development distribution and changes
             st.write("Multi-Test Users Power Development Distribution")
@@ -467,13 +459,7 @@ def main():
                 matrices = matrix_generator.generate_user_matrices(
                     processed_df, selected_user, min_days=min_days_between_tests)
 
-                # The matrices unpacking needs to handle both old and new return formats
-                if len(matrices) == 8:
-                    # New format with user_data as first return value
-                    user_data, power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
-                else:
-                    # Original format with 7 return values
-                    power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
+                power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
 
                 # Special handling to ensure Vertical Jump is visible
                 if 'Vertical Jump (Countermovement)' not in power_matrix.index:
@@ -601,10 +587,7 @@ def main():
                     body_region_averages,
                     improvement_thresholds,
                     region_metrics,
-                    site_name=site_name,
-                    min_days_between_tests=min_days_between_tests,
-                    original_avg_days=original_avg_days_between_tests,
-                    constrained_avg_days=constrained_avg_days_between_tests
+                    site_name=site_name
                 )
                 st.download_button(
                     label="Download Comprehensive Report",
