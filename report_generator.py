@@ -125,7 +125,7 @@ class ReportGenerator:
         
         # Generate transition tables HTML if provided
         transitions_html = ""
-        if power_transitions and accel_transitions:
+        if power_transitions is not None and accel_transitions is not None and len(power_transitions) > 0 and len(accel_transitions) > 0:
             transitions_html += """
             <h2>Transition Analysis</h2>
             <p>Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.</p>
@@ -1263,17 +1263,23 @@ class ReportGenerator:
                 <p>Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.</p>
         """
         
-        # Power transitions
-        transitions_section += "<h3>Power Transitions</h3>"
-        for period, matrix in power_transitions.items():
-            transitions_section += f"<h4>Period: {period}</h4>"
-            transitions_section += matrix.to_html(classes='table', index=True)
+        # Check if power_transitions is a valid dictionary with entries
+        if isinstance(power_transitions, dict) and len(power_transitions) > 0:
+            # Power transitions
+            transitions_section += "<h3>Power Transitions</h3>"
+            for period, matrix in power_transitions.items():
+                if isinstance(matrix, pd.DataFrame) and not matrix.empty:
+                    transitions_section += f"<h4>Period: {period}</h4>"
+                    transitions_section += matrix.to_html(classes='table', index=True)
         
-        # Acceleration transitions
-        transitions_section += "<h3>Acceleration Transitions</h3>"
-        for period, matrix in accel_transitions.items():
-            transitions_section += f"<h4>Period: {period}</h4>"
-            transitions_section += matrix.to_html(classes='table', index=True)
+        # Check if accel_transitions is a valid dictionary with entries
+        if isinstance(accel_transitions, dict) and len(accel_transitions) > 0:
+            # Acceleration transitions
+            transitions_section += "<h3>Acceleration Transitions</h3>"
+            for period, matrix in accel_transitions.items():
+                if isinstance(matrix, pd.DataFrame) and not matrix.empty:
+                    transitions_section += f"<h4>Period: {period}</h4>"
+                    transitions_section += matrix.to_html(classes='table', index=True)
             
         transitions_section += """
             </div>
@@ -1317,18 +1323,24 @@ class ReportGenerator:
                 <p>These threshold values represent the average percentage change between tests for all users. They are used to identify underperforming users relative to the group average.</p>
         """
         
-        for region, thresholds in improvement_thresholds.items():
-            thresholds_section += f"<h3>{region} Region</h3>"
-            thresholds_data = pd.DataFrame({
-                'Metric': ['Power (Test 1 to 2)', 'Power (Test 2 to 3)', 'Acceleration (Test 1 to 2)', 'Acceleration (Test 2 to 3)'],
-                'Threshold': [
-                    f"{thresholds.get('power_1_to_2', 0):.2f}%",
-                    f"{thresholds.get('power_2_to_3', 0):.2f}%",
-                    f"{thresholds.get('accel_1_to_2', 0):.2f}%",
-                    f"{thresholds.get('accel_2_to_3', 0):.2f}%"
+        # Safe iteration through improvement thresholds if it exists and is a dictionary
+        if isinstance(improvement_thresholds, dict) and len(improvement_thresholds) > 0:
+            for region, thresholds in improvement_thresholds.items():
+                thresholds_section += f"<h3>{region} Region</h3>"
+                
+                # Create a DataFrame for thresholds with safe access
+                threshold_values = [
+                    f"{thresholds.get('power_1_to_2', 0):.2f}%" if 'power_1_to_2' in thresholds else "0.00%",
+                    f"{thresholds.get('power_2_to_3', 0):.2f}%" if 'power_2_to_3' in thresholds else "0.00%",
+                    f"{thresholds.get('accel_1_to_2', 0):.2f}%" if 'accel_1_to_2' in thresholds else "0.00%",
+                    f"{thresholds.get('accel_2_to_3', 0):.2f}%" if 'accel_2_to_3' in thresholds else "0.00%"
                 ]
-            })
-            thresholds_section += thresholds_data.to_html(classes='table', index=False)
+                
+                thresholds_data = pd.DataFrame({
+                    'Metric': ['Power (Test 1 to 2)', 'Power (Test 2 to 3)', 'Acceleration (Test 1 to 2)', 'Acceleration (Test 2 to 3)'],
+                    'Threshold': threshold_values
+                })
+                thresholds_section += thresholds_data.to_html(classes='table', index=False)
             
         thresholds_section += """
             </div>
@@ -1343,73 +1355,91 @@ class ReportGenerator:
                 <p>The following users showed below-average improvement compared to the group thresholds.</p>
         """
         
-        for region, metrics in region_metrics.items():
-            if 'power_underperformers_1_to_2' in metrics or 'accel_underperformers_1_to_2' in metrics:
-                underperformers_section += f"<h3>{region} Region</h3>"
+        # Safe iteration through region metrics if it exists and is a dictionary
+        if isinstance(region_metrics, dict) and len(region_metrics) > 0:
+            for region, metrics in region_metrics.items():
+                # Check if we have any underperformers
+                has_underperformers = False
+                if isinstance(metrics, dict):
+                    has_underperformers = (
+                        ('power_underperformers_1_to_2' in metrics and len(metrics.get('power_underperformers_1_to_2', [])) > 0) or 
+                        ('accel_underperformers_1_to_2' in metrics and len(metrics.get('accel_underperformers_1_to_2', [])) > 0) or
+                        ('power_underperformers_2_to_3' in metrics and len(metrics.get('power_underperformers_2_to_3', [])) > 0) or
+                        ('accel_underperformers_2_to_3' in metrics and len(metrics.get('accel_underperformers_2_to_3', [])) > 0)
+                    )
                 
-                # Test 1 to 2 Underperformers
-                if 'power_underperformers_1_to_2' in metrics or 'accel_underperformers_1_to_2' in metrics:
-                    underperformers_section += "<h4>Test 1 to Test 2</h4>"
+                if has_underperformers:
+                    underperformers_section += f"<h3>{region} Region</h3>"
                     
-                    power_users = metrics.get('power_underperformers_1_to_2', [])
-                    accel_users = metrics.get('accel_underperformers_1_to_2', [])
-                    
-                    # Create a combined list of underperformers
-                    all_users = set()
-                    for user, _ in power_users:
-                        all_users.add(user)
-                    for user, _ in accel_users:
-                        all_users.add(user)
-                    
-                    # Create a DataFrame for display
-                    user_data = []
-                    for user in all_users:
-                        power_pct = next((f"{pct:.2f}%" for u, pct in power_users if u == user), "")
-                        accel_pct = next((f"{pct:.2f}%" for u, pct in accel_users if u == user), "")
+                    # Test 1 to 2 Underperformers
+                    if ('power_underperformers_1_to_2' in metrics and len(metrics.get('power_underperformers_1_to_2', [])) > 0) or \
+                       ('accel_underperformers_1_to_2' in metrics and len(metrics.get('accel_underperformers_1_to_2', [])) > 0):
+                        underperformers_section += "<h4>Test 1 to Test 2</h4>"
                         
-                        user_data.append({
-                            'Name': user,
-                            'Power': power_pct,
-                            'Acceleration': accel_pct
-                        })
-                    
-                    if user_data:
-                        df_users = pd.DataFrame(user_data)
-                        underperformers_section += df_users.to_html(classes='table', index=False)
-                    else:
-                        underperformers_section += "<p>No underperforming users identified for this period.</p>"
-                
-                # Test 2 to 3 Underperformers
-                if 'power_underperformers_2_to_3' in metrics or 'accel_underperformers_2_to_3' in metrics:
-                    underperformers_section += "<h4>Test 2 to Test 3</h4>"
-                    
-                    power_users = metrics.get('power_underperformers_2_to_3', [])
-                    accel_users = metrics.get('accel_underperformers_2_to_3', [])
-                    
-                    # Create a combined list of underperformers
-                    all_users = set()
-                    for user, _ in power_users:
-                        all_users.add(user)
-                    for user, _ in accel_users:
-                        all_users.add(user)
-                    
-                    # Create a DataFrame for display
-                    user_data = []
-                    for user in all_users:
-                        power_pct = next((f"{pct:.2f}%" for u, pct in power_users if u == user), "")
-                        accel_pct = next((f"{pct:.2f}%" for u, pct in accel_users if u == user), "")
+                        power_users = metrics.get('power_underperformers_1_to_2', [])
+                        accel_users = metrics.get('accel_underperformers_1_to_2', [])
                         
-                        user_data.append({
-                            'Name': user,
-                            'Power': power_pct,
-                            'Acceleration': accel_pct
-                        })
+                        # Create a combined list of underperformers
+                        all_users = set()
+                        for user_tuple in power_users:
+                            if isinstance(user_tuple, tuple) and len(user_tuple) >= 1:
+                                all_users.add(user_tuple[0])
+                        for user_tuple in accel_users:
+                            if isinstance(user_tuple, tuple) and len(user_tuple) >= 1:
+                                all_users.add(user_tuple[0])
+                        
+                        # Create a DataFrame for display
+                        user_data = []
+                        for user in all_users:
+                            power_pct = next((f"{pct:.2f}%" for u, pct in power_users if u == user), "")
+                            accel_pct = next((f"{pct:.2f}%" for u, pct in accel_users if u == user), "")
+                            
+                            user_data.append({
+                                'Name': user,
+                                'Power': power_pct,
+                                'Acceleration': accel_pct
+                            })
+                        
+                        if user_data:
+                            df_users = pd.DataFrame(user_data)
+                            underperformers_section += df_users.to_html(classes='table', index=False)
+                        else:
+                            underperformers_section += "<p>No underperforming users identified for this period.</p>"
                     
-                    if user_data:
-                        df_users = pd.DataFrame(user_data)
-                        underperformers_section += df_users.to_html(classes='table', index=False)
-                    else:
-                        underperformers_section += "<p>No underperforming users identified for this period.</p>"
+                    # Test 2 to 3 Underperformers
+                    if ('power_underperformers_2_to_3' in metrics and len(metrics.get('power_underperformers_2_to_3', [])) > 0) or \
+                       ('accel_underperformers_2_to_3' in metrics and len(metrics.get('accel_underperformers_2_to_3', [])) > 0):
+                        underperformers_section += "<h4>Test 2 to Test 3</h4>"
+                        
+                        power_users = metrics.get('power_underperformers_2_to_3', [])
+                        accel_users = metrics.get('accel_underperformers_2_to_3', [])
+                        
+                        # Create a combined list of underperformers
+                        all_users = set()
+                        for user_tuple in power_users:
+                            if isinstance(user_tuple, tuple) and len(user_tuple) >= 1:
+                                all_users.add(user_tuple[0])
+                        for user_tuple in accel_users:
+                            if isinstance(user_tuple, tuple) and len(user_tuple) >= 1:
+                                all_users.add(user_tuple[0])
+                        
+                        # Create a DataFrame for display
+                        user_data = []
+                        for user in all_users:
+                            power_pct = next((f"{pct:.2f}%" for u, pct in power_users if u == user), "")
+                            accel_pct = next((f"{pct:.2f}%" for u, pct in accel_users if u == user), "")
+                            
+                            user_data.append({
+                                'Name': user,
+                                'Power': power_pct,
+                                'Acceleration': accel_pct
+                            })
+                        
+                        if user_data:
+                            df_users = pd.DataFrame(user_data)
+                            underperformers_section += df_users.to_html(classes='table', index=False)
+                        else:
+                            underperformers_section += "<p>No underperforming users identified for this period.</p>"
         
         underperformers_section += """
             </div>
