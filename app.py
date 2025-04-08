@@ -94,9 +94,19 @@ def main():
     matrix_generator = MatrixGenerator()
     report_generator = ReportGenerator()
 
-    # File upload configuration
-    uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
-                                     type=['csv', 'xlsx'])
+    # File upload and minimum days configuration
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
+                                          type=['csv', 'xlsx'])
+    with col2:
+        min_days_between_tests = st.number_input(
+            "Minimum Days Between Tests",
+            min_value=0,
+            max_value=365,
+            value=7,
+            help="Minimum number of days required between test instances for the same exercise"
+        )
 
     if uploaded_file is not None:
         try:
@@ -115,6 +125,27 @@ def main():
 
             # Process data
             processed_df = data_processor.preprocess_data(df)
+            
+            # Show resistance filtering information
+            with st.expander("Data Processing Information", expanded=True):
+                st.info("""
+                **Resistance Filtering Applied**
+                
+                This app now automatically filters exercise data to only include movements performed at specific required resistance values:
+                - Chest Press (One Hand): 12 lbs
+                - Horizontal Row (One Hand): 12 lbs
+                - Biceps Curl (One Hand): 6 lbs
+                - Triceps Extension (One Hand): 6 lbs
+                - PNF D2 Flexion: 6 lbs
+                - PNF D2 Extension: 6 lbs
+                - Straight Arm Trunk Rotation: 12 lbs
+                - Lateral Bound: 6 lbs
+                - Shot Put (Countermovement): 18 lbs
+                - Vertical Jump (Countermovement): 6 lbs
+                
+                Only exercise instances performed at these exact resistance values will be included in the analysis.
+                If the dataset doesn't include a 'resistance' column, this filtering won't be applied.
+                """)
 
             # Show data preview in collapsed expander
             with st.expander("Data Preview", expanded=False):
@@ -126,7 +157,7 @@ def main():
              power_average, accel_average,
              avg_power_change_1_2, avg_accel_change_1_2,
              avg_power_change_2_3, avg_accel_change_2_3,
-             avg_days_between_tests) = matrix_generator.generate_group_analysis(processed_df)
+             original_avg_days_between_tests, constrained_avg_days_between_tests) = matrix_generator.generate_group_analysis(processed_df, min_days=min_days_between_tests)
 
             # Display group-level analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Group Development Analysis</h2>", unsafe_allow_html=True)
@@ -148,7 +179,15 @@ def main():
 
             # Display Multi-Test User Averages
             st.markdown("<h2 style='font-size: 1.875em;'>Multi-Test User Averages</h2>", unsafe_allow_html=True)
-            st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
+            
+            # Create two columns for the averages
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.metric("Original Average Days Between Tests", f"{original_avg_days_between_tests:.1f}")
+            
+            with col2:
+                st.metric("Constrained Average Days Between Tests", f"{constrained_avg_days_between_tests:.1f}")
 
             # Display Power development distribution and changes
             st.write("Multi-Test Users Power Development Distribution")
@@ -209,7 +248,7 @@ def main():
             st.write("Group averages by body region for multi-test users")
 
             # Calculate body region averages
-            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
+            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df, min_days=min_days_between_tests)
 
             # Create columns for each body region
             region_cols = st.columns(len(VALID_EXERCISES))
@@ -222,7 +261,7 @@ def main():
                     st.dataframe(styled_averages)
             
             # Calculate improvement thresholds for all regions
-            improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df)
+            improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df, min_days=min_days_between_tests)
             
             # Detailed Body Region Analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Detailed Body Region Analysis</h2>", unsafe_allow_html=True)
@@ -244,7 +283,7 @@ def main():
                     accel_underperformers_2_to_3 = None
                     
                     # Get region metrics only once
-                    region_metrics = matrix_generator.get_region_metrics(processed_df, region)
+                    region_metrics = matrix_generator.get_region_metrics(processed_df, region, min_days=min_days_between_tests)
                     
                     # Extract underperformers for all periods
                     if region_metrics[2]:  # Power metrics
@@ -380,7 +419,7 @@ def main():
                         st.markdown("<hr>", unsafe_allow_html=True)
                     
                     # Get detailed region metrics using the generalized function for all regions
-                    region_metrics = matrix_generator.get_region_metrics(processed_df, region)
+                    region_metrics = matrix_generator.get_region_metrics(processed_df, region, min_days=min_days_between_tests)
                     # Unpack the values carefully, handling different return formats
                     if region_metrics[0] is None:
                         # No metrics available
@@ -447,9 +486,15 @@ def main():
             if selected_user:
                 # Generate matrices
                 matrices = matrix_generator.generate_user_matrices(
-                    processed_df, selected_user)
+                    processed_df, selected_user, min_days=min_days_between_tests)
 
-                power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
+                # The matrices unpacking needs to handle both old and new return formats
+                if len(matrices) == 8:
+                    # New format with user_data as first return value
+                    user_data, power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
+                else:
+                    # Original format with 7 return values
+                    power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
 
                 # Special handling to ensure Vertical Jump is visible
                 if 'Vertical Jump (Countermovement)' not in power_matrix.index:
@@ -554,6 +599,26 @@ def main():
             st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
             st.write("Generate comprehensive reports with interactive analysis")
             
+            # How-To Section
+            with st.expander("How Test Instances are Compiled", expanded=True):
+                st.markdown("""
+                ## How Test Instances are Compiled
+
+                Test instances represent chronological snapshots of a user's performance across multiple exercises. Here's how they're organized:
+
+                1. **Chronological Ordering**: Test instances are filled chronologically rather than strictly by date. The earliest recorded exercise data goes into Test 1, the next into Test 2, and so on.
+
+                2. **Exercise Backfilling**: If an exercise is missing from earlier test instances but appears in later ones, the data is not backfilled. Each test instance only contains exercises that were actually performed during that period.
+
+                3. **Time Constraints**: To ensure meaningful analysis, a minimum time gap is required between measurements of the same exercise. If multiple tests for the same exercise occur within this timeframe, only the earliest one is included.
+
+                4. **Resistance Standardization**: Only exercises performed at the specific required resistance values are included in the analysis to ensure comparability.
+
+                5. **Development Scores**: For each test instance, both power and acceleration metrics are compiled, and overall development scores are calculated as averages across all exercises in that instance.
+
+                The reports generated from these test instances show how users progress through different development brackets over time, allowing you to track improvement patterns at both individual and group levels.
+                """)
+            
             # Comprehensive report section
             st.subheader("Comprehensive Interactive Report")
             st.write("This report includes detailed analysis with separate pages for each body region and interactive navigation")
@@ -564,7 +629,7 @@ def main():
             # First collect region metrics for all regions
             region_metrics = {}
             for region in VALID_EXERCISES.keys():
-                region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
+                region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region, min_days=min_days_between_tests)
             
             # Only enable the download button if a site name is provided
             if site_name.strip() != "":
@@ -577,7 +642,10 @@ def main():
                     body_region_averages,
                     improvement_thresholds,
                     region_metrics,
-                    site_name=site_name
+                    site_name=site_name,
+                    min_days_between_tests=min_days_between_tests,
+                    original_avg_days=original_avg_days_between_tests,
+                    constrained_avg_days=constrained_avg_days_between_tests
                 )
                 st.download_button(
                     label="Download Comprehensive Report",
