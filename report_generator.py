@@ -412,10 +412,24 @@ class ReportGenerator:
             {css_styles}
             <script>
                 function goToPage(pageId) {{
+                    // Hide all pages
                     document.querySelectorAll('.page').forEach(page => {{
                         page.style.display = 'none';
                     }});
-                    document.getElementById(pageId).style.display = 'block';
+                    
+                    // Show the requested page
+                    const pageElement = document.getElementById(pageId);
+                    if (pageElement) {{
+                        pageElement.style.display = 'block';
+                        console.log('Showing page:', pageId);
+                    }} else {{
+                        console.error('Page not found:', pageId);
+                        // Fallback to overview if requested page doesn't exist
+                        const overviewPage = document.getElementById('overview');
+                        if (overviewPage) {{
+                            overviewPage.style.display = 'block';
+                        }}
+                    }}
                 }}
             </script>
         </head>
@@ -442,7 +456,7 @@ class ReportGenerator:
         site_header = f"<div class='site-name'><h2>Site: {site_name}</h2></div>" if site_name else ""
         
         overview_page = f"""
-        <div id="overview" class="page container">
+        <div id="overview" class="page container" style="display: none;">
             <h1>Exercise Development Overview</h1>
             {site_header}
             
@@ -777,7 +791,7 @@ class ReportGenerator:
         # Combine all pages
         # INFORMATION PAGE
         info_page = """
-        <div id="info-page" class="page container">
+        <div id="info-page" class="page container" style="display: none;">
             <h1>Exercise Movements and Assessment Information</h1>
             
             <p>This report analyzes performance data for the following exercise movements, organized by body region. Please review this information before examining the results.</p>
@@ -877,7 +891,23 @@ class ReportGenerator:
             <script>
                 // Set information page as the default page
                 document.addEventListener('DOMContentLoaded', function() {
-                    goToPage('info-page');
+                    // Initially hide all pages
+                    document.querySelectorAll('.page').forEach(function(page) {
+                        page.style.display = 'none';
+                    });
+                    
+                    // Show the info page
+                    var infoPage = document.getElementById('info-page');
+                    if (infoPage) {
+                        infoPage.style.display = 'block';
+                        console.log('Showing info page on load');
+                    } else {
+                        console.error('Info page not found, showing overview instead');
+                        var overviewPage = document.getElementById('overview');
+                        if (overviewPage) {
+                            overviewPage.style.display = 'block';
+                        }
+                    }
                 });
             </script>
         </body>
