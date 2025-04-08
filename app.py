@@ -599,6 +599,26 @@ def main():
             st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
             st.write("Generate comprehensive reports with interactive analysis")
             
+            # How-To Section
+            with st.expander("How Test Instances are Compiled", expanded=True):
+                st.markdown("""
+                ## How Test Instances are Compiled
+
+                Test instances represent chronological snapshots of a user's performance across multiple exercises. Here's how they're organized:
+
+                1. **Chronological Ordering**: Test instances are filled chronologically rather than strictly by date. The earliest recorded exercise data goes into Test 1, the next into Test 2, and so on.
+
+                2. **Exercise Backfilling**: If an exercise is missing from earlier test instances but appears in later ones, the data is not backfilled. Each test instance only contains exercises that were actually performed during that period.
+
+                3. **Time Constraints**: To ensure meaningful analysis, a minimum time gap is required between measurements of the same exercise. If multiple tests for the same exercise occur within this timeframe, only the earliest one is included.
+
+                4. **Resistance Standardization**: Only exercises performed at the specific required resistance values are included in the analysis to ensure comparability.
+
+                5. **Development Scores**: For each test instance, both power and acceleration metrics are compiled, and overall development scores are calculated as averages across all exercises in that instance.
+
+                The reports generated from these test instances show how users progress through different development brackets over time, allowing you to track improvement patterns at both individual and group levels.
+                """)
+            
             # Comprehensive report section
             st.subheader("Comprehensive Interactive Report")
             st.write("This report includes detailed analysis with separate pages for each body region and interactive navigation")
