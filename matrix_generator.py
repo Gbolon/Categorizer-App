@@ -36,8 +36,15 @@ class MatrixGenerator:
             'Severely Under Developed'
         ]
 
-    def generate_group_analysis(self, df, max_tests=4):
-        """Generate group-level analysis of development categories."""
+    def generate_group_analysis(self, df, max_tests=4, min_days=0):
+        """
+        Generate group-level analysis of development categories.
+        
+        Args:
+            df: DataFrame with processed exercise data
+            max_tests: Maximum number of tests to include in analysis
+            min_days: Minimum days required between measurements of the same exercise
+        """
         # Initialize count DataFrames for power and acceleration
         categories = list(self.development_brackets.keys()) + ['Total Users']
         power_counts = pd.DataFrame(0, index=categories, columns=[])
@@ -65,8 +72,8 @@ class MatrixGenerator:
 
         # Process each user
         for user in df['user name'].unique():
-            # Generate matrices for user
-            matrices = self.generate_user_matrices(df, user)
+            # Generate matrices for user with minimum days constraint
+            matrices = self.generate_user_matrices(df, user, min_days=min_days)
 
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
