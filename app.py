@@ -8,7 +8,6 @@ from matrix_generator import MatrixGenerator
 from report_generator import ReportGenerator
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
-from web_scraper import get_website_text_content
 
 # Configure the page at the very beginning
 st.set_page_config(
@@ -94,18 +93,6 @@ def main():
     data_processor = DataProcessor()
     matrix_generator = MatrixGenerator()
     report_generator = ReportGenerator()
-    
-    # Create a sidebar for settings
-    with st.sidebar:
-        st.header("Settings")
-        
-        # Option for time-constrained test instance assembly
-        st.write("Test Instance Assembly")
-        use_time_constraint = st.checkbox(
-            "Use 45-day minimum between tests",
-            value=False,
-            help="When enabled, only tests separated by at least 45 days for the same exercise will be included in test instances."
-        )
 
     # File upload
     uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
@@ -133,16 +120,13 @@ def main():
             with st.expander("Data Preview", expanded=False):
                 st.dataframe(processed_df.head())
 
-            # Generate group-level analysis with time constraint option
+            # Generate group-level analysis
             (power_counts, accel_counts, single_test_distribution,
              power_transitions_detail, accel_transitions_detail,
              power_average, accel_average,
              avg_power_change_1_2, avg_accel_change_1_2,
              avg_power_change_2_3, avg_accel_change_2_3,
-             avg_days_between_tests) = matrix_generator.generate_group_analysis(
-                 processed_df, 
-                 use_time_constraint=use_time_constraint
-             )
+             avg_days_between_tests) = matrix_generator.generate_group_analysis(processed_df)
 
             # Display group-level analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Group Development Analysis</h2>", unsafe_allow_html=True)
@@ -225,7 +209,7 @@ def main():
             st.write("Group averages by body region for multi-test users")
 
             # Calculate body region averages
-            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df, use_time_constraint=use_time_constraint)
+            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
 
             # Create columns for each body region
             region_cols = st.columns(len(VALID_EXERCISES))
@@ -238,7 +222,7 @@ def main():
                     st.dataframe(styled_averages)
             
             # Calculate improvement thresholds for all regions
-            improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df, use_time_constraint=use_time_constraint)
+            improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df)
             
             # Detailed Body Region Analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Detailed Body Region Analysis</h2>", unsafe_allow_html=True)
@@ -259,12 +243,8 @@ def main():
                     accel_underperformers_1_to_2 = None
                     accel_underperformers_2_to_3 = None
                     
-                    # Get region metrics only once with time constraint option
-                    region_metrics = matrix_generator.get_region_metrics(
-                        processed_df, 
-                        region,
-                        use_time_constraint=use_time_constraint
-                    )
+                    # Get region metrics only once
+                    region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                     
                     # Extract underperformers for all periods
                     if region_metrics[2]:  # Power metrics
@@ -400,11 +380,7 @@ def main():
                         st.markdown("<hr>", unsafe_allow_html=True)
                     
                     # Get detailed region metrics using the generalized function for all regions
-                    region_metrics = matrix_generator.get_region_metrics(
-                        processed_df, 
-                        region,
-                        use_time_constraint=use_time_constraint
-                    )
+                    region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                     # Unpack the values carefully, handling different return formats
                     if region_metrics[0] is None:
                         # No metrics available
@@ -469,17 +445,11 @@ def main():
             selected_user = st.selectbox("Select User", users)
 
             if selected_user:
-                # Generate matrices with time constraint option
+                # Generate matrices
                 matrices = matrix_generator.generate_user_matrices(
-                    processed_df, selected_user, use_time_constraint=use_time_constraint)
+                    processed_df, selected_user)
 
                 power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
-                
-                # Show which method was used for test instance assembly
-                if use_time_constraint:
-                    st.info("Using time-constrained test instance assembly (45-day minimum between tests)")
-                else:
-                    st.info("Using standard chronological test instance assembly")
 
                 # Special handling to ensure Vertical Jump is visible
                 if 'Vertical Jump (Countermovement)' not in power_matrix.index:
@@ -594,11 +564,7 @@ def main():
             # First collect region metrics for all regions
             region_metrics = {}
             for region in VALID_EXERCISES.keys():
-                region_metrics[region] = matrix_generator.get_region_metrics(
-                    processed_df, 
-                    region,
-                    use_time_constraint=use_time_constraint
-                )
+                region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
             
             # Only enable the download button if a site name is provided
             if site_name.strip() != "":
@@ -665,36 +631,6 @@ def main():
 
         except Exception as e:
             st.error(f"Error processing file: {str(e)}")
-    
-    # Add Web Content Scraper section
-    st.sidebar.markdown("---")
-    with st.sidebar.expander("Web Content Scraper", expanded=False):
-        st.markdown("### Extract Text Content from Websites")
-        st.write("Use this tool to extract clean text content from any website URL.")
-        
-        url_input = st.text_input("Enter website URL:", placeholder="https://example.com")
-        scrape_button = st.button("Extract Content")
-        
-        if scrape_button and url_input:
-            try:
-                with st.spinner("Extracting content..."):
-                    text_content = get_website_text_content(url_input)
-                    
-                if text_content:
-                    st.success("Content extracted successfully!")
-                    with st.expander("Extracted Content", expanded=True):
-                        st.text_area("Website Content", text_content, height=300)
-                        # Add download button for extracted content
-                        st.download_button(
-                            label="Download Extracted Text",
-                            data=text_content,
-                            file_name="extracted_content.txt",
-                            mime="text/plain"
-                        )
-                else:
-                    st.warning("Could not extract content from the provided URL. Please check the URL and try again.")
-            except Exception as e:
-                st.error(f"Error extracting content: {str(e)}")
 
 if __name__ == "__main__":
     main()
