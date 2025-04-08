@@ -1064,29 +1064,34 @@ class ReportGenerator:
         Returns:
             str: The styled HTML table with appropriate cell classes
         """
-        import re
-        from bs4 import BeautifulSoup
-        
-        # Create a BeautifulSoup object
-        soup = BeautifulSoup(html_table, 'html.parser')
-        
-        # Get all data rows (skip header row)
-        rows = soup.find_all('tr')[1:]
-        
-        # Process each row
-        for i, row in enumerate(rows):
-            cells = row.find_all('td')[1:]  # Skip the index column
+        try:
+            import re
+            from bs4 import BeautifulSoup
             
-            for j, cell in enumerate(cells):
-                if i == j:  # Diagonal - no change
-                    cell['class'] = cell.get('class', []) + ['diagonal']
-                elif i < j:  # Above diagonal - regression
-                    cell['class'] = cell.get('class', []) + ['above-diagonal']
-                else:  # Below diagonal - improvement
-                    cell['class'] = cell.get('class', []) + ['below-diagonal']
-        
-        # Return the modified HTML
-        return str(soup)
+            # Create a BeautifulSoup object
+            soup = BeautifulSoup(html_table, 'html.parser')
+            
+            # Get all data rows (skip header row)
+            rows = soup.find_all('tr')[1:]
+            
+            # Process each row
+            for i, row in enumerate(rows):
+                cells = row.find_all('td')[1:]  # Skip the index column
+                
+                for j, cell in enumerate(cells):
+                    if i == j:  # Diagonal - no change
+                        cell['style'] = 'background-color: #d4e6f1 !important;'  # Pale Blue
+                    elif i < j:  # Above diagonal - regression
+                        cell['style'] = 'background-color: #f5b7b1 !important;'  # Pale Red
+                    else:  # Below diagonal - improvement
+                        cell['style'] = 'background-color: #abebc6 !important;'  # Pale Green
+            
+            # Return the modified HTML
+            return str(soup)
+        except Exception as e:
+            print(f"Error in _apply_transition_styling: {e}")
+            # Fall back to original table if styling fails
+            return html_table
     
     def generate_pdf_from_html(self, html_content):
         """
@@ -1296,59 +1301,86 @@ class ReportGenerator:
             <div class="section">
                 <h2>Transition Analysis</h2>
                 <p>Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.</p>
+                <p><strong>Color coding:</strong> Blue cells show users who remained in the same bracket, Red cells show regression, Green cells show improvement.</p>
         """
         
         # Check if power_transitions is a valid dictionary with entries
         if isinstance(power_transitions, dict) and len(power_transitions) > 0:
             # Power transitions
             transitions_section += "<h3>Power Transitions</h3>"
-            transitions_section += """
-            <div class="transition-guide">
-                <p>Cell coloring guide:</p>
-                <ul>
-                    <li><span class="diagonal">Blue cells</span>: Users who remained in the same bracket</li>
-                    <li><span class="above-diagonal">Red cells</span>: Users who regressed to a lower bracket</li>
-                    <li><span class="below-diagonal">Green cells</span>: Users who improved to a higher bracket</li>
-                </ul>
-            </div>
-            """
+            
             for period, matrix in power_transitions.items():
                 if isinstance(matrix, pd.DataFrame) and not matrix.empty:
                     transitions_section += f"<h4>Period: {period}</h4>"
                     
-                    # Add classes to cells for styling
-                    styled_html = matrix.to_html(classes='table transition-table', index=True)
+                    # Create manual table with inline styling
+                    transitions_section += "<table class='table transition-table' border='1' cellpadding='5' cellspacing='0'>"
                     
-                    # Apply styling to highlight cells
-                    styled_html = self._apply_transition_styling(styled_html, matrix)
+                    # Add header row with column names
+                    transitions_section += "<tr><th></th>"
+                    for col in matrix.columns:
+                        transitions_section += f"<th>{col}</th>"
+                    transitions_section += "</tr>"
                     
-                    transitions_section += styled_html
+                    # Add data rows with styling
+                    for i, row_idx in enumerate(matrix.index):
+                        transitions_section += f"<tr><th>{row_idx}</th>"
+                        
+                        for j, col in enumerate(matrix.columns):
+                            value = matrix.iloc[i, j]
+                            
+                            # Determine cell color
+                            if i == j:  # Diagonal - no change
+                                bg_color = "#d4e6f1"  # Pale Blue
+                            elif i < j:  # Above diagonal - regression
+                                bg_color = "#f5b7b1"  # Pale Red
+                            else:  # Below diagonal - improvement
+                                bg_color = "#abebc6"  # Pale Green
+                                
+                            transitions_section += f"<td style='background-color: {bg_color};'>{value}</td>"
+                            
+                        transitions_section += "</tr>"
+                    
+                    transitions_section += "</table>"
         
         # Check if accel_transitions is a valid dictionary with entries
         if isinstance(accel_transitions, dict) and len(accel_transitions) > 0:
             # Acceleration transitions
             transitions_section += "<h3>Acceleration Transitions</h3>"
-            transitions_section += """
-            <div class="transition-guide">
-                <p>Cell coloring guide:</p>
-                <ul>
-                    <li><span class="diagonal">Blue cells</span>: Users who remained in the same bracket</li>
-                    <li><span class="above-diagonal">Red cells</span>: Users who regressed to a lower bracket</li>
-                    <li><span class="below-diagonal">Green cells</span>: Users who improved to a higher bracket</li>
-                </ul>
-            </div>
-            """
+            
             for period, matrix in accel_transitions.items():
                 if isinstance(matrix, pd.DataFrame) and not matrix.empty:
                     transitions_section += f"<h4>Period: {period}</h4>"
                     
-                    # Add classes to cells for styling
-                    styled_html = matrix.to_html(classes='table transition-table', index=True)
+                    # Create manual table with inline styling
+                    transitions_section += "<table class='table transition-table' border='1' cellpadding='5' cellspacing='0'>"
                     
-                    # Apply styling to highlight cells
-                    styled_html = self._apply_transition_styling(styled_html, matrix)
+                    # Add header row with column names
+                    transitions_section += "<tr><th></th>"
+                    for col in matrix.columns:
+                        transitions_section += f"<th>{col}</th>"
+                    transitions_section += "</tr>"
                     
-                    transitions_section += styled_html
+                    # Add data rows with styling
+                    for i, row_idx in enumerate(matrix.index):
+                        transitions_section += f"<tr><th>{row_idx}</th>"
+                        
+                        for j, col in enumerate(matrix.columns):
+                            value = matrix.iloc[i, j]
+                            
+                            # Determine cell color
+                            if i == j:  # Diagonal - no change
+                                bg_color = "#d4e6f1"  # Pale Blue
+                            elif i < j:  # Above diagonal - regression
+                                bg_color = "#f5b7b1"  # Pale Red
+                            else:  # Below diagonal - improvement
+                                bg_color = "#abebc6"  # Pale Green
+                                
+                            transitions_section += f"<td style='background-color: {bg_color};'>{value}</td>"
+                            
+                        transitions_section += "</tr>"
+                    
+                    transitions_section += "</table>"
             
         transitions_section += """
             </div>
@@ -1520,8 +1552,18 @@ class ReportGenerator:
         </html>
         """.format(timestamp=pd.Timestamp.now().strftime("%B %d, %Y at %I:%M %p"))
         
+        # Debug print statements for sections
+        print("\n\nDEBUG PDF GENERATION:")
+        print(f"Power transitions type: {type(power_transitions)}")
+        print(f"Power transitions keys: {power_transitions.keys() if isinstance(power_transitions, dict) else 'Not a dict'}")
+        
+        print(f"Transition section length: {len(transitions_section)}")
+        
         # Combine all sections
         complete_html = title_page + distribution_section + transitions_section + body_region_section + thresholds_section + underperformers_section
+        
+        # Debug print for complete HTML
+        print(f"Complete HTML length: {len(complete_html)}")
         
         # Convert the HTML to PDF
         pdf_content = self.generate_pdf_from_html(complete_html)
