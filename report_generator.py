@@ -290,10 +290,17 @@ class ReportGenerator:
             min_days_between_tests (int, optional): Minimum days required between test instances
             original_avg_days (float, optional): Original average days between tests
             constrained_avg_days (float, optional): Constrained average days between tests after applying min_days filter
+            resistance_filtering (bool, optional): Whether resistance standardization was applied
             
         Returns:
             str: HTML content
         """
+        # Set resistance filtering status based on the parameter
+        resistance_status = "ENABLED" if resistance_filtering else "DISABLED"
+        if resistance_filtering:
+            resistance_message = "The data in this report has been filtered to only include exercises performed at the standard resistance values shown below."
+        else:
+            resistance_message = "The data in this report includes all exercise instances regardless of resistance settings. Exercise comparisons may be less accurate."
         # Create CSS styles
         css_styles = """
         <style>
@@ -836,7 +843,7 @@ class ReportGenerator:
         
         # Combine all pages
         # INFORMATION PAGE
-        # Set resistance filtering status based on the parameter
+        # Set resistance filtering status based on the parameter right before using it
         resistance_status = "ENABLED" if resistance_filtering else "DISABLED"
         if resistance_filtering:
             resistance_message = "The data in this report has been filtered to only include exercises performed at the standard resistance values shown below."
