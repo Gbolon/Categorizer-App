@@ -36,8 +36,18 @@ class MatrixGenerator:
             'Severely Under Developed'
         ]
 
-    def generate_group_analysis(self, df, max_tests=4):
-        """Generate group-level analysis of development categories."""
+    def generate_group_analysis(self, df, max_tests=4, use_time_constraint=False):
+        """
+        Generate group-level analysis of development categories.
+        
+        Args:
+            df: Processed DataFrame with required columns
+            max_tests: Maximum number of tests to consider
+            use_time_constraint: If True, use the 45-day minimum between tests constraint
+            
+        Returns:
+            Tuple containing analysis results
+        """
         # Initialize count DataFrames for power and acceleration
         categories = list(self.development_brackets.keys()) + ['Total Users']
         power_counts = pd.DataFrame(0, index=categories, columns=[])
@@ -66,7 +76,7 @@ class MatrixGenerator:
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user
-            matrices = self.generate_user_matrices(df, user)
+            matrices = self.generate_user_matrices(df, user, use_time_constraint=use_time_constraint)
 
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
@@ -324,8 +334,75 @@ class MatrixGenerator:
 
         return patterns_df
 
-    def generate_user_matrices(self, df, user_name):
-        """Generate test instance matrices for a specific user."""
+    def generate_user_matrices(self, df, user_name, use_time_constraint=False):
+        """
+        Generate test instance matrices for a specific user.
+        
+        Args:
+            df: Processed DataFrame with required columns
+            user_name: Name of the user to generate matrices for
+            use_time_constraint: If True, use the 45-day minimum between tests constraint
+            
+        Returns:
+            Tuple containing power and acceleration matrices and development information
+        """
+        # If using time constraint, use the dedicated processor
+        if use_time_constraint:
+            from time_constrained_processor import TimeConstrainedProcessor, MIN_DAYS_BETWEEN_TESTS
+            
+            print(f"Using time-constrained test instance assembly with {MIN_DAYS_BETWEEN_TESTS} day minimum")
+            
+            # Get user data
+            user_data = df[df['user name'] == user_name].copy()
+            
+            # Early return checks
+            if user_data.empty:
+                return {}, {}, None, None, None, None, None
+
+            user_sex = user_data['sex'].iloc[0]
+            if not isinstance(user_sex, str) or user_sex.lower() not in ['male', 'female']:
+                return {}, {}, None, None, None, None, None
+                
+            # Process with time constraint
+            processor = TimeConstrainedProcessor()
+            
+            # Create a temporary dataframe with just this user
+            temp_df = df[df['user name'] == user_name].copy()
+            
+            # Assign test instances with time constraint
+            user_matrices = processor.assign_time_constrained_test_instances(temp_df)
+            
+            # If user not in results, return empty
+            if user_name not in user_matrices:
+                return {}, {}, None, None, None, None, None
+                
+            # Finalize matrices
+            finalized_matrices = processor.finalize_matrices(
+                {user_name: user_matrices[user_name]}, 
+                self.exercises
+            )
+            
+            # If user not in finalized results, return empty
+            if user_name not in finalized_matrices:
+                return {}, {}, None, None, None, None, None
+                
+            # Extract matrices
+            power_df, accel_df, user_sex = finalized_matrices[user_name]
+            
+            # Generate development matrices
+            power_dev_df = self._calculate_development_matrix(power_df, user_sex, 'power')
+            accel_dev_df = self._calculate_development_matrix(accel_df, user_sex, 'acceleration')
+
+            # Calculate overall development categorization
+            overall_dev_df = self._calculate_overall_development(power_dev_df, accel_dev_df)
+
+            # Add bracketing information
+            power_brackets = self._categorize_development(power_dev_df)
+            accel_brackets = self._categorize_development(accel_dev_df)
+
+            return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df, power_brackets, accel_brackets
+        
+        # Original implementation without time constraint
         user_data = df[df['user name'] == user_name].copy()
 
         # Initialize matrices
@@ -665,7 +742,7 @@ class MatrixGenerator:
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user
-            matrices = self.generate_user_matrices(df, user)
+            matrices = self.generate_user_matrices(df, user, use_time_constraint=use_time_constraint)
             if matrices[2] is not None:  # If development matrices exist
                 power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
 
@@ -783,7 +860,7 @@ class MatrixGenerator:
         
         return changes
             
-    def get_region_metrics(self, df, region_name, max_tests=4):
+    def get_region_metrics(self, df, region_name, max_tests=4, use_time_constraint=False):
         """
         Calculate detailed power and acceleration metrics for the specified body region exercises.
         Only includes multi-test users with separate metrics for power and acceleration.
@@ -792,6 +869,7 @@ class MatrixGenerator:
             df: The processed dataframe
             region_name: The name of the body region (e.g., 'Torso', 'Arms', etc.)
             max_tests: Maximum number of tests to include
+            use_time_constraint: If True, use the 45-day minimum between tests constraint
             
         Returns:
             Tuple containing:
@@ -877,7 +955,7 @@ class MatrixGenerator:
         multi_test_users = []
         for user in df['user name'].unique():
             # Generate matrices for user
-            matrices = self.generate_user_matrices(df, user)
+            matrices = self.generate_user_matrices(df, user, use_time_constraint=use_time_constraint)
             if matrices[2] is not None:  # If development matrices exist
                 power_dev = matrices[2]  # Get power development matrix
                 
@@ -918,7 +996,7 @@ class MatrixGenerator:
         # Process each user
         for user in multi_test_users:
             # Generate matrices for user
-            matrices = self.generate_user_matrices(df, user)
+            matrices = self.generate_user_matrices(df, user, use_time_constraint=use_time_constraint)
             if matrices[2] is not None:  # If development matrices exist
                 power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
                 
@@ -971,7 +1049,7 @@ class MatrixGenerator:
         # Calculate average development per user across all exercises in this region
         for user in multi_test_users:
             # Generate matrices for user
-            matrices = self.generate_user_matrices(df, user)
+            matrices = self.generate_user_matrices(df, user, use_time_constraint=use_time_constraint)
             if matrices[2] is not None:  # If development matrices exist
                 power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
                 
@@ -1109,18 +1187,23 @@ class MatrixGenerator:
         
         return power_df, accel_df, power_changes, accel_changes, lowest_power_change_exercise, lowest_power_change_value, lowest_accel_change_exercise, lowest_accel_change_value
             
-    def get_torso_region_metrics(self, df, max_tests=4):
+    def get_torso_region_metrics(self, df, max_tests=4, use_time_constraint=False):
         """
         Calculate detailed power and acceleration metrics for the Torso region exercises.
         Only includes multi-test users with separate metrics for power and acceleration.
         
+        Args:
+            df: The processed dataframe
+            max_tests: Maximum number of tests to include
+            use_time_constraint: If True, use the 45-day minimum between tests constraint
+            
         Returns:
             Same as get_region_metrics - a tuple with 8 elements containing power and 
             acceleration metrics, changes, and lowest change information.
         """
-        return self.get_region_metrics(df, 'Torso', max_tests)
+        return self.get_region_metrics(df, 'Torso', max_tests, use_time_constraint)
         
-    def calculate_improvement_thresholds(self, df):
+    def calculate_improvement_thresholds(self, df, use_time_constraint=False):
         """
         Calculate the improvement thresholds for each body region.
         
@@ -1131,6 +1214,7 @@ class MatrixGenerator:
         
         Args:
             df: The processed dataframe
+            use_time_constraint: If True, use the 45-day minimum between tests constraint
             
         Returns:
             Dictionary containing improvement thresholds for each region:
@@ -1151,7 +1235,7 @@ class MatrixGenerator:
         # Process each region
         for region in VALID_EXERCISES.keys():
             print(f"Calculating improvement thresholds for {region} region")
-            region_metrics = self.get_region_metrics(df, region)
+            region_metrics = self.get_region_metrics(df, region, use_time_constraint=use_time_constraint)
             
             # Skip if no metrics available
             if region_metrics[0] is None:
