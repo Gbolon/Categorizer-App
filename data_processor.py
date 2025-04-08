@@ -3,7 +3,6 @@ import numpy as np
 from exercise_constants import (
     VALID_EXERCISES,
     EXERCISE_DOMINANCE,
-    REQUIRED_RESISTANCE,
     is_valid_exercise_dominance,
     get_full_exercise_name,
     standardize_dominance
@@ -143,62 +142,9 @@ class DataProcessor:
 
         # Sort by user and timestamp
         processed_df = processed_df.sort_values(['user name', 'exercise createdAt'])
-        
-        # Apply resistance filtering if the column exists
-        if 'resistance' in processed_df.columns:
-            print("INFO: Applying resistance filtering...")
-            processed_df = self.filter_by_resistance(processed_df)
 
         return processed_df
 
     def get_user_list(self, df):
         """Get list of unique users in the dataset."""
         return sorted(df['user name'].unique())
-        
-    def filter_by_resistance(self, df):
-        """
-        Filter dataset to only include exercises performed at the required resistance values.
-        
-        Args:
-            df: DataFrame with processed exercise data
-            
-        Returns:
-            DataFrame containing only rows with the required resistance values for each exercise
-        """
-        # Create a copy to avoid modifying original data
-        filtered_df = df.copy()
-        
-        # Check if 'resistance' column exists
-        if 'resistance' not in filtered_df.columns:
-            print("WARNING: 'resistance' column not found. Cannot filter by resistance.")
-            return filtered_df
-            
-        # Convert resistance to numeric
-        filtered_df['resistance'] = pd.to_numeric(filtered_df['resistance'], errors='coerce')
-        
-        # Count rows before filtering
-        before_filter = len(filtered_df)
-        
-        # Filter rows based on required resistance for each exercise
-        valid_rows = []
-        for idx, row in filtered_df.iterrows():
-            exercise_name = row['exercise name']
-            if exercise_name in REQUIRED_RESISTANCE:
-                required_value = REQUIRED_RESISTANCE[exercise_name]
-                resistance = row['resistance']
-                
-                # Check if resistance matches the required value
-                if resistance == required_value:
-                    valid_rows.append(idx)
-            else:
-                # Keep rows for exercises not in REQUIRED_RESISTANCE dictionary
-                valid_rows.append(idx)
-                
-        # Apply the filter
-        filtered_df = filtered_df.loc[valid_rows].copy()
-        
-        # Count rows after filtering
-        after_filter = len(filtered_df)
-        print(f"DEBUG: Rows before/after resistance filtering: {before_filter}/{after_filter}")
-        
-        return filtered_df
