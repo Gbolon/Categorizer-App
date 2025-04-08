@@ -601,7 +601,10 @@ def main():
                     body_region_averages,
                     improvement_thresholds,
                     region_metrics,
-                    site_name=site_name
+                    site_name=site_name,
+                    min_days_between_tests=min_days_between_tests,
+                    original_avg_days=original_avg_days_between_tests,
+                    constrained_avg_days=constrained_avg_days_between_tests
                 )
                 st.download_button(
                     label="Download Comprehensive Report",

@@ -238,7 +238,8 @@ class ReportGenerator:
         return html_content.encode('utf-8')
         
     def generate_comprehensive_report(self, power_counts, accel_counts, power_transitions, accel_transitions,
-                                    body_region_averages, improvement_thresholds, region_metrics, site_name=""):
+                                    body_region_averages, improvement_thresholds, region_metrics, site_name="",
+                                    min_days_between_tests=7, original_avg_days=0, constrained_avg_days=0):
         """
         Generate a comprehensive HTML report with separate pages for each section.
         
@@ -251,6 +252,9 @@ class ReportGenerator:
             improvement_thresholds (dict): Dictionary of improvement thresholds by region
             region_metrics (dict): Dictionary of region metrics including underperformers
             site_name (str, optional): Name of the site/location for the report header
+            min_days_between_tests (int, optional): Minimum days required between test instances
+            original_avg_days (float, optional): Original average days between tests
+            constrained_avg_days (float, optional): Constrained average days between tests after applying min_days filter
             
         Returns:
             bytes: Comprehensive HTML report as bytes
@@ -258,13 +262,15 @@ class ReportGenerator:
         # Start building the HTML report
         html_content = self._generate_comprehensive_html(
             power_counts, accel_counts, power_transitions, accel_transitions,
-            body_region_averages, improvement_thresholds, region_metrics, site_name
+            body_region_averages, improvement_thresholds, region_metrics, site_name,
+            min_days_between_tests, original_avg_days, constrained_avg_days
         )
         
         return html_content.encode('utf-8')
         
     def _generate_comprehensive_html(self, power_counts, accel_counts, power_transitions, accel_transitions,
-                                   body_region_averages, improvement_thresholds, region_metrics, site_name=""):
+                                   body_region_averages, improvement_thresholds, region_metrics, site_name="",
+                                   min_days_between_tests=7, original_avg_days=0, constrained_avg_days=0):
         """
         Generate comprehensive HTML report content with separate pages.
         
@@ -277,6 +283,9 @@ class ReportGenerator:
             improvement_thresholds (dict): Dictionary of improvement thresholds by region
             region_metrics (dict): Dictionary of region metrics including underperformers
             site_name (str, optional): Name of the site/location for the report header
+            min_days_between_tests (int, optional): Minimum days required between test instances
+            original_avg_days (float, optional): Original average days between tests
+            constrained_avg_days (float, optional): Constrained average days between tests after applying min_days filter
             
         Returns:
             str: HTML content
@@ -455,10 +464,34 @@ class ReportGenerator:
         # Add site name to the overview if provided
         site_header = f"<div class='site-name'><h2>Site: {site_name}</h2></div>" if site_name else ""
         
+        # Format the time constraint information
+        time_constraint_info = ""
+        if min_days_between_tests > 0:
+            time_constraint_info = f"""
+            <div class="site-name" style="margin-bottom: 30px;">
+                <h3>Time Constraint Settings</h3>
+                <table class="table" style="width: 80%; margin: 10px auto;">
+                    <tr>
+                        <td><strong>Minimum Days Between Tests:</strong></td>
+                        <td>{min_days_between_tests} days</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Original Average Days Between Tests:</strong></td>
+                        <td>{original_avg_days:.1f} days</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Constrained Average Days Between Tests:</strong></td>
+                        <td>{constrained_avg_days:.1f} days</td>
+                    </tr>
+                </table>
+            </div>
+            """
+            
         overview_page = f"""
         <div id="overview" class="page container" style="display: none;">
             <h1>Exercise Development Overview</h1>
             {site_header}
+            {time_constraint_info}
             
             <h2>Power Development Distribution</h2>
         """
@@ -878,6 +911,11 @@ class ReportGenerator:
             
             <h2>Overall Development Score</h2>
             <p>Each test instance has one overall Power Development Score and one overall Acceleration Development Score per user, calculated as the average of all available exercise development scores for that test instance.</p>
+            
+            <h2>Time Constraint</h2>
+            <p>In order to ensure valid analysis of performance changes over time, a minimum time constraint is applied between measurements of the same exercise. This helps ensure that changes in performance reflect true development rather than day-to-day variability.</p>
+            <p>Test instances for the same exercise that don't meet the minimum days requirement are skipped in the analysis. This means that if a user has multiple tests for the same exercise within the minimum time window, only the earliest test is included in the analysis.</p>
+            <p>The minimum days between tests setting is reflected in the Overview page, along with both the original average days between tests (before filtering) and the constrained average days (after applying the minimum days filter).</p>
             
             <p style="margin-top: 30px;">Please proceed to the Overview page to view the report results.</p>
         </div>
