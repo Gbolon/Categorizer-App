@@ -1290,13 +1290,15 @@ class ReportGenerator:
         for region, data in body_region_averages.items():
             body_region_section += f"<h3>{region} Region</h3>"
             
-            if 'power_averages' in data and not data['power_averages'].empty:
+            # Check if power_averages exists and is not empty
+            if 'power_averages' in data and isinstance(data['power_averages'], pd.Series) and not data['power_averages'].empty:
                 # Format values to 2 decimal places
                 formatted_power = data['power_averages'].map(lambda x: f"{x:.2f}%" if not pd.isna(x) else "N/A")
                 body_region_section += "<h4>Power Development (% of Goal)</h4>"
                 body_region_section += formatted_power.to_frame().to_html(classes='table', index=True)
             
-            if 'accel_averages' in data and not data['accel_averages'].empty:
+            # Check if accel_averages exists and is not empty
+            if 'accel_averages' in data and isinstance(data['accel_averages'], pd.Series) and not data['accel_averages'].empty:
                 # Format values to 2 decimal places
                 formatted_accel = data['accel_averages'].map(lambda x: f"{x:.2f}%" if not pd.isna(x) else "N/A")
                 body_region_section += "<h4>Acceleration Development (% of Goal)</h4>"
