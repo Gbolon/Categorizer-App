@@ -1080,7 +1080,7 @@ class ReportGenerator:
                                         min_days_between_tests=7, original_avg_days=0, constrained_avg_days=0, 
                                         resistance_filtering=True):
         """
-        Generate a comprehensive PDF report by converting the HTML report to PDF.
+        Generate a comprehensive PDF report with a structured layout and controlled page breaks.
         
         Args:
             power_counts (DataFrame): Power development distribution
@@ -1099,15 +1099,330 @@ class ReportGenerator:
         Returns:
             bytes: PDF report as bytes
         """
-        # Generate the HTML content first
-        html_content = self._generate_comprehensive_html(
-            power_counts, accel_counts, power_transitions, accel_transitions,
-            body_region_averages, improvement_thresholds, region_metrics, site_name,
-            min_days_between_tests, original_avg_days, constrained_avg_days,
-            resistance_filtering
-        )
+        # Set resistance filtering status based on the parameter
+        resistance_status = "ENABLED" if resistance_filtering else "DISABLED"
+        if resistance_filtering:
+            resistance_message = "The data in this report has been filtered to only include exercises performed at the standard resistance values shown below."
+        else:
+            resistance_message = "The data in this report includes all exercise instances regardless of resistance settings. Exercise comparisons may be less accurate."
+            
+        # Create CSS styles optimized for PDF output
+        css_styles = """
+        <style>
+            @page {
+                size: letter;
+                margin: 2cm;
+                @top-center {
+                    content: "Exercise Performance Analysis";
+                    font-size: 10pt;
+                }
+                @bottom-center {
+                    content: "Page " counter(page) " of " counter(pages);
+                    font-size: 10pt;
+                }
+            }
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 12pt;
+                color: #333;
+                line-height: 1.5;
+            }
+            h1 {
+                font-size: 20pt;
+                color: #2c3e50;
+                margin-top: 0;
+                border-bottom: 1px solid #2c3e50;
+                padding-bottom: 10px;
+            }
+            h2 {
+                font-size: 16pt;
+                color: #2c3e50;
+                margin-top: 20px;
+                margin-bottom: 10px;
+            }
+            h3 {
+                font-size: 14pt;
+                color: #2c3e50;
+                margin-top: 15px;
+                margin-bottom: 10px;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 15px 0;
+                font-size: 10pt;
+            }
+            th, td {
+                padding: 8px;
+                border: 1px solid #ddd;
+                text-align: left;
+            }
+            th {
+                background-color: #2c3e50;
+                color: white;
+            }
+            tr:nth-child(even) {
+                background-color: #f2f2f2;
+            }
+            .section {
+                margin-bottom: 20px;
+            }
+            /* Transition table cell colors */
+            .diagonal {
+                background-color: #d4e6f1 !important; /* Pale Blue for no change */
+            }
+            .above-diagonal {
+                background-color: #f5b7b1 !important; /* Pale Red for regression */
+            }
+            .below-diagonal {
+                background-color: #abebc6 !important; /* Pale Green for improvement */
+            }
+            /* Positive/negative values */
+            .positive {
+                color: green;
+            }
+            .negative {
+                color: red;
+            }
+            .info-box {
+                background-color: #f8f9fa;
+                border: 1px solid #ddd;
+                padding: 10px;
+                margin: 15px 0;
+                border-radius: 5px;
+                font-size: 10pt;
+            }
+            .footer {
+                text-align: center;
+                font-size: 10pt;
+                color: #777;
+                margin-top: 30px;
+            }
+        </style>
+        """
+
+        # Generate each section of the report with appropriate page breaks
+        
+        # 1. Title Page and Overview
+        title_page = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Exercise Performance Analysis Report</title>
+            {css_styles}
+        </head>
+        <body>
+            <div class="section">
+                <h1>Exercise Performance Analysis Report</h1>
+                <h2>{site_name}</h2>
+                <p>Report Date: {pd.Timestamp.now().strftime("%B %d, %Y")}</p>
+                
+                <div class="info-box">
+                    <h3>Analysis Configuration</h3>
+                    <p><strong>Resistance Standardization:</strong> {resistance_status}</p>
+                    <p>{resistance_message}</p>
+                    <p><strong>Time Constraint:</strong> Minimum {min_days_between_tests} days between measurements of the same exercise</p>
+                    <p><strong>Original Average Days Between Tests:</strong> {original_avg_days:.2f} days</p>
+                    <p><strong>After Time Constraint Average:</strong> {constrained_avg_days:.2f} days</p>
+                </div>
+                
+                <h3>How Test Instances are Compiled</h3>
+                <p>Test instances are chronologically ordered collections of exercise data. Each exercise is assigned to the earliest available test instance where:</p>
+                <ol>
+                    <li>The exercise hasn't been measured in a previous test instance, or</li>
+                    <li>Sufficient time ({min_days_between_tests} days) has passed since the last measurement of the same exercise</li>
+                </ol>
+                <p>This approach ensures that development tracking is based on meaningful changes over time rather than day-to-day fluctuations.</p>
+            </div>
+            
+            <div class="page-break"></div>
+        """
+        
+        # 2. Distribution Overview
+        distribution_section = f"""
+            <div class="section">
+                <h2>Development Distribution Overview</h2>
+                
+                <h3>Power Development Distribution</h3>
+                {power_counts.to_html(classes='table', index=True)}
+                
+                <h3>Acceleration Development Distribution</h3>
+                {accel_counts.to_html(classes='table', index=True)}
+            </div>
+            
+            <div class="page-break"></div>
+        """
+        
+        # 3. Transition Analysis
+        transitions_section = """
+            <div class="section">
+                <h2>Transition Analysis</h2>
+                <p>Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.</p>
+        """
+        
+        # Power transitions
+        transitions_section += "<h3>Power Transitions</h3>"
+        for period, matrix in power_transitions.items():
+            transitions_section += f"<h4>Period: {period}</h4>"
+            transitions_section += matrix.to_html(classes='table', index=True)
+        
+        # Acceleration transitions
+        transitions_section += "<h3>Acceleration Transitions</h3>"
+        for period, matrix in accel_transitions.items():
+            transitions_section += f"<h4>Period: {period}</h4>"
+            transitions_section += matrix.to_html(classes='table', index=True)
+            
+        transitions_section += """
+            </div>
+            
+            <div class="page-break"></div>
+        """
+        
+        # 4. Body Region Analysis
+        body_region_section = """
+            <div class="section">
+                <h2>Body Region Analysis</h2>
+        """
+        
+        for region, data in body_region_averages.items():
+            body_region_section += f"<h3>{region} Region</h3>"
+            
+            if 'power_averages' in data and not data['power_averages'].empty:
+                # Format values to 2 decimal places
+                formatted_power = data['power_averages'].map(lambda x: f"{x:.2f}%" if not pd.isna(x) else "N/A")
+                body_region_section += "<h4>Power Development (% of Goal)</h4>"
+                body_region_section += formatted_power.to_frame().to_html(classes='table', index=True)
+            
+            if 'accel_averages' in data and not data['accel_averages'].empty:
+                # Format values to 2 decimal places
+                formatted_accel = data['accel_averages'].map(lambda x: f"{x:.2f}%" if not pd.isna(x) else "N/A")
+                body_region_section += "<h4>Acceleration Development (% of Goal)</h4>"
+                body_region_section += formatted_accel.to_frame().to_html(classes='table', index=True)
+                
+        body_region_section += """
+            </div>
+            
+            <div class="page-break"></div>
+        """
+        
+        # 5. Improvement Thresholds
+        thresholds_section = """
+            <div class="section">
+                <h2>Improvement Thresholds</h2>
+                <p>These threshold values represent the average percentage change between tests for all users. They are used to identify underperforming users relative to the group average.</p>
+        """
+        
+        for region, thresholds in improvement_thresholds.items():
+            thresholds_section += f"<h3>{region} Region</h3>"
+            thresholds_data = pd.DataFrame({
+                'Metric': ['Power (Test 1 to 2)', 'Power (Test 2 to 3)', 'Acceleration (Test 1 to 2)', 'Acceleration (Test 2 to 3)'],
+                'Threshold': [
+                    f"{thresholds.get('power_1_to_2', 0):.2f}%",
+                    f"{thresholds.get('power_2_to_3', 0):.2f}%",
+                    f"{thresholds.get('accel_1_to_2', 0):.2f}%",
+                    f"{thresholds.get('accel_2_to_3', 0):.2f}%"
+                ]
+            })
+            thresholds_section += thresholds_data.to_html(classes='table', index=False)
+            
+        thresholds_section += """
+            </div>
+            
+            <div class="page-break"></div>
+        """
+        
+        # 6. Underperforming Users
+        underperformers_section = """
+            <div class="section">
+                <h2>Underperforming Users</h2>
+                <p>The following users showed below-average improvement compared to the group thresholds.</p>
+        """
+        
+        for region, metrics in region_metrics.items():
+            if 'power_underperformers_1_to_2' in metrics or 'accel_underperformers_1_to_2' in metrics:
+                underperformers_section += f"<h3>{region} Region</h3>"
+                
+                # Test 1 to 2 Underperformers
+                if 'power_underperformers_1_to_2' in metrics or 'accel_underperformers_1_to_2' in metrics:
+                    underperformers_section += "<h4>Test 1 to Test 2</h4>"
+                    
+                    power_users = metrics.get('power_underperformers_1_to_2', [])
+                    accel_users = metrics.get('accel_underperformers_1_to_2', [])
+                    
+                    # Create a combined list of underperformers
+                    all_users = set()
+                    for user, _ in power_users:
+                        all_users.add(user)
+                    for user, _ in accel_users:
+                        all_users.add(user)
+                    
+                    # Create a DataFrame for display
+                    user_data = []
+                    for user in all_users:
+                        power_pct = next((f"{pct:.2f}%" for u, pct in power_users if u == user), "")
+                        accel_pct = next((f"{pct:.2f}%" for u, pct in accel_users if u == user), "")
+                        
+                        user_data.append({
+                            'Name': user,
+                            'Power': power_pct,
+                            'Acceleration': accel_pct
+                        })
+                    
+                    if user_data:
+                        df_users = pd.DataFrame(user_data)
+                        underperformers_section += df_users.to_html(classes='table', index=False)
+                    else:
+                        underperformers_section += "<p>No underperforming users identified for this period.</p>"
+                
+                # Test 2 to 3 Underperformers
+                if 'power_underperformers_2_to_3' in metrics or 'accel_underperformers_2_to_3' in metrics:
+                    underperformers_section += "<h4>Test 2 to Test 3</h4>"
+                    
+                    power_users = metrics.get('power_underperformers_2_to_3', [])
+                    accel_users = metrics.get('accel_underperformers_2_to_3', [])
+                    
+                    # Create a combined list of underperformers
+                    all_users = set()
+                    for user, _ in power_users:
+                        all_users.add(user)
+                    for user, _ in accel_users:
+                        all_users.add(user)
+                    
+                    # Create a DataFrame for display
+                    user_data = []
+                    for user in all_users:
+                        power_pct = next((f"{pct:.2f}%" for u, pct in power_users if u == user), "")
+                        accel_pct = next((f"{pct:.2f}%" for u, pct in accel_users if u == user), "")
+                        
+                        user_data.append({
+                            'Name': user,
+                            'Power': power_pct,
+                            'Acceleration': accel_pct
+                        })
+                    
+                    if user_data:
+                        df_users = pd.DataFrame(user_data)
+                        underperformers_section += df_users.to_html(classes='table', index=False)
+                    else:
+                        underperformers_section += "<p>No underperforming users identified for this period.</p>"
+        
+        underperformers_section += """
+            </div>
+            
+            <div class="footer">
+                <p>Generated on {timestamp} • Exercise Performance Analysis Tool</p>
+            </div>
+        </body>
+        </html>
+        """.format(timestamp=pd.Timestamp.now().strftime("%B %d, %Y at %I:%M %p"))
+        
+        # Combine all sections
+        complete_html = title_page + distribution_section + transitions_section + body_region_section + thresholds_section + underperformers_section
         
         # Convert the HTML to PDF
-        pdf_content = self.generate_pdf_from_html(html_content)
+        pdf_content = self.generate_pdf_from_html(complete_html)
         
         return pdf_content
