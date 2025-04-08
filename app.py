@@ -467,7 +467,13 @@ def main():
                 matrices = matrix_generator.generate_user_matrices(
                     processed_df, selected_user, min_days=min_days_between_tests)
 
-                power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
+                # The matrices unpacking needs to handle both old and new return formats
+                if len(matrices) == 8:
+                    # New format with user_data as first return value
+                    user_data, power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
+                else:
+                    # Original format with 7 return values
+                    power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
 
                 # Special handling to ensure Vertical Jump is visible
                 if 'Vertical Jump (Countermovement)' not in power_matrix.index:
