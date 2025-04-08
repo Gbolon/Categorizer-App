@@ -107,11 +107,6 @@ def main():
             value=7,
             help="Minimum number of days required between test instances for the same exercise"
         )
-        apply_resistance_filtering = st.checkbox(
-            "Apply Resistance Standardization",
-            value=True,
-            help="Filter data to only include exercises performed at standard resistance values"
-        )
 
     if uploaded_file is not None:
         try:
@@ -129,38 +124,28 @@ def main():
                 return
 
             # Process data
-            processed_df = data_processor.preprocess_data(df, apply_resistance_filtering=apply_resistance_filtering)
+            processed_df = data_processor.preprocess_data(df)
             
             # Show resistance filtering information
             with st.expander("Data Processing Information", expanded=True):
-                if apply_resistance_filtering:
-                    st.info("""
-                    **Resistance Standardization: ENABLED**
-                    
-                    The dataset is being filtered to only include exercise movements performed at these standard resistance values:
-                    - Chest Press (One Hand): 12 lbs
-                    - Horizontal Row (One Hand): 12 lbs
-                    - Biceps Curl (One Hand): 6 lbs
-                    - Triceps Extension (One Hand): 6 lbs
-                    - PNF D2 Flexion: 6 lbs
-                    - PNF D2 Extension: 6 lbs
-                    - Straight Arm Trunk Rotation: 12 lbs
-                    - Lateral Bound: 6 lbs
-                    - Shot Put (Countermovement): 18 lbs
-                    - Vertical Jump (Countermovement): 6 lbs
-                    
-                    Only exercise instances performed at these exact resistance values will be included in the analysis.
-                    If the dataset doesn't include a 'resistance' column, this filtering won't be applied.
-                    """)
-                else:
-                    st.warning("""
-                    **Resistance Standardization: DISABLED**
-                    
-                    The dataset is NOT being filtered by resistance values. All exercise data will be included regardless of resistance setting.
-                    
-                    Note: This may affect exercise comparability since different resistance settings can significantly impact performance metrics.
-                    For most accurate analysis, consider enabling resistance standardization.
-                    """)
+                st.info("""
+                **Resistance Filtering Applied**
+                
+                This app now automatically filters exercise data to only include movements performed at specific required resistance values:
+                - Chest Press (One Hand): 12 lbs
+                - Horizontal Row (One Hand): 12 lbs
+                - Biceps Curl (One Hand): 6 lbs
+                - Triceps Extension (One Hand): 6 lbs
+                - PNF D2 Flexion: 6 lbs
+                - PNF D2 Extension: 6 lbs
+                - Straight Arm Trunk Rotation: 12 lbs
+                - Lateral Bound: 6 lbs
+                - Shot Put (Countermovement): 18 lbs
+                - Vertical Jump (Countermovement): 6 lbs
+                
+                Only exercise instances performed at these exact resistance values will be included in the analysis.
+                If the dataset doesn't include a 'resistance' column, this filtering won't be applied.
+                """)
 
             # Show data preview in collapsed expander
             with st.expander("Data Preview", expanded=False):
@@ -660,8 +645,7 @@ def main():
                     site_name=site_name,
                     min_days_between_tests=min_days_between_tests,
                     original_avg_days=original_avg_days_between_tests,
-                    constrained_avg_days=constrained_avg_days_between_tests,
-                    resistance_filtering=apply_resistance_filtering
+                    constrained_avg_days=constrained_avg_days_between_tests
                 )
                 st.download_button(
                     label="Download Comprehensive Report",

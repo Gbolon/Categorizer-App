@@ -239,8 +239,7 @@ class ReportGenerator:
         
     def generate_comprehensive_report(self, power_counts, accel_counts, power_transitions, accel_transitions,
                                     body_region_averages, improvement_thresholds, region_metrics, site_name="",
-                                    min_days_between_tests=7, original_avg_days=0, constrained_avg_days=0, 
-                                    resistance_filtering=True):
+                                    min_days_between_tests=7, original_avg_days=0, constrained_avg_days=0):
         """
         Generate a comprehensive HTML report with separate pages for each section.
         
@@ -256,7 +255,6 @@ class ReportGenerator:
             min_days_between_tests (int, optional): Minimum days required between test instances
             original_avg_days (float, optional): Original average days between tests
             constrained_avg_days (float, optional): Constrained average days between tests after applying min_days filter
-            resistance_filtering (bool, optional): Whether resistance standardization was applied
             
         Returns:
             bytes: Comprehensive HTML report as bytes
@@ -265,16 +263,14 @@ class ReportGenerator:
         html_content = self._generate_comprehensive_html(
             power_counts, accel_counts, power_transitions, accel_transitions,
             body_region_averages, improvement_thresholds, region_metrics, site_name,
-            min_days_between_tests, original_avg_days, constrained_avg_days,
-            resistance_filtering
+            min_days_between_tests, original_avg_days, constrained_avg_days
         )
         
         return html_content.encode('utf-8')
         
     def _generate_comprehensive_html(self, power_counts, accel_counts, power_transitions, accel_transitions,
                                    body_region_averages, improvement_thresholds, region_metrics, site_name="",
-                                   min_days_between_tests=7, original_avg_days=0, constrained_avg_days=0,
-                                   resistance_filtering=True):
+                                   min_days_between_tests=7, original_avg_days=0, constrained_avg_days=0):
         """
         Generate comprehensive HTML report content with separate pages.
         
@@ -491,20 +487,11 @@ class ReportGenerator:
             </div>
             """
             
-        # Format the resistance standardization information
-        resistance_info = f"""
-        <div class="site-name" style="margin-bottom: 30px;">
-            <h3>Resistance Standardization: <span style="color: {'green' if resistance_filtering else 'orange'};">{resistance_status}</span></h3>
-            <p>{resistance_message}</p>
-        </div>
-        """ if resistance_filtering is not None else ""
-            
         overview_page = f"""
         <div id="overview" class="page container" style="display: none;">
             <h1>Exercise Development Overview</h1>
             {site_header}
             {time_constraint_info}
-            {resistance_info}
             
             <h2>Power Development Distribution</h2>
         """
@@ -836,14 +823,7 @@ class ReportGenerator:
         
         # Combine all pages
         # INFORMATION PAGE
-        # Set resistance filtering status based on the parameter
-        resistance_status = "ENABLED" if resistance_filtering else "DISABLED"
-        if resistance_filtering:
-            resistance_message = "The data in this report has been filtered to only include exercises performed at the standard resistance values shown below."
-        else:
-            resistance_message = "The data in this report includes all exercise instances regardless of resistance settings. Exercise comparisons may be less accurate."
-            
-        info_page = f"""
+        info_page = """
         <div id="info-page" class="page container" style="display: none;">
             <h1>Exercise Movements and Assessment Information</h1>
             
@@ -938,13 +918,7 @@ class ReportGenerator:
             <p>The minimum days between tests setting is reflected in the Overview page, along with both the original average days between tests (before filtering) and the constrained average days (after applying the minimum days filter).</p>
             
             <h2>Resistance Standardization</h2>
-            <p>To ensure accurate and comparable measurements across users, each exercise should be performed with a standardized resistance value (in pounds).</p>
-            
-            <div style='padding: 10px; border-left: 4px solid #2c3e50; background-color: #f8f9fa; margin-bottom: 20px;'>
-                <p><strong>Resistance Standardization Status: {resistance_status}</strong></p>
-                <p>{resistance_message}</p>
-            </div>
-            
+            <p>To ensure accurate and comparable measurements across users, each exercise is performed with a standardized resistance value (in pounds):</p>
             <table class="table">
                 <thead>
                     <tr>
