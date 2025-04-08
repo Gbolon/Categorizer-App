@@ -664,70 +664,18 @@ def main():
                     resistance_filtering=apply_resistance_filtering
                 )
                 st.download_button(
-                    label="Download Comprehensive Report (HTML)",
+                    label="Download Comprehensive Report",
                     data=comprehensive_report,
                     file_name="comprehensive_report.html",
                     mime="text/html",
                 )
-                
-                # Generate and provide PDF download option
-                pdf_report = report_generator.generate_comprehensive_pdf_report(
-                    power_counts,
-                    accel_counts,
-                    power_transitions_detail,
-                    accel_transitions_detail,
-                    body_region_averages,
-                    improvement_thresholds,
-                    region_metrics,
-                    site_name=site_name,
-                    min_days_between_tests=min_days_between_tests,
-                    original_avg_days=original_avg_days_between_tests,
-                    constrained_avg_days=constrained_avg_days_between_tests,
-                    resistance_filtering=apply_resistance_filtering
-                )
-                
-                # Uncomment if you need to debug transition matrices
-                # Debug output for transition data
-                # if st.checkbox("Show Transition Matrix Debug Data", value=False):
-                #     st.write("### Transition Matrix Details")
-                #     st.write("Power Transitions:")
-                #     if isinstance(power_transitions_detail, dict) and len(power_transitions_detail) > 0:
-                #         for period, matrix in power_transitions_detail.items():
-                #             if isinstance(matrix, pd.DataFrame) and not matrix.empty:
-                #                 st.write(f"Period: {period}")
-                #                 st.dataframe(matrix)
-                #             else:
-                #                 st.write(f"Period: {period} - No transitions data available")
-                #     else:
-                #         st.write("No power transition data available")
-                #     
-                #     st.write("Acceleration Transitions:")
-                #     if isinstance(accel_transitions_detail, dict) and len(accel_transitions_detail) > 0:
-                #         for period, matrix in accel_transitions_detail.items():
-                #             if isinstance(matrix, pd.DataFrame) and not matrix.empty:
-                #                 st.write(f"Period: {period}")
-                #                 st.dataframe(matrix)
-                #             else:
-                #                 st.write(f"Period: {period} - No transitions data available")
-                #     else:
-                #         st.write("No acceleration transition data available")
-                
-                st.download_button(
-                    label="Download Comprehensive Report (PDF)",
-                    data=pdf_report,
-                    file_name="comprehensive_report.pdf",
-                    mime="application/pdf",
-                )
             else:
-                # Display disabled buttons with message
-                st.info("Please enter a site name to enable the report downloads")
-                st.button("Download Comprehensive Report (HTML)", disabled=True)
-                st.button("Download Comprehensive Report (PDF)", disabled=True)
+                # Display disabled button with message
+                st.info("Please enter a site name to enable the report download")
+                st.button("Download Comprehensive Report", disabled=True)
             
             # Add an explanation about the report
-            st.write("**Comprehensive Report**: Includes all analysis data with site identification and detailed region-specific metrics")
-            st.write("- **HTML Version**: Features interactive navigation between pages for better user experience")
-            st.write("- **PDF Version**: Provides a static, print-friendly document ideal for sharing and archiving")
+            st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")
             
             # Future features info
             with st.expander("Upcoming Features", expanded=False):
