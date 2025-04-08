@@ -125,27 +125,6 @@ def main():
 
             # Process data
             processed_df = data_processor.preprocess_data(df)
-            
-            # Show resistance filtering information
-            with st.expander("Data Processing Information", expanded=True):
-                st.info("""
-                **Resistance Filtering Applied**
-                
-                This app now automatically filters exercise data to only include movements performed at specific required resistance values:
-                - Chest Press (One Hand): 12 lbs
-                - Horizontal Row (One Hand): 12 lbs
-                - Biceps Curl (One Hand): 6 lbs
-                - Triceps Extension (One Hand): 6 lbs
-                - PNF D2 Flexion: 6 lbs
-                - PNF D2 Extension: 6 lbs
-                - Straight Arm Trunk Rotation: 12 lbs
-                - Lateral Bound: 6 lbs
-                - Shot Put (Countermovement): 18 lbs
-                - Vertical Jump (Countermovement): 6 lbs
-                
-                Only exercise instances performed at these exact resistance values will be included in the analysis.
-                If the dataset doesn't include a 'resistance' column, this filtering won't be applied.
-                """)
 
             # Show data preview in collapsed expander
             with st.expander("Data Preview", expanded=False):
@@ -598,26 +577,6 @@ def main():
             # Report Generator Section
             st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
             st.write("Generate comprehensive reports with interactive analysis")
-            
-            # How-To Section
-            with st.expander("How Test Instances are Compiled", expanded=True):
-                st.markdown("""
-                ## How Test Instances are Compiled
-
-                Test instances represent chronological snapshots of a user's performance across multiple exercises. Here's how they're organized:
-
-                1. **Chronological Ordering**: Test instances are filled chronologically rather than strictly by date. The earliest recorded exercise data goes into Test 1, the next into Test 2, and so on.
-
-                2. **Exercise Backfilling**: If an exercise is missing from earlier test instances but appears in later ones, the data is not backfilled. Each test instance only contains exercises that were actually performed during that period.
-
-                3. **Time Constraints**: To ensure meaningful analysis, a minimum time gap is required between measurements of the same exercise. If multiple tests for the same exercise occur within this timeframe, only the earliest one is included.
-
-                4. **Resistance Standardization**: Only exercises performed at the specific required resistance values are included in the analysis to ensure comparability.
-
-                5. **Development Scores**: For each test instance, both power and acceleration metrics are compiled, and overall development scores are calculated as averages across all exercises in that instance.
-
-                The reports generated from these test instances show how users progress through different development brackets over time, allowing you to track improvement patterns at both individual and group levels.
-                """)
             
             # Comprehensive report section
             st.subheader("Comprehensive Interactive Report")

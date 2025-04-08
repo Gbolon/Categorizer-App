@@ -20,20 +20,6 @@ VALID_EXERCISES = {
     ]
 }
 
-# Dictionary mapping exercises to their required resistance values (in pounds)
-REQUIRED_RESISTANCE = {
-    'Chest Press (One Hand)': 12,
-    'Horizontal Row (One Hand)': 12,
-    'Biceps Curl (One Hand)': 6,
-    'Triceps Extension (One Hand)': 6,
-    'PNF D2 Flexion': 6,
-    'PNF D2 Extension': 6,
-    'Straight Arm Trunk Rotation': 12,
-    'Lateral Bound': 6,
-    'Shot Put (Countermovement)': 18,
-    'Vertical Jump (Countermovement)': 6
-}
-
 # Define which exercises require dominance and valid dominance values
 EXERCISE_DOMINANCE = {
     'Straight Arm Trunk Rotation': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
