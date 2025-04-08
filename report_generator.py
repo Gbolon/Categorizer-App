@@ -499,12 +499,29 @@ class ReportGenerator:
             """
             
         # Format the resistance standardization information
-        resistance_info = f"""
-        <div class="site-name" style="margin-bottom: 30px;">
-            <h3>Resistance Standardization: <span style="color: {'green' if resistance_filtering else 'orange'};">{resistance_status}</span></h3>
-            <p>{resistance_message}</p>
-        </div>
-        """ if resistance_filtering is not None else ""
+        if resistance_filtering is not None:
+            check_symbol = '✓' if resistance_filtering else ''
+            resistance_info = f"""
+            <div class="site-name" style="margin-bottom: 30px;">
+                <h3>Resistance Standardization</h3>
+                <table class="table" style="width: 80%; margin: 10px auto;">
+                    <tr>
+                        <td style="width: 60%;"><strong>Status:</strong></td>
+                        <td style="width: 40%;">
+                            <span style="color: {'green' if resistance_filtering else 'orange'}; font-weight: bold; display: inline-block; margin-right: 10px;">{resistance_status}</span>
+                            <span style="display: inline-block; width: 18px; height: 18px; border: 2px solid {'green' if resistance_filtering else 'gray'}; background-color: {'#abebc6' if resistance_filtering else 'white'}; border-radius: 3px; vertical-align: middle; text-align: center;">
+                                {check_symbol}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">{resistance_message}</td>
+                    </tr>
+                </table>
+            </div>
+            """
+        else:
+            resistance_info = ""
             
         overview_page = f"""
         <div id="overview" class="page container" style="display: none;">
@@ -845,6 +862,7 @@ class ReportGenerator:
         # INFORMATION PAGE
         # Set resistance filtering status based on the parameter right before using it
         resistance_status = "ENABLED" if resistance_filtering else "DISABLED"
+        check_symbol = '✓' if resistance_filtering else ''
         if resistance_filtering:
             resistance_message = "The data in this report has been filtered to only include exercises performed at the standard resistance values shown below."
         else:
@@ -853,6 +871,19 @@ class ReportGenerator:
         info_page = f"""
         <div id="info-page" class="page container" style="display: none;">
             <h1>Exercise Movements and Assessment Information</h1>
+            
+            <h2>How Test Instances are Compiled</h2>
+            <div class="site-name" style="margin-bottom: 20px;">
+                <p>Test instances are chronological compilations of exercise data organized into groups (Test 1, Test 2, etc.) to track performance over time:</p>
+                <ol style="margin-left: 20px;">
+                    <li>Exercise data is sorted chronologically by Date/Time for each user.</li>
+                    <li>The earliest record for each exercise is assigned to the earliest available test instance slot (Test 1).</li>
+                    <li>Subsequent records of the same exercise are assigned to the next available test instance (Test 2, Test 3, etc.).</li>
+                    <li>Different exercises may be tested on different dates within the same test instance.</li>
+                    <li>If the minimum days between tests constraint is enabled, subsequent measurements of the same exercise that don't meet this requirement are skipped.</li>
+                </ol>
+                <p>This approach allows for proper tracking of individual progress across multiple exercises even when they aren't all measured on the same day.</p>
+            </div>
             
             <p>This report analyzes performance data for the following exercise movements, organized by body region. Please review this information before examining the results.</p>
             
@@ -947,10 +978,20 @@ class ReportGenerator:
             <h2>Resistance Standardization</h2>
             <p>To ensure accurate and comparable measurements across users, each exercise should be performed with a standardized resistance value (in pounds).</p>
             
-            <div style='padding: 10px; border-left: 4px solid #2c3e50; background-color: #f8f9fa; margin-bottom: 20px;'>
-                <p><strong>Resistance Standardization Status: {resistance_status}</strong></p>
-                <p>{resistance_message}</p>
-            </div>
+            <table class="table" style="width: 80%; margin: 10px auto;">
+                <tr>
+                    <td style="width: 60%;"><strong>Status:</strong></td>
+                    <td style="width: 40%;">
+                        <span style="color: {'green' if resistance_filtering else 'orange'}; font-weight: bold; display: inline-block; margin-right: 10px;">{resistance_status}</span>
+                        <span style="display: inline-block; width: 18px; height: 18px; border: 2px solid {'green' if resistance_filtering else 'gray'}; background-color: {'#abebc6' if resistance_filtering else 'white'}; border-radius: 3px; vertical-align: middle; text-align: center;">
+                            {check_symbol}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">{resistance_message}</td>
+                </tr>
+            </table>
             
             <table class="table">
                 <thead>
