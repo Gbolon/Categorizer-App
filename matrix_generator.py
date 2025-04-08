@@ -333,6 +333,9 @@ class MatrixGenerator:
         accel_matrix = {}
         test_instances = {}
         
+        # Minimum time between tests in days
+        MIN_DAYS_BETWEEN_TESTS = 45
+        
         # Explicitly track if Vertical Jump is present for this user
         has_vertical_jump = False
 
@@ -365,36 +368,77 @@ class MatrixGenerator:
             for _, row in press_pull_exercises.iterrows():
                 print(f"Debug: Exercise: {row['full_exercise_name']}, Power: {row['power - high']}, Accel: {row['acceleration - high']}")
 
-        # Process each exercise chronologically and keep power/acceleration paired
+        # Group exercises by type for time-based filtering
+        exercise_groups = {}
+        
+        # Process and group all exercises first
         for _, row in user_data.iterrows():
             exercise = row['full_exercise_name']
-            power_value = row['power - high']
-            accel_value = row['acceleration - high']
             
             # For Vertical Jump, ensure we use the standard name without dominance
             if 'Vertical Jump' in exercise:
                 # Normalize to use just the base name for Vertical Jump
                 exercise = 'Vertical Jump (Countermovement)'
                 has_vertical_jump = True  # Mark that user has Vertical Jump exercises
-                print(f"Debug: Standardizing Vertical Jump name to: {exercise}")
                 
             # For Shot Put, ensure we use the standard name
             if 'Shot Put' in exercise:
                 # Normalize to use just the base name for Shot Put
                 exercise = 'Shot Put (Countermovement)'
-                print(f"DEBUG: Standardizing Shot Put name to: {exercise}")
             
-            # Debug Shot Put and Vertical Jump exercises
-            if 'Shot Put' in exercise:
-                print(f"DEBUG: Processing Shot Put for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
-            elif 'Vertical Jump' in exercise:
-                print(f"Debug: Processing Vertical Jump for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
-            # Debug Press/Pull exercises
-            elif 'Horizontal Row' in exercise or 'Chest Press' in exercise:
-                print(f"Debug: Processing Press/Pull for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
-
-            # Only process if both power and acceleration are present
-            if pd.notna(power_value) and pd.notna(accel_value):
+            # Initialize the exercise group if needed
+            if exercise not in exercise_groups:
+                exercise_groups[exercise] = []
+            
+            # Add the exercise data to its group
+            exercise_groups[exercise].append({
+                'exercise': exercise,
+                'power_value': row['power - high'],
+                'accel_value': row['acceleration - high'],
+                'timestamp': row['exercise createdAt']
+            })
+        
+        # Process each exercise group with time filtering
+        for exercise, instances in exercise_groups.items():
+            # Skip if no instances
+            if not instances:
+                continue
+                
+            # Skip if both power and acceleration are not present
+            valid_instances = [inst for inst in instances 
+                             if pd.notna(inst['power_value']) and pd.notna(inst['accel_value'])]
+            
+            if not valid_instances:
+                continue
+                
+            # Sort by timestamp
+            valid_instances.sort(key=lambda x: x['timestamp'])
+            
+            # Apply minimum time filter
+            filtered_instances = []
+            last_timestamp = None
+            
+            for instance in valid_instances:
+                if last_timestamp is None or (instance['timestamp'] - last_timestamp).days >= MIN_DAYS_BETWEEN_TESTS:
+                    filtered_instances.append(instance)
+                    last_timestamp = instance['timestamp']
+                else:
+                    print(f"Debug: Skipping test for {exercise} on {instance['timestamp']} - less than {MIN_DAYS_BETWEEN_TESTS} days since last test")
+            
+            # Now add the filtered instances to the matrices
+            for instance in filtered_instances:
+                exercise = instance['exercise']
+                power_value = instance['power_value']
+                accel_value = instance['accel_value']
+                
+                # Debug info
+                if 'Shot Put' in exercise:
+                    print(f"DEBUG: Processing Shot Put for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
+                elif 'Vertical Jump' in exercise:
+                    print(f"Debug: Processing Vertical Jump for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
+                elif 'Horizontal Row' in exercise or 'Chest Press' in exercise:
+                    print(f"Debug: Processing Press/Pull for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
+                
                 # Find earliest available test instance for this exercise
                 target_instance = 1
                 while target_instance in test_instances and exercise in test_instances[target_instance]:
