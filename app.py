@@ -686,29 +686,31 @@ def main():
                     resistance_filtering=apply_resistance_filtering
                 )
                 
+                # Uncomment if you need to debug transition matrices
                 # Debug output for transition data
-                st.write("### DEBUG - Transitions Data")
-                st.write("Power Transitions:")
-                if isinstance(power_transitions_detail, dict) and len(power_transitions_detail) > 0:
-                    for period, matrix in power_transitions_detail.items():
-                        if isinstance(matrix, pd.DataFrame) and not matrix.empty:
-                            st.write(f"Period: {period}")
-                            st.dataframe(matrix)
-                        else:
-                            st.write(f"Period: {period} - Empty or invalid matrix")
-                else:
-                    st.write("No power transition data available")
-                
-                st.write("Acceleration Transitions:")
-                if isinstance(accel_transitions_detail, dict) and len(accel_transitions_detail) > 0:
-                    for period, matrix in accel_transitions_detail.items():
-                        if isinstance(matrix, pd.DataFrame) and not matrix.empty:
-                            st.write(f"Period: {period}")
-                            st.dataframe(matrix)
-                        else:
-                            st.write(f"Period: {period} - Empty or invalid matrix")
-                else:
-                    st.write("No acceleration transition data available")
+                # if st.checkbox("Show Transition Matrix Debug Data", value=False):
+                #     st.write("### Transition Matrix Details")
+                #     st.write("Power Transitions:")
+                #     if isinstance(power_transitions_detail, dict) and len(power_transitions_detail) > 0:
+                #         for period, matrix in power_transitions_detail.items():
+                #             if isinstance(matrix, pd.DataFrame) and not matrix.empty:
+                #                 st.write(f"Period: {period}")
+                #                 st.dataframe(matrix)
+                #             else:
+                #                 st.write(f"Period: {period} - No transitions data available")
+                #     else:
+                #         st.write("No power transition data available")
+                #     
+                #     st.write("Acceleration Transitions:")
+                #     if isinstance(accel_transitions_detail, dict) and len(accel_transitions_detail) > 0:
+                #         for period, matrix in accel_transitions_detail.items():
+                #             if isinstance(matrix, pd.DataFrame) and not matrix.empty:
+                #                 st.write(f"Period: {period}")
+                #                 st.dataframe(matrix)
+                #             else:
+                #                 st.write(f"Period: {period} - No transitions data available")
+                #     else:
+                #         st.write("No acceleration transition data available")
                 
                 st.download_button(
                     label="Download Comprehensive Report (PDF)",

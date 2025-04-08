@@ -1310,9 +1310,9 @@ class ReportGenerator:
             transitions_section += "<h3>Power Transitions</h3>"
             
             for period, matrix in power_transitions.items():
+                transitions_section += f"<h4>Period: {period}</h4>"
+                
                 if isinstance(matrix, pd.DataFrame) and not matrix.empty:
-                    transitions_section += f"<h4>Period: {period}</h4>"
-                    
                     # Create manual table with inline styling
                     transitions_section += "<table class='table transition-table' border='1' cellpadding='5' cellspacing='0'>"
                     
@@ -1342,6 +1342,18 @@ class ReportGenerator:
                         transitions_section += "</tr>"
                     
                     transitions_section += "</table>"
+                else:
+                    # Create a message for no transition data
+                    transitions_section += """
+                    <div class="info-box">
+                        <p>No transition data available for this period. This can occur when:</p>
+                        <ul>
+                            <li>There are not enough test instances to create transition matrices</li>
+                            <li>Users have not progressed between different development brackets</li>
+                            <li>Data does not meet the time constraint requirements</li>
+                        </ul>
+                    </div>
+                    """
         
         # Check if accel_transitions is a valid dictionary with entries
         if isinstance(accel_transitions, dict) and len(accel_transitions) > 0:
@@ -1349,9 +1361,9 @@ class ReportGenerator:
             transitions_section += "<h3>Acceleration Transitions</h3>"
             
             for period, matrix in accel_transitions.items():
+                transitions_section += f"<h4>Period: {period}</h4>"
+                
                 if isinstance(matrix, pd.DataFrame) and not matrix.empty:
-                    transitions_section += f"<h4>Period: {period}</h4>"
-                    
                     # Create manual table with inline styling
                     transitions_section += "<table class='table transition-table' border='1' cellpadding='5' cellspacing='0'>"
                     
@@ -1381,6 +1393,18 @@ class ReportGenerator:
                         transitions_section += "</tr>"
                     
                     transitions_section += "</table>"
+                else:
+                    # Create a message for no transition data
+                    transitions_section += """
+                    <div class="info-box">
+                        <p>No transition data available for this period. This can occur when:</p>
+                        <ul>
+                            <li>There are not enough test instances to create transition matrices</li>
+                            <li>Users have not progressed between different development brackets</li>
+                            <li>Data does not meet the time constraint requirements</li>
+                        </ul>
+                    </div>
+                    """
             
         transitions_section += """
             </div>
@@ -1555,7 +1579,19 @@ class ReportGenerator:
         # Debug print statements for sections
         print("\n\nDEBUG PDF GENERATION:")
         print(f"Power transitions type: {type(power_transitions)}")
-        print(f"Power transitions keys: {power_transitions.keys() if isinstance(power_transitions, dict) else 'Not a dict'}")
+        if isinstance(power_transitions, dict):
+            print(f"Power transitions keys: {power_transitions.keys()}")
+            
+            # Debug the transition matrices content
+            for period, matrix in power_transitions.items():
+                if isinstance(matrix, pd.DataFrame):
+                    print(f"Matrix for {period} - Shape: {matrix.shape}, Empty: {matrix.empty}")
+                    if not matrix.empty:
+                        print(f"Sample values: {matrix.iloc[0, 0] if matrix.shape[0] > 0 and matrix.shape[1] > 0 else 'No data'}")
+                else:
+                    print(f"Matrix for {period} is not a DataFrame, type: {type(matrix)}")
+        else:
+            print("Power transitions is not a dict")
         
         print(f"Transition section length: {len(transitions_section)}")
         
