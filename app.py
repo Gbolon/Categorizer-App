@@ -8,6 +8,7 @@ from matrix_generator import MatrixGenerator
 from report_generator import ReportGenerator
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
+from web_scraper import get_website_text_content
 
 # Configure the page at the very beginning
 st.set_page_config(
@@ -224,7 +225,7 @@ def main():
             st.write("Group averages by body region for multi-test users")
 
             # Calculate body region averages
-            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
+            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df, use_time_constraint=use_time_constraint)
 
             # Create columns for each body region
             region_cols = st.columns(len(VALID_EXERCISES))
@@ -664,6 +665,36 @@ def main():
 
         except Exception as e:
             st.error(f"Error processing file: {str(e)}")
+    
+    # Add Web Content Scraper section
+    st.sidebar.markdown("---")
+    with st.sidebar.expander("Web Content Scraper", expanded=False):
+        st.markdown("### Extract Text Content from Websites")
+        st.write("Use this tool to extract clean text content from any website URL.")
+        
+        url_input = st.text_input("Enter website URL:", placeholder="https://example.com")
+        scrape_button = st.button("Extract Content")
+        
+        if scrape_button and url_input:
+            try:
+                with st.spinner("Extracting content..."):
+                    text_content = get_website_text_content(url_input)
+                    
+                if text_content:
+                    st.success("Content extracted successfully!")
+                    with st.expander("Extracted Content", expanded=True):
+                        st.text_area("Website Content", text_content, height=300)
+                        # Add download button for extracted content
+                        st.download_button(
+                            label="Download Extracted Text",
+                            data=text_content,
+                            file_name="extracted_content.txt",
+                            mime="text/plain"
+                        )
+                else:
+                    st.warning("Could not extract content from the provided URL. Please check the URL and try again.")
+            except Exception as e:
+                st.error(f"Error extracting content: {str(e)}")
 
 if __name__ == "__main__":
     main()

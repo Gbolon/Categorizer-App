@@ -720,8 +720,15 @@ class MatrixGenerator:
 
         return brackets_df
 
-    def calculate_body_region_averages(self, df, max_tests=4):
-        """Calculate average development scores by body region for multi-test users."""
+    def calculate_body_region_averages(self, df, max_tests=4, use_time_constraint=False):
+        """
+        Calculate average development scores by body region for multi-test users.
+        
+        Args:
+            df: The processed dataframe
+            max_tests: Maximum number of tests to include
+            use_time_constraint: If True, use the 45-day minimum between tests constraint
+        """
         from exercise_constants import VALID_EXERCISES
 
         # Initialize results dictionary
