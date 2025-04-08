@@ -238,8 +238,7 @@ class ReportGenerator:
         return html_content.encode('utf-8')
         
     def generate_comprehensive_report(self, power_counts, accel_counts, power_transitions, accel_transitions,
-                                    body_region_averages, improvement_thresholds, region_metrics, site_name="",
-                                    min_days_between_tests=7, original_avg_days=0, constrained_avg_days=0):
+                                    body_region_averages, improvement_thresholds, region_metrics, site_name=""):
         """
         Generate a comprehensive HTML report with separate pages for each section.
         
@@ -252,9 +251,6 @@ class ReportGenerator:
             improvement_thresholds (dict): Dictionary of improvement thresholds by region
             region_metrics (dict): Dictionary of region metrics including underperformers
             site_name (str, optional): Name of the site/location for the report header
-            min_days_between_tests (int, optional): Minimum days required between test instances
-            original_avg_days (float, optional): Original average days between tests
-            constrained_avg_days (float, optional): Constrained average days between tests after applying min_days filter
             
         Returns:
             bytes: Comprehensive HTML report as bytes
@@ -262,15 +258,13 @@ class ReportGenerator:
         # Start building the HTML report
         html_content = self._generate_comprehensive_html(
             power_counts, accel_counts, power_transitions, accel_transitions,
-            body_region_averages, improvement_thresholds, region_metrics, site_name,
-            min_days_between_tests, original_avg_days, constrained_avg_days
+            body_region_averages, improvement_thresholds, region_metrics, site_name
         )
         
         return html_content.encode('utf-8')
         
     def _generate_comprehensive_html(self, power_counts, accel_counts, power_transitions, accel_transitions,
-                                   body_region_averages, improvement_thresholds, region_metrics, site_name="",
-                                   min_days_between_tests=7, original_avg_days=0, constrained_avg_days=0):
+                                   body_region_averages, improvement_thresholds, region_metrics, site_name=""):
         """
         Generate comprehensive HTML report content with separate pages.
         
@@ -283,9 +277,6 @@ class ReportGenerator:
             improvement_thresholds (dict): Dictionary of improvement thresholds by region
             region_metrics (dict): Dictionary of region metrics including underperformers
             site_name (str, optional): Name of the site/location for the report header
-            min_days_between_tests (int, optional): Minimum days required between test instances
-            original_avg_days (float, optional): Original average days between tests
-            constrained_avg_days (float, optional): Constrained average days between tests after applying min_days filter
             
         Returns:
             str: HTML content
@@ -421,30 +412,15 @@ class ReportGenerator:
             {css_styles}
             <script>
                 function goToPage(pageId) {{
-                    // Hide all pages
                     document.querySelectorAll('.page').forEach(page => {{
                         page.style.display = 'none';
                     }});
-                    
-                    // Show the requested page
-                    const pageElement = document.getElementById(pageId);
-                    if (pageElement) {{
-                        pageElement.style.display = 'block';
-                        console.log('Showing page:', pageId);
-                    }} else {{
-                        console.error('Page not found:', pageId);
-                        // Fallback to overview if requested page doesn't exist
-                        const overviewPage = document.getElementById('overview');
-                        if (overviewPage) {{
-                            overviewPage.style.display = 'block';
-                        }}
-                    }}
+                    document.getElementById(pageId).style.display = 'block';
                 }}
             </script>
         </head>
         <body>
             <div class="nav">
-                <a href="#" onclick="goToPage('info-page'); return false;">Information</a>
                 <a href="#" onclick="goToPage('overview'); return false;">Overview</a>
                 <a href="#" onclick="goToPage('power-transitions'); return false;">Power Transitions</a>
                 <a href="#" onclick="goToPage('accel-transitions'); return false;">Acceleration Transitions</a>
@@ -464,34 +440,10 @@ class ReportGenerator:
         # Add site name to the overview if provided
         site_header = f"<div class='site-name'><h2>Site: {site_name}</h2></div>" if site_name else ""
         
-        # Format the time constraint information
-        time_constraint_info = ""
-        if min_days_between_tests > 0:
-            time_constraint_info = f"""
-            <div class="site-name" style="margin-bottom: 30px;">
-                <h3>Time Constraint Settings</h3>
-                <table class="table" style="width: 80%; margin: 10px auto;">
-                    <tr>
-                        <td><strong>Minimum Days Between Tests:</strong></td>
-                        <td>{min_days_between_tests} days</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Original Average Days Between Tests:</strong></td>
-                        <td>{original_avg_days:.1f} days</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Constrained Average Days Between Tests:</strong></td>
-                        <td>{constrained_avg_days:.1f} days</td>
-                    </tr>
-                </table>
-            </div>
-            """
-            
         overview_page = f"""
-        <div id="overview" class="page container" style="display: none;">
+        <div id="overview" class="page container">
             <h1>Exercise Development Overview</h1>
             {site_header}
-            {time_constraint_info}
             
             <h2>Power Development Distribution</h2>
         """
@@ -822,130 +774,15 @@ class ReportGenerator:
             region_pages += region_page
         
         # Combine all pages
-        # INFORMATION PAGE
-        info_page = """
-        <div id="info-page" class="page container" style="display: none;">
-            <h1>Exercise Movements and Assessment Information</h1>
-            
-            <p>This report analyzes performance data for the following exercise movements, organized by body region. Please review this information before examining the results.</p>
-            
-            <h2>Torso Region</h2>
-            <ul>
-                <li>Straight Arm Trunk Rotation (Dominant)</li>
-                <li>Straight Arm Trunk Rotation (Non-Dominant)</li>
-                <li>Shot Put (Countermovement)</li>
-                <li>Shot Put (Countermovement) (Dominant)</li>
-                <li>Shot Put (Countermovement) (Non-Dominant)</li>
-            </ul>
-            
-            <h2>Arms Region</h2>
-            <ul>
-                <li>PNF D2 Flexion (Dominant)</li>
-                <li>PNF D2 Flexion (Non-Dominant)</li>
-                <li>PNF D2 Extension (Dominant)</li>
-                <li>PNF D2 Extension (Non-Dominant)</li>
-                <li>Biceps Curl (One Hand) (Dominant)</li>
-                <li>Biceps Curl (One Hand) (Non-Dominant)</li>
-                <li>Triceps Extension (One Hand) (Dominant)</li>
-                <li>Triceps Extension (One Hand) (Non-Dominant)</li>
-            </ul>
-            
-            <h2>Press/Pull Region</h2>
-            <ul>
-                <li>Horizontal Row (One Hand) (Dominant)</li>
-                <li>Horizontal Row (One Hand) (Non-Dominant)</li>
-                <li>Chest Press (One Hand) (Dominant)</li>
-                <li>Chest Press (One Hand) (Non-Dominant)</li>
-            </ul>
-            
-            <h2>Legs Region</h2>
-            <ul>
-                <li>Lateral Bound (Dominant)</li>
-                <li>Lateral Bound (Non-Dominant)</li>
-                <li>Vertical Jump (Countermovement)</li>
-            </ul>
-            
-            <h2>Development Classification</h2>
-            <p>Each user's performance is categorized into one of the following development brackets:</p>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Classification</th>
-                        <th>Development Score Range (%)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Goal Hit</td>
-                        <td>≥ 100%</td>
-                    </tr>
-                    <tr>
-                        <td>Elite</td>
-                        <td>90% - 99.99%</td>
-                    </tr>
-                    <tr>
-                        <td>Above Average</td>
-                        <td>76% - 90%</td>
-                    </tr>
-                    <tr>
-                        <td>Average</td>
-                        <td>51% - 75%</td>
-                    </tr>
-                    <tr>
-                        <td>Under Developed</td>
-                        <td>26% - 50%</td>
-                    </tr>
-                    <tr>
-                        <td>Severely Under Developed</td>
-                        <td>0% - 25%</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <h2>Calculation Method</h2>
-            <p>For each exercise movement, we compute a Development Score as follows:</p>
-            <div style="text-align: center; margin: 20px 0;">
-                <p style="font-size: 1.2em;">Development Score = (User's Recorded Value / Goal Standard) × 100</p>
-            </div>
-            <p>This calculation is performed separately for both Power and Acceleration metrics.</p>
-            
-            <h2>Overall Development Score</h2>
-            <p>Each test instance has one overall Power Development Score and one overall Acceleration Development Score per user, calculated as the average of all available exercise development scores for that test instance.</p>
-            
-            <h2>Time Constraint</h2>
-            <p>In order to ensure valid analysis of performance changes over time, a minimum time constraint is applied between measurements of the same exercise. This helps ensure that changes in performance reflect true development rather than day-to-day variability.</p>
-            <p>Test instances for the same exercise that don't meet the minimum days requirement are skipped in the analysis. This means that if a user has multiple tests for the same exercise within the minimum time window, only the earliest test is included in the analysis.</p>
-            <p>The minimum days between tests setting is reflected in the Overview page, along with both the original average days between tests (before filtering) and the constrained average days (after applying the minimum days filter).</p>
-            
-            <p style="margin-top: 30px;">Please proceed to the Overview page to view the report results.</p>
-        </div>
-        """
-        
-        html_content = html_header + info_page + overview_page + power_transitions_page + accel_transitions_page + region_pages
+        html_content = html_header + overview_page + power_transitions_page + accel_transitions_page + region_pages
         
         # Add closing tags
         html_content += """
             </div>
             <script>
-                // Set information page as the default page
+                // Set overview as the default page
                 document.addEventListener('DOMContentLoaded', function() {
-                    // Initially hide all pages
-                    document.querySelectorAll('.page').forEach(function(page) {
-                        page.style.display = 'none';
-                    });
-                    
-                    // Show the info page
-                    var infoPage = document.getElementById('info-page');
-                    if (infoPage) {
-                        infoPage.style.display = 'block';
-                        console.log('Showing info page on load');
-                    } else {
-                        console.error('Info page not found, showing overview instead');
-                        var overviewPage = document.getElementById('overview');
-                        if (overviewPage) {
-                            overviewPage.style.display = 'block';
-                        }
-                    }
+                    goToPage('overview');
                 });
             </script>
         </body>
