@@ -1053,6 +1053,41 @@ class ReportGenerator:
         
         return html_content
         
+    def _apply_transition_styling(self, html_table, df):
+        """
+        Apply transition styling to an HTML table based on the dataframe values.
+        
+        Args:
+            html_table (str): The HTML table string
+            df (DataFrame): The transition matrix dataframe
+            
+        Returns:
+            str: The styled HTML table with appropriate cell classes
+        """
+        import re
+        from bs4 import BeautifulSoup
+        
+        # Create a BeautifulSoup object
+        soup = BeautifulSoup(html_table, 'html.parser')
+        
+        # Get all data rows (skip header row)
+        rows = soup.find_all('tr')[1:]
+        
+        # Process each row
+        for i, row in enumerate(rows):
+            cells = row.find_all('td')[1:]  # Skip the index column
+            
+            for j, cell in enumerate(cells):
+                if i == j:  # Diagonal - no change
+                    cell['class'] = cell.get('class', []) + ['diagonal']
+                elif i < j:  # Above diagonal - regression
+                    cell['class'] = cell.get('class', []) + ['above-diagonal']
+                else:  # Below diagonal - improvement
+                    cell['class'] = cell.get('class', []) + ['below-diagonal']
+        
+        # Return the modified HTML
+        return str(soup)
+    
     def generate_pdf_from_html(self, html_content):
         """
         Convert HTML content to PDF format using WeasyPrint.
@@ -1267,19 +1302,53 @@ class ReportGenerator:
         if isinstance(power_transitions, dict) and len(power_transitions) > 0:
             # Power transitions
             transitions_section += "<h3>Power Transitions</h3>"
+            transitions_section += """
+            <div class="transition-guide">
+                <p>Cell coloring guide:</p>
+                <ul>
+                    <li><span class="diagonal">Blue cells</span>: Users who remained in the same bracket</li>
+                    <li><span class="above-diagonal">Red cells</span>: Users who regressed to a lower bracket</li>
+                    <li><span class="below-diagonal">Green cells</span>: Users who improved to a higher bracket</li>
+                </ul>
+            </div>
+            """
             for period, matrix in power_transitions.items():
                 if isinstance(matrix, pd.DataFrame) and not matrix.empty:
                     transitions_section += f"<h4>Period: {period}</h4>"
-                    transitions_section += matrix.to_html(classes='table', index=True)
+                    
+                    # Add classes to cells for styling
+                    styled_html = matrix.to_html(classes='table transition-table', index=True)
+                    
+                    # Apply styling to highlight cells
+                    styled_html = self._apply_transition_styling(styled_html, matrix)
+                    
+                    transitions_section += styled_html
         
         # Check if accel_transitions is a valid dictionary with entries
         if isinstance(accel_transitions, dict) and len(accel_transitions) > 0:
             # Acceleration transitions
             transitions_section += "<h3>Acceleration Transitions</h3>"
+            transitions_section += """
+            <div class="transition-guide">
+                <p>Cell coloring guide:</p>
+                <ul>
+                    <li><span class="diagonal">Blue cells</span>: Users who remained in the same bracket</li>
+                    <li><span class="above-diagonal">Red cells</span>: Users who regressed to a lower bracket</li>
+                    <li><span class="below-diagonal">Green cells</span>: Users who improved to a higher bracket</li>
+                </ul>
+            </div>
+            """
             for period, matrix in accel_transitions.items():
                 if isinstance(matrix, pd.DataFrame) and not matrix.empty:
                     transitions_section += f"<h4>Period: {period}</h4>"
-                    transitions_section += matrix.to_html(classes='table', index=True)
+                    
+                    # Add classes to cells for styling
+                    styled_html = matrix.to_html(classes='table transition-table', index=True)
+                    
+                    # Apply styling to highlight cells
+                    styled_html = self._apply_transition_styling(styled_html, matrix)
+                    
+                    transitions_section += styled_html
             
         transitions_section += """
             </div>
