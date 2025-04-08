@@ -94,19 +94,9 @@ def main():
     matrix_generator = MatrixGenerator()
     report_generator = ReportGenerator()
 
-    # File upload and minimum days configuration
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
-                                          type=['csv', 'xlsx'])
-    with col2:
-        min_days_between_tests = st.number_input(
-            "Minimum Days Between Tests",
-            min_value=0,
-            max_value=365,
-            value=7,
-            help="Minimum number of days required between test instances for the same exercise"
-        )
+    # File upload configuration
+    uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
+                                     type=['csv', 'xlsx'])
 
     if uploaded_file is not None:
         try:
@@ -136,7 +126,7 @@ def main():
              power_average, accel_average,
              avg_power_change_1_2, avg_accel_change_1_2,
              avg_power_change_2_3, avg_accel_change_2_3,
-             avg_days_between_tests) = matrix_generator.generate_group_analysis(processed_df, min_days=min_days_between_tests)
+             avg_days_between_tests) = matrix_generator.generate_group_analysis(processed_df)
 
             # Display group-level analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Group Development Analysis</h2>", unsafe_allow_html=True)
@@ -219,7 +209,7 @@ def main():
             st.write("Group averages by body region for multi-test users")
 
             # Calculate body region averages
-            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df, min_days=min_days_between_tests)
+            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
 
             # Create columns for each body region
             region_cols = st.columns(len(VALID_EXERCISES))
@@ -232,7 +222,7 @@ def main():
                     st.dataframe(styled_averages)
             
             # Calculate improvement thresholds for all regions
-            improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df, min_days=min_days_between_tests)
+            improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df)
             
             # Detailed Body Region Analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Detailed Body Region Analysis</h2>", unsafe_allow_html=True)
@@ -254,7 +244,7 @@ def main():
                     accel_underperformers_2_to_3 = None
                     
                     # Get region metrics only once
-                    region_metrics = matrix_generator.get_region_metrics(processed_df, region, min_days=min_days_between_tests)
+                    region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                     
                     # Extract underperformers for all periods
                     if region_metrics[2]:  # Power metrics
@@ -390,7 +380,7 @@ def main():
                         st.markdown("<hr>", unsafe_allow_html=True)
                     
                     # Get detailed region metrics using the generalized function for all regions
-                    region_metrics = matrix_generator.get_region_metrics(processed_df, region, min_days=min_days_between_tests)
+                    region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                     # Unpack the values carefully, handling different return formats
                     if region_metrics[0] is None:
                         # No metrics available
@@ -457,7 +447,7 @@ def main():
             if selected_user:
                 # Generate matrices
                 matrices = matrix_generator.generate_user_matrices(
-                    processed_df, selected_user, min_days=min_days_between_tests)
+                    processed_df, selected_user)
 
                 power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
 
@@ -574,7 +564,7 @@ def main():
             # First collect region metrics for all regions
             region_metrics = {}
             for region in VALID_EXERCISES.keys():
-                region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region, min_days=min_days_between_tests)
+                region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
             
             # Only enable the download button if a site name is provided
             if site_name.strip() != "":

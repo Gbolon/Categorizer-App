@@ -36,15 +36,8 @@ class MatrixGenerator:
             'Severely Under Developed'
         ]
 
-    def generate_group_analysis(self, df, max_tests=4, min_days=0):
-        """
-        Generate group-level analysis of development categories.
-        
-        Args:
-            df: DataFrame with processed exercise data
-            max_tests: Maximum number of tests to include in analysis
-            min_days: Minimum days required between measurements of the same exercise
-        """
+    def generate_group_analysis(self, df, max_tests=4):
+        """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
         categories = list(self.development_brackets.keys()) + ['Total Users']
         power_counts = pd.DataFrame(0, index=categories, columns=[])
@@ -73,7 +66,7 @@ class MatrixGenerator:
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user with minimum days constraint
-            matrices = self.generate_user_matrices(df, user, min_days=min_days)
+            matrices = self.generate_user_matrices(df, user)
 
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
@@ -343,34 +336,6 @@ class MatrixGenerator:
         """
         user_data = df[df['user name'] == user_name].copy()
         
-        # Apply minimum days filter if specified
-        if min_days > 0:
-            # Sort data by exercise name and timestamp
-            user_data = user_data.sort_values(['full_exercise_name', 'exercise createdAt'])
-            
-            # Group by exercise name to filter instances that are too close together
-            filtered_indices = []
-            for exercise, group in user_data.groupby('full_exercise_name'):
-                # Reset index for easier processing
-                group = group.reset_index(drop=False)
-                valid_indices = [group.index[0]]  # First instance is always valid
-                
-                for i in range(1, len(group)):
-                    current_date = group.loc[i, 'exercise createdAt']
-                    prev_date = group.loc[valid_indices[-1], 'exercise createdAt']
-                    days_diff = (current_date - prev_date).days
-                    
-                    # Only include instances that are at least min_days apart
-                    if days_diff >= min_days:
-                        valid_indices.append(group.index[i])
-                
-                # Get original indices
-                filtered_indices.extend(group.loc[valid_indices, 'index'].tolist())
-            
-            # Filter data to only include valid instances
-            user_data = user_data.loc[filtered_indices]
-            
-            print(f"DEBUG: Applied min_days={min_days} filter, keeping {len(user_data)} instances out of original set")
 
         # Initialize matrices
         power_matrix = {}
@@ -687,7 +652,7 @@ class MatrixGenerator:
 
         return brackets_df
 
-    def calculate_body_region_averages(self, df, max_tests=4, min_days=0):
+    def calculate_body_region_averages(self, df, max_tests=4):
         """
         Calculate average development scores by body region for multi-test users.
         
@@ -716,7 +681,7 @@ class MatrixGenerator:
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user with minimum days constraint
-            matrices = self.generate_user_matrices(df, user, min_days=min_days)
+            matrices = self.generate_user_matrices(df, user)
             if matrices[2] is not None:  # If development matrices exist
                 power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
 
@@ -834,7 +799,7 @@ class MatrixGenerator:
         
         return changes
             
-    def get_region_metrics(self, df, region_name, max_tests=4, min_days=0):
+    def get_region_metrics(self, df, region_name, max_tests=4):
         """
         Calculate detailed power and acceleration metrics for the specified body region exercises.
         Only includes multi-test users with separate metrics for power and acceleration.
@@ -929,7 +894,7 @@ class MatrixGenerator:
         multi_test_users = []
         for user in df['user name'].unique():
             # Generate matrices for user with minimum days constraint
-            matrices = self.generate_user_matrices(df, user, min_days=min_days)
+            matrices = self.generate_user_matrices(df, user)
             if matrices[2] is not None:  # If development matrices exist
                 power_dev = matrices[2]  # Get power development matrix
                 
@@ -970,7 +935,7 @@ class MatrixGenerator:
         # Process each user
         for user in multi_test_users:
             # Generate matrices for user with minimum days constraint
-            matrices = self.generate_user_matrices(df, user, min_days=min_days)
+            matrices = self.generate_user_matrices(df, user)
             if matrices[2] is not None:  # If development matrices exist
                 power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
                 
@@ -1023,7 +988,7 @@ class MatrixGenerator:
         # Calculate average development per user across all exercises in this region
         for user in multi_test_users:
             # Generate matrices for user with minimum days constraint
-            matrices = self.generate_user_matrices(df, user, min_days=min_days)
+            matrices = self.generate_user_matrices(df, user)
             if matrices[2] is not None:  # If development matrices exist
                 power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
                 
@@ -1161,7 +1126,7 @@ class MatrixGenerator:
         
         return power_df, accel_df, power_changes, accel_changes, lowest_power_change_exercise, lowest_power_change_value, lowest_accel_change_exercise, lowest_accel_change_value
             
-    def get_torso_region_metrics(self, df, max_tests=4, min_days=0):
+    def get_torso_region_metrics(self, df, max_tests=4):
         """
         Calculate detailed power and acceleration metrics for the Torso region exercises.
         Only includes multi-test users with separate metrics for power and acceleration.
@@ -1177,7 +1142,7 @@ class MatrixGenerator:
         """
         return self.get_region_metrics(df, 'Torso', max_tests, min_days)
         
-    def calculate_improvement_thresholds(self, df, min_days=0):
+    def calculate_improvement_thresholds(self, df):
         """
         Calculate the improvement thresholds for each body region.
         
@@ -1209,7 +1174,7 @@ class MatrixGenerator:
         # Process each region
         for region in VALID_EXERCISES.keys():
             print(f"Calculating improvement thresholds for {region} region")
-            region_metrics = self.get_region_metrics(df, region, min_days=min_days)
+            region_metrics = self.get_region_metrics(df, region)
             
             # Skip if no metrics available
             if region_metrics[0] is None:
