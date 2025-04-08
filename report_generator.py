@@ -1312,22 +1312,36 @@ class ReportGenerator:
             for period, matrix in power_transitions.items():
                 transitions_section += f"<h4>Period: {period}</h4>"
                 
+                # Get the actual DataFrame - handle both DataFrame and Styler objects
+                df = None
                 if isinstance(matrix, pd.DataFrame) and not matrix.empty:
+                    df = matrix
+                elif hasattr(matrix, 'data') and not matrix.data.empty:
+                    # This is a Styler object, get the underlying DataFrame
+                    df = matrix.data
+                    
+                if df is not None:
                     # Create manual table with inline styling
                     transitions_section += "<table class='table transition-table' border='1' cellpadding='5' cellspacing='0'>"
                     
                     # Add header row with column names
                     transitions_section += "<tr><th></th>"
-                    for col in matrix.columns:
-                        transitions_section += f"<th>{col}</th>"
+                    for col in df.columns:
+                        # Handle MultiIndex columns if present
+                        if isinstance(col, tuple):
+                            col_name = col[1] if len(col) > 1 else col[0]
+                        else:
+                            col_name = col
+                        transitions_section += f"<th>{col_name}</th>"
                     transitions_section += "</tr>"
                     
                     # Add data rows with styling
-                    for i, row_idx in enumerate(matrix.index):
+                    for i, row_idx in enumerate(df.index):
                         transitions_section += f"<tr><th>{row_idx}</th>"
                         
-                        for j, col in enumerate(matrix.columns):
-                            value = matrix.iloc[i, j]
+                        for j in range(len(df.columns)):
+                            # Get the value directly using iloc
+                            value = df.iloc[i, j]
                             
                             # Determine cell color
                             if i == j:  # Diagonal - no change
@@ -1363,22 +1377,36 @@ class ReportGenerator:
             for period, matrix in accel_transitions.items():
                 transitions_section += f"<h4>Period: {period}</h4>"
                 
+                # Get the actual DataFrame - handle both DataFrame and Styler objects
+                df = None
                 if isinstance(matrix, pd.DataFrame) and not matrix.empty:
+                    df = matrix
+                elif hasattr(matrix, 'data') and not matrix.data.empty:
+                    # This is a Styler object, get the underlying DataFrame
+                    df = matrix.data
+                    
+                if df is not None:
                     # Create manual table with inline styling
                     transitions_section += "<table class='table transition-table' border='1' cellpadding='5' cellspacing='0'>"
                     
                     # Add header row with column names
                     transitions_section += "<tr><th></th>"
-                    for col in matrix.columns:
-                        transitions_section += f"<th>{col}</th>"
+                    for col in df.columns:
+                        # Handle MultiIndex columns if present
+                        if isinstance(col, tuple):
+                            col_name = col[1] if len(col) > 1 else col[0]
+                        else:
+                            col_name = col
+                        transitions_section += f"<th>{col_name}</th>"
                     transitions_section += "</tr>"
                     
                     # Add data rows with styling
-                    for i, row_idx in enumerate(matrix.index):
+                    for i, row_idx in enumerate(df.index):
                         transitions_section += f"<tr><th>{row_idx}</th>"
                         
-                        for j, col in enumerate(matrix.columns):
-                            value = matrix.iloc[i, j]
+                        for j in range(len(df.columns)):
+                            # Get the value directly using iloc
+                            value = df.iloc[i, j]
                             
                             # Determine cell color
                             if i == j:  # Diagonal - no change
@@ -1588,8 +1616,13 @@ class ReportGenerator:
                     print(f"Matrix for {period} - Shape: {matrix.shape}, Empty: {matrix.empty}")
                     if not matrix.empty:
                         print(f"Sample values: {matrix.iloc[0, 0] if matrix.shape[0] > 0 and matrix.shape[1] > 0 else 'No data'}")
+                elif hasattr(matrix, 'data'):  # This is likely a Styler object
+                    print(f"Matrix for {period} is a Styler object - Converting to DataFrame")
+                    print(f"Styler data shape: {matrix.data.shape}, Empty: {matrix.data.empty if hasattr(matrix.data, 'empty') else 'unknown'}")
+                    if hasattr(matrix.data, 'iloc') and matrix.data.shape[0] > 0 and matrix.data.shape[1] > 0:
+                        print(f"Sample values: {matrix.data.iloc[0, 0]}")
                 else:
-                    print(f"Matrix for {period} is not a DataFrame, type: {type(matrix)}")
+                    print(f"Matrix for {period} is not a DataFrame or Styler, type: {type(matrix)}")
         else:
             print("Power transitions is not a dict")
         

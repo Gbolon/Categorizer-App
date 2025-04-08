@@ -10,12 +10,10 @@ class MatrixGenerator:
         
         # Explicitly ensure Vertical Jump is included
         if 'Vertical Jump (Countermovement)' not in self.exercises:
-            print("Adding Vertical Jump (Countermovement) to exercises list")
             self.exercises.append('Vertical Jump (Countermovement)')
             
         # Explicitly ensure Shot Put is included
         if 'Shot Put (Countermovement)' not in self.exercises:
-            print("DEBUG: Adding Shot Put (Countermovement) to exercises list")
             self.exercises.append('Shot Put (Countermovement)')
             
         self.development_brackets = {
@@ -596,17 +594,7 @@ class MatrixGenerator:
         print(f"DEBUG: Input matrix has shape {metric_df.shape} with columns {metric_df.columns.tolist()}")
         print(f"DEBUG: Input matrix index/exercises: {metric_df.index.tolist()}")
         
-        # Check for Vertical Jump
-        if 'Vertical Jump (Countermovement)' in metric_df.index:
-            print(f"DEBUG: Vertical Jump IS in input matrix with values: {metric_df.loc['Vertical Jump (Countermovement)'].values}")
-        else:
-            print(f"DEBUG: Vertical Jump NOT found in input matrix!")
-            
-        # Check for Shot Put
-        if 'Shot Put (Countermovement)' in metric_df.index:
-            print(f"DEBUG: Shot Put IS in input matrix with values: {metric_df.loc['Shot Put (Countermovement)'].values}")
-        else:
-            print(f"DEBUG: Shot Put NOT found in input matrix!")
+
 
         # Calculate development scores
         for col in dev_matrix.columns:
@@ -721,6 +709,8 @@ class MatrixGenerator:
         """
         from exercise_constants import VALID_EXERCISES
 
+        print(f"\nDEBUG BODY REGION CALCULATION: min_days={min_days}, user count={len(df['user name'].unique())}")
+
         # Initialize results dictionary
         body_region_averages = {
             region: pd.DataFrame(
@@ -735,6 +725,10 @@ class MatrixGenerator:
             region: {f'Test {i}': 0 for i in range(1, max_tests + 1)}
             for region in VALID_EXERCISES.keys()
         }
+        
+        # Track users who contribute to each region's averages
+        users_with_power_data = {region: set() for region in VALID_EXERCISES.keys()}
+        users_with_accel_data = {region: set() for region in VALID_EXERCISES.keys()}
 
         # Process each user
         for user in df['user name'].unique():
@@ -745,6 +739,8 @@ class MatrixGenerator:
 
                 # Only process multi-test users
                 if len(power_dev.columns) >= 2:
+                    print(f"  User {user} has {len(power_dev.columns)} test columns")
+                    
                     # Process each body region
                     for region, exercises in VALID_EXERCISES.items():
                         # Only process up to max_tests columns
@@ -756,6 +752,10 @@ class MatrixGenerator:
                             for exercise in exercises:
                                 matching_exercises = [ex for ex in power_dev.index if exercise in ex]
                                 region_exercises.extend(matching_exercises)
+                            
+                            # Debug - show what exercises are available for this region
+                            if region == 'Torso':  # Focus on one region for debugging
+                                print(f"  Region {region}, Test {test_col}, Available exercises: {region_exercises}")
 
                             # Calculate averages for this region if data exists
                             power_scores = power_dev.loc[region_exercises, test_col].dropna()
@@ -767,20 +767,46 @@ class MatrixGenerator:
                                     power_mean = power_scores.mean()
                                     if pd.notna(power_mean):
                                         body_region_averages[region].loc['Power Average', test_col] += power_mean
+                                        users_with_power_data[region].add(user)
+                                        
+                                        # Debug - show power scores for Torso region
+                                        if region == 'Torso':
+                                            print(f"    User {user}, {test_col} - Power scores: {power_scores.to_dict()}")
+                                            print(f"    Power mean: {power_mean}")
+                                            
                                 if not accel_scores.empty:
                                     accel_mean = accel_scores.mean()
                                     if pd.notna(accel_mean):
                                         body_region_averages[region].loc['Acceleration Average', test_col] += accel_mean
+                                        users_with_accel_data[region].add(user)
                                 users_per_test[region][test_col] += 1
 
         # Calculate final averages
         for region in VALID_EXERCISES.keys():
+            print(f"\nRegion {region} statistics:")
+            print(f"  Users with power data: {len(users_with_power_data[region])}")
+            print(f"  Users with accel data: {len(users_with_accel_data[region])}")
+            
             for test in body_region_averages[region].columns:
                 n_users = users_per_test[region][test]
+                print(f"  {test}: {n_users} users contributing to average")
+                
                 if n_users > 0:
+                    # Before division
+                    power_sum = body_region_averages[region].loc['Power Average', test]
+                    accel_sum = body_region_averages[region].loc['Acceleration Average', test]
+                    print(f"    Before division - Power sum: {power_sum}, Accel sum: {accel_sum}")
+                    
+                    # Perform division
                     body_region_averages[region][test] = body_region_averages[region][test] / n_users
+                    
+                    # After division
+                    power_avg = body_region_averages[region].loc['Power Average', test]
+                    accel_avg = body_region_averages[region].loc['Acceleration Average', test]
+                    print(f"    After division - Power avg: {power_avg}, Accel avg: {accel_avg}")
                 else:
                     body_region_averages[region][test] = np.nan
+                    print(f"    No users - Using NaN")
 
         return body_region_averages
         
