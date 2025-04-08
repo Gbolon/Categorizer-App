@@ -732,10 +732,12 @@ class MatrixGenerator:
 
         # Process each user
         for user in df['user name'].unique():
-            # Generate matrices for user with minimum days constraint
-            matrices = self.generate_user_matrices(df, user, min_days=min_days)
-            if matrices[2] is not None:  # If development matrices exist
-                power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
+            # For body region averages, we always use the unfiltered data to maintain consistency
+            # regardless of the min_days parameter - this ensures region averages are not affected by constraints
+            matrices_no_filter = self.generate_user_matrices(df, user, min_days=0)
+            
+            if matrices_no_filter[2] is not None:  # If development matrices exist
+                power_dev, accel_dev = matrices_no_filter[2], matrices_no_filter[3]  # Get development matrices
 
                 # Only process multi-test users
                 if len(power_dev.columns) >= 2:
@@ -780,6 +782,14 @@ class MatrixGenerator:
                                         body_region_averages[region].loc['Acceleration Average', test_col] += accel_mean
                                         users_with_accel_data[region].add(user)
                                 users_per_test[region][test_col] += 1
+                                
+            # Check if this user would be included with the requested min_days constraint
+            # If not, we want to print a debug message to show why the numbers differ
+            if min_days > 0:
+                matrices_with_filter = self.generate_user_matrices(df, user, min_days=min_days)
+                if matrices_with_filter[2] is not None and matrices_no_filter[2] is not None:
+                    if len(matrices_with_filter[2].columns) != len(matrices_no_filter[2].columns):
+                        print(f"  Note: User {user} has {len(matrices_no_filter[2].columns)} columns unfiltered but only {len(matrices_with_filter[2].columns)} with min_days={min_days}")
 
         # Calculate final averages
         for region in VALID_EXERCISES.keys():
