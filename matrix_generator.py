@@ -75,8 +75,8 @@ class MatrixGenerator:
             # Generate matrices for user with minimum days constraint
             matrices = self.generate_user_matrices(df, user, min_days=min_days)
 
-            if matrices[2] is not None:  # If development matrices exist
-                _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
+            if matrices[3] is not None:  # If development matrices exist
+                _, _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
 
                 # Determine if user has multiple tests
                 has_multiple_tests = len(power_brackets) >= 2
@@ -199,8 +199,8 @@ class MatrixGenerator:
         power_transitions_detail = self._analyze_detailed_transitions(power_transitions)
         accel_transitions_detail = self._analyze_detailed_transitions(accel_transitions)
 
-        # Calculate time differences between tests for the same movement
-        time_differences = []
+        # Calculate original time differences between tests (before applying min_days filter)
+        original_time_differences = []
         for user in df['user name'].unique():
             user_data = df[df['user name'] == user].copy()
             if len(user_data) > 1:
@@ -212,9 +212,32 @@ class MatrixGenerator:
                         exercise_data = exercise_data.sort_values('exercise createdAt')
                         # Calculate differences in days
                         time_diffs = exercise_data['exercise createdAt'].diff().dropna().dt.days
-                        time_differences.extend(time_diffs.tolist())
+                        original_time_differences.extend(time_diffs.tolist())
         
-        avg_days_between_tests = np.mean(time_differences) if time_differences else 0
+        # Calculate time differences between tests after applying min_days filter
+        constrained_time_differences = []
+        for user in df['user name'].unique():
+            # Generate matrices for this user with the min_days constraint to get filtered data
+            matrices = self.generate_user_matrices(df, user, min_days=min_days)
+            
+            # Extract the filtered user data from matrices (it's the first element returned)
+            if matrices[0] is not None:
+                filtered_user_data = matrices[0]
+                
+                # Only proceed if we have multiple measurements
+                if len(filtered_user_data) > 1:
+                    # Group by exercise and calculate time differences within each exercise
+                    for exercise in filtered_user_data['full_exercise_name'].unique():
+                        exercise_data = filtered_user_data[filtered_user_data['full_exercise_name'] == exercise]
+                        if len(exercise_data) > 1:
+                            # Sort by timestamp
+                            exercise_data = exercise_data.sort_values('exercise createdAt')
+                            # Calculate differences in days
+                            time_diffs = exercise_data['exercise createdAt'].diff().dropna().dt.days
+                            constrained_time_differences.extend(time_diffs.tolist())
+        
+        original_avg_days_between_tests = np.mean(original_time_differences) if original_time_differences else 0
+        constrained_avg_days_between_tests = np.mean(constrained_time_differences) if constrained_time_differences else 0
 
         # Calculate average changes
         avg_power_change_1_2 = np.mean(test1_to_2_power) if test1_to_2_power else 0
@@ -227,7 +250,7 @@ class MatrixGenerator:
                 power_average, accel_average,
                 avg_power_change_1_2, avg_accel_change_1_2,
                 avg_power_change_2_3, avg_accel_change_2_3,
-                avg_days_between_tests)
+                original_avg_days_between_tests, constrained_avg_days_between_tests)
 
     def _update_progression_counts(self, current_cat, next_cat, col, transitions_list):
         """Update progression counts based on category changes."""
@@ -382,11 +405,11 @@ class MatrixGenerator:
 
         # Get user's sex for development calculations
         if user_data.empty:
-            return power_matrix, accel_matrix, None, None, None, None, None
+            return user_data, power_matrix, accel_matrix, None, None, None, None, None
 
         user_sex = user_data['sex'].iloc[0]
         if not isinstance(user_sex, str) or user_sex.lower() not in ['male', 'female']:
-            return power_matrix, accel_matrix, None, None, None, None, None
+            return user_data, power_matrix, accel_matrix, None, None, None, None, None
 
         # Debug for Shot Put and Vertical Jump exercises
         shot_put_exercises = user_data[user_data['full_exercise_name'].str.contains('Shot Put', na=False)]
@@ -514,7 +537,7 @@ class MatrixGenerator:
         power_brackets = self._categorize_development(power_dev_df)
         accel_brackets = self._categorize_development(accel_dev_df)
 
-        return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df, power_brackets, accel_brackets
+        return user_data, power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df, power_brackets, accel_brackets
 
     def _convert_to_dataframes(self, power_matrix, accel_matrix):
         """Convert dictionary matrices to pandas DataFrames."""
