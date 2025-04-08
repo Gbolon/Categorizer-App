@@ -421,6 +421,7 @@ class ReportGenerator:
         </head>
         <body>
             <div class="nav">
+                <a href="#" onclick="goToPage('info-page'); return false;">Information</a>
                 <a href="#" onclick="goToPage('overview'); return false;">Overview</a>
                 <a href="#" onclick="goToPage('power-transitions'); return false;">Power Transitions</a>
                 <a href="#" onclick="goToPage('accel-transitions'); return false;">Acceleration Transitions</a>
@@ -774,15 +775,109 @@ class ReportGenerator:
             region_pages += region_page
         
         # Combine all pages
-        html_content = html_header + overview_page + power_transitions_page + accel_transitions_page + region_pages
+        # INFORMATION PAGE
+        info_page = """
+        <div id="info-page" class="page container">
+            <h1>Exercise Movements and Assessment Information</h1>
+            
+            <p>This report analyzes performance data for the following exercise movements, organized by body region. Please review this information before examining the results.</p>
+            
+            <h2>Torso Region</h2>
+            <ul>
+                <li>Straight Arm Trunk Rotation (Dominant)</li>
+                <li>Straight Arm Trunk Rotation (Non-Dominant)</li>
+                <li>Shot Put (Countermovement)</li>
+                <li>Shot Put (Countermovement) (Dominant)</li>
+                <li>Shot Put (Countermovement) (Non-Dominant)</li>
+            </ul>
+            
+            <h2>Arms Region</h2>
+            <ul>
+                <li>PNF D2 Flexion (Dominant)</li>
+                <li>PNF D2 Flexion (Non-Dominant)</li>
+                <li>PNF D2 Extension (Dominant)</li>
+                <li>PNF D2 Extension (Non-Dominant)</li>
+                <li>Biceps Curl (One Hand) (Dominant)</li>
+                <li>Biceps Curl (One Hand) (Non-Dominant)</li>
+                <li>Triceps Extension (One Hand) (Dominant)</li>
+                <li>Triceps Extension (One Hand) (Non-Dominant)</li>
+            </ul>
+            
+            <h2>Press/Pull Region</h2>
+            <ul>
+                <li>Horizontal Row (One Hand) (Dominant)</li>
+                <li>Horizontal Row (One Hand) (Non-Dominant)</li>
+                <li>Chest Press (One Hand) (Dominant)</li>
+                <li>Chest Press (One Hand) (Non-Dominant)</li>
+            </ul>
+            
+            <h2>Legs Region</h2>
+            <ul>
+                <li>Lateral Bound (Dominant)</li>
+                <li>Lateral Bound (Non-Dominant)</li>
+                <li>Vertical Jump (Countermovement)</li>
+            </ul>
+            
+            <h2>Development Classification</h2>
+            <p>Each user's performance is categorized into one of the following development brackets:</p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Classification</th>
+                        <th>Development Score Range (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Goal Hit</td>
+                        <td>≥ 100%</td>
+                    </tr>
+                    <tr>
+                        <td>Elite</td>
+                        <td>90% - 99.99%</td>
+                    </tr>
+                    <tr>
+                        <td>Above Average</td>
+                        <td>76% - 90%</td>
+                    </tr>
+                    <tr>
+                        <td>Average</td>
+                        <td>51% - 75%</td>
+                    </tr>
+                    <tr>
+                        <td>Under Developed</td>
+                        <td>26% - 50%</td>
+                    </tr>
+                    <tr>
+                        <td>Severely Under Developed</td>
+                        <td>0% - 25%</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>Calculation Method</h2>
+            <p>For each exercise movement, we compute a Development Score as follows:</p>
+            <div style="text-align: center; margin: 20px 0;">
+                <p style="font-size: 1.2em;">Development Score = (User's Recorded Value / Goal Standard) × 100</p>
+            </div>
+            <p>This calculation is performed separately for both Power and Acceleration metrics.</p>
+            
+            <h2>Overall Development Score</h2>
+            <p>Each test instance has one overall Power Development Score and one overall Acceleration Development Score per user, calculated as the average of all available exercise development scores for that test instance.</p>
+            
+            <p style="margin-top: 30px;">Please proceed to the Overview page to view the report results.</p>
+        </div>
+        """
+        
+        html_content = html_header + info_page + overview_page + power_transitions_page + accel_transitions_page + region_pages
         
         # Add closing tags
         html_content += """
             </div>
             <script>
-                // Set overview as the default page
+                // Set information page as the default page
                 document.addEventListener('DOMContentLoaded', function() {
-                    goToPage('overview');
+                    goToPage('info-page');
                 });
             </script>
         </body>
