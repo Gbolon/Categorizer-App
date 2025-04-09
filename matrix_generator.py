@@ -60,6 +60,8 @@ class MatrixGenerator:
         test1_to_2_accel = []
         test2_to_3_power = []
         test2_to_3_accel = []
+        test3_to_4_power = []
+        test3_to_4_accel = []
 
         # Initialize transition tracking for all movements
         power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
@@ -153,6 +155,20 @@ class MatrixGenerator:
                         if pd.notna(accel_2) and pd.notna(accel_3):
                             accel_change_2_3 = accel_3 - accel_2
                             test2_to_3_accel.append(accel_change_2_3)
+                            
+                    if 'Test 3' in overall_dev.columns and 'Test 4' in overall_dev.columns:
+                        power_3 = overall_dev.loc['Power Average', 'Test 3']
+                        power_4 = overall_dev.loc['Power Average', 'Test 4']
+                        accel_3 = overall_dev.loc['Acceleration Average', 'Test 3']
+                        accel_4 = overall_dev.loc['Acceleration Average', 'Test 4']
+
+                        if pd.notna(power_3) and pd.notna(power_4):
+                            power_change_3_4 = power_4 - power_3
+                            test3_to_4_power.append(power_change_3_4)
+
+                        if pd.notna(accel_3) and pd.notna(accel_4):
+                            accel_change_3_4 = accel_4 - accel_3
+                            test3_to_4_accel.append(accel_change_3_4)
 
                     # Increment total users once for all test columns
                     for test in test_columns:
@@ -245,12 +261,15 @@ class MatrixGenerator:
         avg_accel_change_1_2 = np.mean(test1_to_2_accel) if test1_to_2_accel else 0
         avg_power_change_2_3 = np.mean(test2_to_3_power) if test2_to_3_power else 0
         avg_accel_change_2_3 = np.mean(test2_to_3_accel) if test2_to_3_accel else 0
+        avg_power_change_3_4 = np.mean(test3_to_4_power) if test3_to_4_power else 0
+        avg_accel_change_3_4 = np.mean(test3_to_4_accel) if test3_to_4_accel else 0
 
         return (power_counts, accel_counts, single_test_distribution,
                 power_transitions_detail, accel_transitions_detail,
                 power_average, accel_average,
                 avg_power_change_1_2, avg_accel_change_1_2,
                 avg_power_change_2_3, avg_accel_change_2_3,
+                avg_power_change_3_4, avg_accel_change_3_4,
                 avg_days_between_tests, avg_constrained_days,
                 power_regression_users, accel_regression_users)
 

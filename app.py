@@ -638,6 +638,7 @@ def main():
              power_average_original, accel_average_original,
              avg_power_change_1_2_original, avg_accel_change_1_2_original,
              avg_power_change_2_3_original, avg_accel_change_2_3_original,
+             avg_power_change_3_4_original, avg_accel_change_3_4_original,
              avg_days_between_tests_original, avg_constrained_days_original,
              power_regression_users_original, accel_regression_users_original) = matrix_generator.generate_group_analysis(processed_df)
             
@@ -651,6 +652,7 @@ def main():
                  power_average, accel_average,
                  avg_power_change_1_2, avg_accel_change_1_2,
                  avg_power_change_2_3, avg_accel_change_2_3,
+                 avg_power_change_3_4, avg_accel_change_3_4,
                  avg_days_between_tests, avg_constrained_days,
                  power_regression_users, accel_regression_users) = matrix_generator.generate_group_analysis(analysis_df)
                 
@@ -684,6 +686,8 @@ def main():
                 avg_accel_change_1_2 = avg_accel_change_1_2_original
                 avg_power_change_2_3 = avg_power_change_2_3_original
                 avg_accel_change_2_3 = avg_accel_change_2_3_original
+                avg_power_change_3_4 = avg_power_change_3_4_original
+                avg_accel_change_3_4 = avg_accel_change_3_4_original
                 avg_days_between_tests = avg_days_between_tests_original
                 avg_constrained_days = avg_constrained_days_original
                 power_regression_users = power_regression_users_original
@@ -806,12 +810,15 @@ def main():
                 st.dataframe(styled_power_counts, use_container_width=True)
 
                 # Display Power changes directly below power distribution
-                col1, col2 = st.columns(2)
+                col1, col2, col3 = st.columns(3)
                 with col1:
                     st.metric("Power Change (Test 1→2)", f"{avg_power_change_1_2:+.1f}%",
                              delta_color="normal")
                 with col2:
                     st.metric("Power Change (Test 2→3)", f"{avg_power_change_2_3:+.1f}%",
+                             delta_color="normal")
+                with col3:
+                    st.metric("Power Change (Test 3→4)", f"{avg_power_change_3_4:+.1f}%",
                              delta_color="normal")
 
                 # Display Acceleration development distribution
@@ -820,12 +827,15 @@ def main():
                 st.dataframe(styled_accel_counts, use_container_width=True)
 
                 # Display Acceleration changes directly below acceleration distribution
-                col1, col2 = st.columns(2)
+                col1, col2, col3 = st.columns(3)
                 with col1:
                     st.metric("Acceleration Change (Test 1→2)", f"{avg_accel_change_1_2:+.1f}%",
                              delta_color="normal")
                 with col2:
                     st.metric("Acceleration Change (Test 2→3)", f"{avg_accel_change_2_3:+.1f}%",
+                             delta_color="normal")
+                with col3:
+                    st.metric("Acceleration Change (Test 3→4)", f"{avg_accel_change_3_4:+.1f}%",
                              delta_color="normal")
             
             #############################################
