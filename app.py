@@ -6,7 +6,6 @@ import csv
 from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
 from report_generator import ReportGenerator
-from web_scraper import WebScraper
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
 
