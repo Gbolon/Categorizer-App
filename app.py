@@ -86,6 +86,72 @@ def create_underperformers_table(region, period, power_underperformers, accel_un
     # Sort by name and create DataFrame
     return pd.DataFrame(table_data).sort_values(by="Name").reset_index(drop=True) if table_data else None
 
+def generate_exercise_metrics(df):
+    """
+    Generate exercise metrics including total executions, most common resistance,
+    and valid entries count.
+    
+    Args:
+        df: The processed dataframe
+        
+    Returns:
+        DataFrame with exercise metrics
+    """
+    # Create a list to store exercise metrics
+    exercise_metrics = []
+    
+    # Get all valid exercises from the dataframe
+    exercises = df['exercise_name'].unique()
+    
+    for exercise in exercises:
+        # Filter data for this exercise
+        exercise_df = df[df['exercise_name'] == exercise]
+        
+        # Get total executions
+        total_executions = len(exercise_df)
+        
+        # Get most common resistance - handle empty or all-NaN cases
+        if 'resistance' in exercise_df.columns and not exercise_df['resistance'].isna().all():
+            most_common_resistance = exercise_df['resistance'].mode()[0]
+            if pd.isna(most_common_resistance):
+                most_common_resistance = "N/A"
+        else:
+            most_common_resistance = "N/A"
+        
+        # Get valid entries count - entries with both power and acceleration values
+        valid_entries = exercise_df.dropna(subset=['power', 'acceleration']).shape[0]
+        
+        # Add to list
+        exercise_metrics.append({
+            'Exercise Name': exercise,
+            'Total Executions': total_executions,
+            'Most Common Resistance': most_common_resistance,
+            'Valid Entries Count': valid_entries
+        })
+    
+    # Convert to DataFrame and sort by Total Executions (descending)
+    return pd.DataFrame(exercise_metrics).sort_values(by='Total Executions', ascending=False).reset_index(drop=True)
+
+def get_most_frequent_session(df):
+    """
+    Get the most frequently performed test type from the 'session_name' column.
+    
+    Args:
+        df: The processed dataframe
+        
+    Returns:
+        String with the most frequent session name and its count
+    """
+    if 'session_name' in df.columns and len(df) > 0:
+        # Get the most common session name
+        session_counts = df['session_name'].value_counts()
+        if len(session_counts) > 0:
+            most_common_session = session_counts.index[0]
+            count = session_counts.iloc[0]
+            return f"{most_common_session} ({count} instances)"
+        
+    return "No session data available"
+
 def main():
     st.markdown("<h1 style='font-size: 3em;'>Site Development Bracketer</h1>", unsafe_allow_html=True)
 
@@ -119,6 +185,22 @@ def main():
             # Show data preview in collapsed expander
             with st.expander("Data Preview", expanded=False):
                 st.dataframe(processed_df.head())
+                
+            # Analysis Overview Section
+            st.markdown("<h2 style='font-size: 1.875em;'>Analysis Overview</h2>", unsafe_allow_html=True)
+            
+            # Exercise Metrics Table
+            st.markdown("<h3 style='font-size: 1.5em;'>Exercise Metrics</h3>", unsafe_allow_html=True)
+            exercise_metrics_df = generate_exercise_metrics(processed_df)
+            st.dataframe(exercise_metrics_df, use_container_width=True)
+            
+            # Test Session Analysis
+            st.markdown("<h3 style='font-size: 1.5em;'>Test Session Analysis</h3>", unsafe_allow_html=True)
+            most_frequent_session = get_most_frequent_session(processed_df)
+            st.metric("Most Frequently Performed Test Type", most_frequent_session)
+            
+            # Create a divider before moving to more detailed analysis
+            st.markdown("---")
 
             # Generate group-level analysis
             (power_counts, accel_counts, single_test_distribution,
