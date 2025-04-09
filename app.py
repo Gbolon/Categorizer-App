@@ -101,11 +101,11 @@ def generate_exercise_metrics(df):
     exercise_metrics = []
     
     # Get all valid exercises from the dataframe
-    exercises = df['exercise_name'].unique()
+    exercises = df['exercise name'].unique()
     
     for exercise in exercises:
         # Filter data for this exercise
-        exercise_df = df[df['exercise_name'] == exercise]
+        exercise_df = df[df['exercise name'] == exercise]
         
         # Get total executions
         total_executions = len(exercise_df)
@@ -119,7 +119,7 @@ def generate_exercise_metrics(df):
             most_common_resistance = "N/A"
         
         # Get valid entries count - entries with both power and acceleration values
-        valid_entries = exercise_df.dropna(subset=['power', 'acceleration']).shape[0]
+        valid_entries = exercise_df.dropna(subset=['power - high', 'acceleration - high']).shape[0]
         
         # Add to list
         exercise_metrics.append({
@@ -134,7 +134,7 @@ def generate_exercise_metrics(df):
 
 def get_most_frequent_session(df):
     """
-    Get the most frequently performed test type from the 'session_name' column.
+    Get the most frequently performed test type from the 'session name' column.
     
     Args:
         df: The processed dataframe
@@ -142,9 +142,9 @@ def get_most_frequent_session(df):
     Returns:
         String with the most frequent session name and its count
     """
-    if 'session_name' in df.columns and len(df) > 0:
+    if 'session name' in df.columns and len(df) > 0:
         # Get the most common session name
-        session_counts = df['session_name'].value_counts()
+        session_counts = df['session name'].value_counts()
         if len(session_counts) > 0:
             most_common_session = session_counts.index[0]
             count = session_counts.iloc[0]
