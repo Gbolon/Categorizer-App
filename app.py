@@ -157,7 +157,8 @@ def get_athlete_metrics(df):
         df: The processed dataframe
         
     Returns:
-        Dictionary with athlete metrics including total counts and most active athlete
+        Dictionary with athlete metrics including total counts, most active athlete,
+        and most complete athlete (user with valid data for the most required exercises)
     """
     # Total number of unique athletes
     total_athletes = df['user name'].nunique()
@@ -166,27 +167,54 @@ def get_athlete_metrics(df):
     valid_athlete_names = set()
     valid_tests_by_athlete = {}
     
+    # Track exercise completeness
+    exercise_completeness = {}
+    # Get the complete list of required exercises
+    from exercise_constants import ALL_EXERCISES
+    required_exercises = ALL_EXERCISES
+    total_required_exercises = len(required_exercises)
+    
     for name in df['user name'].unique():
         athlete_df = df[df['user name'] == name]
         valid_entries = athlete_df.dropna(subset=['power - high', 'acceleration - high'])
+        
         if valid_entries.shape[0] > 0:
             valid_athlete_names.add(name)
-            # Count number of valid test instances for this athlete
             valid_tests_by_athlete[name] = valid_entries.shape[0]
+            
+            # Track unique exercises with valid data
+            valid_exercises = valid_entries['exercise name'].unique()
+            # Filter to only include exercises from our required list
+            valid_required_exercises = [ex for ex in valid_exercises if ex in required_exercises]
+            
+            # Store completeness metrics
+            num_completed = len(valid_required_exercises)
+            exercise_completeness[name] = {
+                'count': num_completed,
+                'percentage': (num_completed / total_required_exercises) * 100,
+                'exercises': valid_required_exercises
+            }
     
     valid_athletes = len(valid_athlete_names)
     
     # Find the athlete with the most valid test instances
     most_active_athlete = None
-    most_valid_tests = 0
     
     if valid_tests_by_athlete:
         most_active_athlete = max(valid_tests_by_athlete.items(), key=lambda x: x[1])
     
+    # Find the athlete with the most complete exercise coverage
+    most_complete_athlete = None
+    if exercise_completeness:
+        most_complete_athlete = max(exercise_completeness.items(), 
+                                   key=lambda x: (x[1]['count'], x[1]['percentage']))
+    
     return {
         'total_athletes': total_athletes,
         'valid_athletes': valid_athletes,
-        'most_active_athlete': most_active_athlete  # Tuple (athlete_name, test_count) or None
+        'most_active_athlete': most_active_athlete,  # Tuple (athlete_name, test_count) or None
+        'most_complete_athlete': most_complete_athlete,  # Tuple (athlete_name, data_dict) or None
+        'total_required_exercises': total_required_exercises
     }
 
 def get_top_session_types(df):
@@ -268,7 +296,7 @@ def main():
             athlete_metrics = get_athlete_metrics(processed_df)
             
             # Create columns for displaying athlete metrics
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
             
             with col1:
                 st.metric("Total Number of Athletes", athlete_metrics['total_athletes'])
@@ -282,6 +310,29 @@ def main():
                     st.metric("Most Active Athlete", f"{name} ({count} tests)")
                 else:
                     st.metric("Most Active Athlete", "No data available")
+                    
+            with col4:
+                if athlete_metrics['most_complete_athlete']:
+                    name, data = athlete_metrics['most_complete_athlete']
+                    st.metric(
+                        "Most Complete Athlete", 
+                        f"{name} ({data['count']}/{athlete_metrics['total_required_exercises']} exercises)"
+                    )
+                else:
+                    st.metric("Most Complete Athlete", "No data available")
+                    
+            # Add expandable section with details about the most complete athlete
+            if athlete_metrics['most_complete_athlete']:
+                name, data = athlete_metrics['most_complete_athlete']
+                with st.expander(f"Details for Most Complete Athlete: {name}", expanded=False):
+                    st.write(f"**Exercises completed:** {data['count']} out of {athlete_metrics['total_required_exercises']}")
+                    st.write(f"**Completion percentage:** {data['percentage']:.1f}%")
+                    st.write("**Completed exercises:**")
+                    # Create a two-column layout for the exercises
+                    exercise_cols = st.columns(2)
+                    for i, exercise in enumerate(sorted(data['exercises'])):
+                        with exercise_cols[i % 2]:
+                            st.write(f"- {exercise}")
             
             # Exercise Metrics Table
             st.markdown("<h3 style='font-size: 1.5em;'>Exercise Metrics</h3>", unsafe_allow_html=True)
