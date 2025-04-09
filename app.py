@@ -187,7 +187,8 @@ def get_athlete_metrics(df):
             valid_tests_by_athlete[name] = valid_entries.shape[0]
             
             # Generate test instance matrices for this user
-            power_matrix, accel_matrix = matrix_generator.generate_user_matrices(df, name)
+            matrices = matrix_generator.generate_user_matrices(df, name)
+            power_matrix, accel_matrix = matrices[0], matrices[1]
             
             # Calculate completeness for each test instance
             test_instances = []
