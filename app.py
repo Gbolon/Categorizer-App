@@ -295,8 +295,21 @@ def main():
             st.markdown("<h3 style='font-size: 1.5em;'>Athlete Metrics</h3>", unsafe_allow_html=True)
             athlete_metrics = get_athlete_metrics(processed_df)
             
-            # Create columns for displaying athlete metrics
+            # Create columns for displaying athlete metrics with smaller font size
             col1, col2, col3, col4 = st.columns(4)
+            
+            # Custom CSS to reduce metric font size
+            st.markdown("""
+            <style>
+            [data-testid="stMetricValue"] {
+                font-size: 1rem;
+            }
+            [data-testid="stMetricLabel"] {
+                font-size: 0.8rem;
+                font-weight: 500;
+            }
+            </style>
+            """, unsafe_allow_html=True)
             
             with col1:
                 st.metric("Total Number of Athletes", athlete_metrics['total_athletes'])
@@ -345,6 +358,8 @@ def main():
             
             # Create columns for displaying session metrics
             col1, col2, col3 = st.columns(3)
+            
+            # Note: We don't need to add the CSS again as it's already added above
             
             with col1:
                 st.metric("1st Most Common Session", session_types['most_common'])
