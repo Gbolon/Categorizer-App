@@ -277,8 +277,8 @@ def main():
             )
             
             # Get earliest and latest dates from the dataset for default values
-            min_date = processed_df['exercise createdAt'].min().date()
-            max_date = processed_df['exercise createdAt'].max().date()
+            min_date = processed_df['exercise createdAt'].dt.tz_localize(None).min().date()
+            max_date = processed_df['exercise createdAt'].dt.tz_localize(None).max().date()
             
             # Add Evaluation Window date range selection
             st.write("### Evaluation Window")
@@ -305,14 +305,14 @@ def main():
             
             # Apply date range filtering
             if start_date or end_date:
-                # Convert to datetime for comparison
-                start_datetime = pd.Timestamp(start_date)
-                end_datetime = pd.Timestamp(end_date) + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)  # Set to end of the day
+                # Convert to datetime for comparison - ensure consistent timezone handling
+                start_datetime = pd.Timestamp(start_date).tz_localize(None)
+                end_datetime = pd.Timestamp(end_date).tz_localize(None) + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)  # Set to end of the day
                 
-                # Apply date filter
+                # Apply date filter - remove timezone info for consistent comparison
                 date_filtered_df = analysis_df[
-                    (analysis_df['exercise createdAt'] >= start_datetime) & 
-                    (analysis_df['exercise createdAt'] <= end_datetime)
+                    (analysis_df['exercise createdAt'].dt.tz_localize(None) >= start_datetime) & 
+                    (analysis_df['exercise createdAt'].dt.tz_localize(None) <= end_datetime)
                 ]
                 
                 # Show date filtering info if dates are not the min/max values
