@@ -88,7 +88,7 @@ def create_underperformers_table(region, period, power_underperformers, accel_un
 
 def generate_exercise_metrics(df):
     """
-    Generate exercise metrics including total executions, most common resistance,
+    Generate exercise metrics including total executions, most common resistances,
     and valid entries count.
     
     Args:
@@ -110,13 +110,28 @@ def generate_exercise_metrics(df):
         # Get total executions
         total_executions = len(exercise_df)
         
-        # Get most common resistance - handle empty or all-NaN cases
+        # Get the top 3 most common resistances - handle empty or all-NaN cases
         if 'resistance' in exercise_df.columns and not exercise_df['resistance'].isna().all():
-            most_common_resistance = exercise_df['resistance'].mode()[0]
-            if pd.isna(most_common_resistance):
-                most_common_resistance = "N/A"
+            # Get resistance value counts, excluding NaN values
+            resistance_counts = exercise_df['resistance'].dropna().value_counts()
+            
+            # Get top 3 most common resistances
+            most_common_resistance = "N/A"
+            second_most_common = "N/A"
+            third_most_common = "N/A"
+            
+            if len(resistance_counts) >= 1:
+                most_common_resistance = f"{resistance_counts.index[0]} ({resistance_counts.iloc[0]})"
+            
+            if len(resistance_counts) >= 2:
+                second_most_common = f"{resistance_counts.index[1]} ({resistance_counts.iloc[1]})"
+                
+            if len(resistance_counts) >= 3:
+                third_most_common = f"{resistance_counts.index[2]} ({resistance_counts.iloc[2]})"
         else:
             most_common_resistance = "N/A"
+            second_most_common = "N/A"
+            third_most_common = "N/A"
         
         # Get valid entries count - entries with both power and acceleration values
         valid_entries = exercise_df.dropna(subset=['power - high', 'acceleration - high']).shape[0]
@@ -125,7 +140,9 @@ def generate_exercise_metrics(df):
         exercise_metrics.append({
             'Exercise Name': exercise,
             'Total Executions': total_executions,
-            'Most Common Resistance': most_common_resistance,
+            '1st Most Common Resistance': most_common_resistance,
+            '2nd Most Common Resistance': second_most_common,
+            '3rd Most Common Resistance': third_most_common,
             'Valid Entries Count': valid_entries
         })
     
