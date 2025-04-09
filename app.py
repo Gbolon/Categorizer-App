@@ -398,7 +398,6 @@ def main():
             - Separate analysis for single-test and multi-test users
             - Power and acceleration distributions
             - Average days between tests metrics
-            - Progression rate metrics showing improvement speed
             - Percentage changes between consecutive tests
             
             #### 3. Transition Analysis
@@ -793,42 +792,13 @@ def main():
                 # Display Multi-Test User Averages
                 st.markdown("<h3 style='font-size: 1.5em;'>Multi-Test Users</h3>", unsafe_allow_html=True)
                 
-                # Create two columns for the days metrics
+                # Create two columns for the metrics
                 day_col1, day_col2 = st.columns(2)
                 with day_col1:
                     st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
                 with day_col2:
                     st.metric("Avg. Constrained Days", f"{avg_constrained_days:.1f}", 
                              help="Average number of days between tests after minimum days filtering")
-                
-                # Calculate progression rates
-                progression_rates = matrix_generator.calculate_progression_rates(analysis_df, avg_constrained_days)
-                
-                # Display progression metrics
-                st.markdown("<h4 style='font-size: 1.2em;'>Progression Rates</h4>", unsafe_allow_html=True)
-                
-                # Create a row of 4 columns for progression metrics
-                prog_col1, prog_col2, prog_col3, prog_col4 = st.columns(4)
-                
-                with prog_col1:
-                    st.metric("Power Total Change", 
-                              f"{progression_rates['power_total_change']:+.2f}%",
-                              help="Average change in power development from first to last test")
-                
-                with prog_col2:
-                    st.metric("Power Progression Rate", 
-                              f"{progression_rates['power_progression_rate']:+.3f}% per day",
-                              help="Average daily rate of power improvement")
-                
-                with prog_col3:
-                    st.metric("Accel Total Change", 
-                              f"{progression_rates['accel_total_change']:+.2f}%",
-                              help="Average change in acceleration development from first to last test")
-                
-                with prog_col4:
-                    st.metric("Accel Progression Rate", 
-                              f"{progression_rates['accel_progression_rate']:+.3f}% per day",
-                              help="Average daily rate of acceleration improvement")
 
                 # Display Power development distribution and changes
                 st.write("Multi-Test Users Power Development Distribution")
@@ -1548,17 +1518,6 @@ def main():
                     for a specific body region between consecutive tests. This serves as a reference point
                     to determine which users are underperforming relative to the group average.
                     
-                    #### Progression Rate
-                    The progression rate measures how quickly users are improving over time, normalized by the
-                    number of days between tests. It is calculated as:
-                    
-                    ```
-                    Progression Rate = (Total Change % from First to Last Test) / (Average Days Between Tests)
-                    ```
-                    
-                    This metric allows for comparing improvement speed across different time periods and
-                    users with varying testing schedules. A higher progression rate indicates more rapid improvement.
-                    
                     #### Minimum Days Between Tests
                     When the minimum days filter is applied:
                     1. The first chronological test for each exercise is always included
@@ -1582,7 +1541,6 @@ def main():
                     - Separate analysis for single-test and multi-test users
                     - Power and acceleration distributions
                     - Average days between tests metrics
-                    - Progression rate metrics showing improvement speed
                     - Percentage changes between consecutive tests
                     
                     #### 3. Transition Analysis
