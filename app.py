@@ -806,11 +806,15 @@ def main():
 
                 # Display Power development distribution and changes
                 st.write("Multi-Test Users Power Development Distribution")
-                # Apply different formatting to different rows
-                formatter = {
-                    'Average Score': '{:.1f}%'  # Format Average Score row with percentage sign
-                }
-                styled_power_counts = power_counts.style.format(formatter, na_rep="-").format("{:.0f}", subset=power_counts.index.difference(['Average Score']))
+                # Create a formatting function that conditionally applies different formats
+                def format_dataframe(val, index):
+                    if index == 'Average Score':
+                        return f"{val:.1f}%" if pd.notna(val) else "-"
+                    else:
+                        return f"{val:.0f}" if pd.notna(val) else "-"
+                
+                # Apply the formatting function
+                styled_power_counts = power_counts.style.format(lambda x, i=power_counts.index: format_dataframe(x, i))
                 st.dataframe(styled_power_counts, use_container_width=True)
 
                 # Display Power changes directly below power distribution
@@ -827,11 +831,8 @@ def main():
 
                 # Display Acceleration development distribution
                 st.write("Multi-Test Users Acceleration Development Distribution")
-                # Apply different formatting to different rows
-                formatter = {
-                    'Average Score': '{:.1f}%'  # Format Average Score row with percentage sign
-                }
-                styled_accel_counts = accel_counts.style.format(formatter, na_rep="-").format("{:.0f}", subset=accel_counts.index.difference(['Average Score']))
+                # Apply the same formatting function as we used for power_counts
+                styled_accel_counts = accel_counts.style.format(lambda x, i=accel_counts.index: format_dataframe(x, i))
                 st.dataframe(styled_accel_counts, use_container_width=True)
 
                 # Display Acceleration changes directly below acceleration distribution
