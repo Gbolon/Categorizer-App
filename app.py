@@ -274,12 +274,13 @@ def main():
             improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df)
             
             # Create main application tabs
-            tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
                 "1. Overview", 
                 "2. Group Development Analysis", 
                 "3. Transition Analysis",
                 "4. Body Region Analysis",
-                "5. Individual Analysis"
+                "5. Individual Analysis",
+                "6. Report Generator"
             ])
             
             # Add custom CSS for metric font size
@@ -923,6 +924,10 @@ def main():
                                     key=f"individual_{name}_download"
                                 )
                         
+            #############################################
+            # TAB 6: REPORT GENERATOR
+            #############################################
+            with tab6:
                 # Report Generator Section
                 st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
                 st.write("Generate comprehensive reports with interactive analysis")
