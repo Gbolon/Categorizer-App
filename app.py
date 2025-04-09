@@ -97,6 +97,11 @@ def generate_exercise_metrics(df):
     Returns:
         DataFrame with exercise metrics
     """
+    # Check if the required column exists
+    if 'exercise_name' not in df.columns:
+        # Return empty DataFrame with correct columns if exercise_name doesn't exist
+        return pd.DataFrame(columns=['Exercise Name', 'Total Executions', 'Most Common Resistance', 'Valid Entries Count'])
+    
     # Create a list to store exercise metrics
     exercise_metrics = []
     
@@ -119,7 +124,11 @@ def generate_exercise_metrics(df):
             most_common_resistance = "N/A"
         
         # Get valid entries count - entries with both power and acceleration values
-        valid_entries = exercise_df.dropna(subset=['power', 'acceleration']).shape[0]
+        required_cols = ['power', 'acceleration']
+        if all(col in exercise_df.columns for col in required_cols):
+            valid_entries = exercise_df.dropna(subset=required_cols).shape[0]
+        else:
+            valid_entries = 0
         
         # Add to list
         exercise_metrics.append({
@@ -142,13 +151,17 @@ def get_most_frequent_session(df):
     Returns:
         String with the most frequent session name and its count
     """
-    if 'session_name' in df.columns and len(df) > 0:
-        # Get the most common session name
-        session_counts = df['session_name'].value_counts()
-        if len(session_counts) > 0:
-            most_common_session = session_counts.index[0]
-            count = session_counts.iloc[0]
-            return f"{most_common_session} ({count} instances)"
+    try:
+        if 'session_name' in df.columns and len(df) > 0:
+            # Get the most common session name, ignoring NaN values
+            session_counts = df['session_name'].dropna().value_counts()
+            if len(session_counts) > 0:
+                most_common_session = session_counts.index[0]
+                count = session_counts.iloc[0]
+                return f"{most_common_session} ({count} instances)"
+    except Exception as e:
+        # Log the error but continue app execution
+        print(f"Error getting most frequent session: {e}")
         
     return "No session data available"
 
