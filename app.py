@@ -406,13 +406,13 @@ def main():
 
                 # Display reading guide once at the top
                 st.markdown("""
-                <div style="background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-                    <h4 style="margin-top: 0;">Reading Guide:</h4>
+                <div style="background-color: #262730; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+                    <h4 style="margin-top: 0; color: white;">Reading Guide:</h4>
                     <ul>
                         <li>Rows show starting bracket, columns show ending bracket.</li>
-                        <li><span style="color: blue; font-weight: bold;">Diagonal values (blue)</span> show users who remained in the same bracket.</li>
-                        <li><span style="color: red; font-weight: bold;">Above diagonal (red)</span> shows regression to lower brackets.</li>
-                        <li><span style="color: green; font-weight: bold;">Below diagonal (green)</span> shows improvement to higher brackets.</li>
+                        <li><span style="color: #4da6ff; font-weight: bold;">Diagonal values (blue)</span> show users who remained in the same bracket.</li>
+                        <li><span style="color: #ff6b6b; font-weight: bold;">Above diagonal (red)</span> shows regression to lower brackets.</li>
+                        <li><span style="color: #4dff4d; font-weight: bold;">Below diagonal (green)</span> shows improvement to higher brackets.</li>
                     </ul>
                 </div>
                 """, unsafe_allow_html=True)
