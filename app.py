@@ -160,13 +160,13 @@ def get_athlete_metrics(df):
         Dictionary with athlete metrics (total and valid counts)
     """
     # Total number of unique athletes
-    total_athletes = df['name'].nunique()
+    total_athletes = df['user name'].nunique()
     
     # Valid athletes have at least one exercise with both power and acceleration values
     valid_athlete_names = set()
     
-    for name in df['name'].unique():
-        athlete_df = df[df['name'] == name]
+    for name in df['user name'].unique():
+        athlete_df = df[df['user name'] == name]
         if athlete_df.dropna(subset=['power - high', 'acceleration - high']).shape[0] > 0:
             valid_athlete_names.add(name)
     
