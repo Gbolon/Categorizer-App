@@ -626,8 +626,6 @@ def main():
                                     
                             st.markdown("<hr>", unsafe_allow_html=True)
                         
-                        # Get detailed region metrics using the generalized function for all regions
-                        region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                         # Unpack the values carefully, handling different return formats
                         if region_metrics[0] is None or (isinstance(region_metrics[0], pd.DataFrame) and region_metrics[0].empty):
                             # No metrics available
@@ -762,66 +760,6 @@ def main():
                                 st.info("No underperforming users")
                                 
                         st.markdown("<hr>", unsafe_allow_html=True)
-                    
-                    # Get detailed region metrics using the generalized function for all regions
-                    region_metrics = matrix_generator.get_region_metrics(processed_df, region)
-                    # Unpack the values carefully, handling different return formats
-                    if region_metrics[0] is None or (isinstance(region_metrics[0], pd.DataFrame) and region_metrics[0].empty):
-                        # No metrics available
-                        power_df, accel_df, power_changes, accel_changes = None, None, None, None
-                        lowest_power_exercise, lowest_power_value = None, None
-                        lowest_accel_exercise, lowest_accel_value = None, None
-                    else:
-                        # Handle either 4 or 8 returned values
-                        power_df, accel_df = region_metrics[0], region_metrics[1]
-                        power_changes, accel_changes = region_metrics[2], region_metrics[3]
-                        
-                        # Check if we have the additional values for lowest changes
-                        if len(region_metrics) >= 8:
-                            lowest_power_exercise = region_metrics[4]
-                            lowest_power_value = region_metrics[5]
-                            lowest_accel_exercise = region_metrics[6]
-                            lowest_accel_value = region_metrics[7]
-                        else:
-                            lowest_power_exercise, lowest_power_value = None, None
-                            lowest_accel_exercise, lowest_accel_value = None, None
-            
-                    if (power_df is not None and isinstance(power_df, pd.DataFrame) and not power_df.empty and 
-                        accel_df is not None and isinstance(accel_df, pd.DataFrame) and not accel_df.empty):
-                        # Create two columns for power and acceleration
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            st.write(f"**{region} Region Power Development (%)**")
-                            
-                            # Apply formatting without highlighting
-                            styled_power = power_df.style.format("{:.1f}%")
-                            st.dataframe(styled_power)
-                            
-                            # Display only the lowest change exercise (removing duplicate average changes)
-                            if lowest_power_exercise is not None and lowest_power_value is not None:
-                                st.write("**Exercise with Lowest Change:**")
-                                if lowest_power_value < 0:
-                                    st.markdown(f"**{lowest_power_exercise}**: <span style='color:red'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f"**{lowest_power_exercise}**: <span style='color:green'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
-                        
-                        with col2:
-                            st.write(f"**{region} Region Acceleration Development (%)**")
-                            
-                            # Apply formatting without highlighting
-                            styled_accel = accel_df.style.format("{:.1f}%")
-                            st.dataframe(styled_accel)
-                            
-                            # Display only the lowest change exercise (removing duplicate average changes)
-                            if lowest_accel_exercise is not None and lowest_accel_value is not None:
-                                st.write("**Exercise with Lowest Change:**")
-                                if lowest_accel_value < 0:
-                                    st.markdown(f"**{lowest_accel_exercise}**: <span style='color:red'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f"**{lowest_accel_exercise}**: <span style='color:green'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
-                    else:
-                        st.info(f"Not enough multi-test user data to display detailed {region.lower()} region analysis.")
 
             #############################################
             # TAB 5: INDIVIDUAL ANALYSIS
