@@ -210,13 +210,25 @@ def get_athlete_metrics(df):
                     # Calculate completeness percentage
                     completeness_pct = (valid_exercises / total_required_exercises) * 100
                     
+                    # Get the list of valid exercises for this test instance
+                    valid_exercise_list = []
+                    for ex in required_exercises:
+                        has_power = ex in power_matrix[test_num] and not pd.isna(power_matrix[test_num][ex])
+                        has_accel = ex in accel_matrix[test_num] and not pd.isna(accel_matrix[test_num][ex])
+                        
+                        if has_power and has_accel:
+                            valid_exercise_list.append(ex)
+                    
+                    # Debug print to see what exercises are being considered valid
+                    if len(valid_exercise_list) > 0:
+                        print(f"DEBUG: User {name}, Test {test_num} has {len(valid_exercise_list)} valid exercises")
+                        print(f"DEBUG: Valid exercises are: {valid_exercise_list}")
+                    
                     test_instances.append({
                         'test_num': test_num,
                         'valid_count': valid_exercises,
                         'percentage': completeness_pct,
-                        'exercise_list': [ex for ex in required_exercises 
-                                        if ex in power_matrix[test_num] and not pd.isna(power_matrix[test_num][ex]) and
-                                           ex in accel_matrix[test_num] and not pd.isna(accel_matrix[test_num][ex])]
+                        'exercise_list': valid_exercise_list
                     })
             
             # Sort test instances by completeness and keep the most complete one
@@ -233,6 +245,67 @@ def get_athlete_metrics(df):
     
     # Find the athlete with the most complete test instance
     most_complete_athlete = None
+    
+    # Debug print to check if we have any test_completeness data
+    print(f"DEBUG: test_completeness has {len(test_completeness)} entries")
+    for name, data in test_completeness.items():
+        print(f"DEBUG: Athlete {name} has {data['valid_count']} valid exercises in Test {data['test_num']}")
+    
+    # Fallback: If no entries have both power and acceleration data, let's look for people
+    # who at least have some exercise data, even if just one type (power or accel)
+    if not test_completeness:
+        print("DEBUG: No test completeness entries found, using alternate approach")
+        # Implement simpler version that just looks for any valid exercise data
+        for name in df['user name'].unique():
+            athlete_df = df[df['user name'] == name].copy()
+            
+            # Generate matrices
+            matrices = matrix_generator.generate_user_matrices(df, name)
+            power_matrix, accel_matrix = matrices[0], matrices[1]
+            
+            # Find the test with the most exercises (even if only power or accel)
+            max_exercises = 0
+            best_test = None
+            
+            for test_num in range(1, max(max(power_matrix.keys() if power_matrix else [0]), 
+                                       max(accel_matrix.keys() if accel_matrix else [0])) + 1):
+                if test_num in power_matrix or test_num in accel_matrix:
+                    # Count power exercises
+                    power_exercises = 0
+                    if test_num in power_matrix:
+                        power_exercises = sum(1 for val in power_matrix[test_num].values() if not pd.isna(val))
+                    
+                    # Count acceleration exercises  
+                    accel_exercises = 0
+                    if test_num in accel_matrix:
+                        accel_exercises = sum(1 for val in accel_matrix[test_num].values() if not pd.isna(val))
+                    
+                    # Take the maximum of power or accel (not requiring both for the same exercise)
+                    total_exercises = max(power_exercises, accel_exercises)
+                    if total_exercises > max_exercises:
+                        max_exercises = total_exercises
+                        
+                        # Get the list of exercises (from either power or accel)
+                        exercise_list = []
+                        if test_num in power_matrix:
+                            exercise_list.extend([ex for ex, val in power_matrix[test_num].items() 
+                                              if not pd.isna(val) and ex in required_exercises])
+                        if test_num in accel_matrix:
+                            for ex, val in accel_matrix[test_num].items():
+                                if not pd.isna(val) and ex in required_exercises and ex not in exercise_list:
+                                    exercise_list.append(ex)
+                        
+                        best_test = {
+                            'test_num': test_num,
+                            'valid_count': max_exercises,
+                            'percentage': (max_exercises / total_required_exercises) * 100,
+                            'exercise_list': exercise_list
+                        }
+            
+            if best_test:
+                test_completeness[name] = best_test
+                print(f"DEBUG: Alternate method - Athlete {name} has {best_test['valid_count']} exercises in Test {best_test['test_num']}")
+    
     if test_completeness:
         # Get the athlete with the highest valid_count in their most complete test
         best_athlete = max(test_completeness.items(), 
