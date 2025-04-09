@@ -159,34 +159,80 @@ def get_athlete_metrics(df):
     Returns:
         Dictionary with athlete metrics including total counts and most active athlete
     """
+    # Import the list of required exercises
+    from exercise_constants import VALID_EXERCISES, ALL_EXERCISES
+    
     # Total number of unique athletes
     total_athletes = df['user name'].nunique()
     
     # Valid athletes have at least one exercise with both power and acceleration values
     valid_athlete_names = set()
     valid_tests_by_athlete = {}
+    complete_tests_by_athlete = {}
+    
+    # Get list of base required exercises (without variations)
+    required_exercises = []
+    for region_exercises in VALID_EXERCISES.values():
+        required_exercises.extend(region_exercises)
     
     for name in df['user name'].unique():
         athlete_df = df[df['user name'] == name]
         valid_entries = athlete_df.dropna(subset=['power - high', 'acceleration - high'])
+        
         if valid_entries.shape[0] > 0:
             valid_athlete_names.add(name)
             # Count number of valid test instances for this athlete
             valid_tests_by_athlete[name] = valid_entries.shape[0]
+            
+            # Count complete tests (tests with valid entries for all required exercises)
+            # Group by test instance
+            test_instances = athlete_df['test instance'].unique()
+            complete_test_count = 0
+            
+            for test_instance in test_instances:
+                instance_df = athlete_df[athlete_df['test instance'] == test_instance]
+                valid_instance_df = instance_df.dropna(subset=['power - high', 'acceleration - high'])
+                
+                # Check if all required exercises are present with valid data
+                exercises_in_instance = set(valid_instance_df['exercise name'].unique())
+                
+                # Check if each required exercise is represented in some form
+                all_required_present = True
+                for req_exercise in required_exercises:
+                    # Look for any variation of the exercise (with dominance)
+                    found = False
+                    for exercise in exercises_in_instance:
+                        if req_exercise in exercise:  # Check if base exercise name is in the found exercise
+                            found = True
+                            break
+                    
+                    if not found:
+                        all_required_present = False
+                        break
+                
+                if all_required_present:
+                    complete_test_count += 1
+            
+            if complete_test_count > 0:
+                complete_tests_by_athlete[name] = complete_test_count
     
     valid_athletes = len(valid_athlete_names)
     
     # Find the athlete with the most valid test instances
     most_active_athlete = None
-    most_valid_tests = 0
-    
     if valid_tests_by_athlete:
         most_active_athlete = max(valid_tests_by_athlete.items(), key=lambda x: x[1])
+    
+    # Find the athlete with the most complete tests
+    most_complete_athlete = None
+    if complete_tests_by_athlete:
+        most_complete_athlete = max(complete_tests_by_athlete.items(), key=lambda x: x[1])
     
     return {
         'total_athletes': total_athletes,
         'valid_athletes': valid_athletes,
-        'most_active_athlete': most_active_athlete  # Tuple (athlete_name, test_count) or None
+        'most_active_athlete': most_active_athlete,  # Tuple (athlete_name, test_count) or None
+        'most_complete_athlete': most_complete_athlete  # Tuple (athlete_name, complete_test_count) or None
     }
 
 def get_top_session_types(df):
@@ -268,20 +314,29 @@ def main():
             athlete_metrics = get_athlete_metrics(processed_df)
             
             # Create columns for displaying athlete metrics
-            col1, col2, col3 = st.columns(3)
+            col1, col2 = st.columns(2)
             
             with col1:
                 st.metric("Total Number of Athletes", athlete_metrics['total_athletes'])
             
             with col2:
                 st.metric("Total Valid Athletes", athlete_metrics['valid_athletes'])
+            
+            col1, col2 = st.columns(2)
                 
-            with col3:
+            with col1:
                 if athlete_metrics['most_active_athlete']:
                     name, count = athlete_metrics['most_active_athlete']
                     st.metric("Most Active Athlete", f"{name} ({count} tests)")
                 else:
                     st.metric("Most Active Athlete", "No data available")
+                    
+            with col2:
+                if athlete_metrics['most_complete_athlete']:
+                    name, count = athlete_metrics['most_complete_athlete']
+                    st.metric("Most Complete Tests Athlete", f"{name} ({count} tests)")
+                else:
+                    st.metric("Most Complete Tests Athlete", "No data available")
             
             # Exercise Metrics Table
             st.markdown("<h3 style='font-size: 1.5em;'>Exercise Metrics</h3>", unsafe_allow_html=True)
