@@ -9,6 +9,20 @@ from report_generator import ReportGenerator
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
 
+# Dictionary of standard resistances for each exercise (in pounds)
+STANDARD_RESISTANCES = {
+    "Chest Press (One Hand)": 12,
+    "Horizontal Row (One Hand)": 12,
+    "Biceps Curl (One Hand)": 6,
+    "Triceps Extension (One Hand)": 6,
+    "PNF D2 Flexion": 6,
+    "PNF D2 Extension": 6,
+    "Straight Arm Trunk Rotation": 12,
+    "Lateral Bound": 6,
+    "Shot Put (Countermovement)": 18,
+    "Vertical Jump (Countermovement)": 6
+}
+
 # Configure the page at the very beginning
 st.set_page_config(
     page_title="Site Development Bracketer",
@@ -255,24 +269,108 @@ def main():
             # Process data
             processed_df = data_processor.preprocess_data(df)
 
+            # Add checkbox for resistance standardization
+            standardize_resistance = st.checkbox(
+                "Enable Resistance Standardization", 
+                value=False,
+                help="When enabled, only includes data where exercises were performed at standard resistance values"
+            )
+            
+            # Apply resistance filtering when checkbox is checked
+            if standardize_resistance:
+                # Create a copy of the DataFrame to avoid modifying the original
+                filtered_df = processed_df.copy()
+                
+                # Define a filtering function
+                def filter_by_standard_resistance(row):
+                    # Extract exercise name
+                    exercise_name = row['exercise name']
+                    # Find the base exercise name that matches our standards dictionary
+                    matching_exercise = None
+                    for standard_exercise in STANDARD_RESISTANCES.keys():
+                        if standard_exercise in exercise_name:
+                            matching_exercise = standard_exercise
+                            break
+                    
+                    # If no matching exercise or no resistance value, keep the row
+                    if matching_exercise is None or pd.isna(row['resistance']):
+                        return True
+                    
+                    # Check if resistance matches the standard with a small tolerance
+                    standard_resistance = STANDARD_RESISTANCES[matching_exercise]
+                    # Allow a small tolerance (e.g., ±0.5 lbs)
+                    tolerance = 0.5
+                    return abs(float(row['resistance']) - standard_resistance) <= tolerance
+                
+                # Apply the filter
+                filtered_df = filtered_df[filtered_df.apply(filter_by_standard_resistance, axis=1)]
+                
+                # Show filtering info
+                st.info(f"Filtering applied: Only showing data with standard resistance values.\n"
+                       f"Original data rows: {len(processed_df)}, Filtered data rows: {len(filtered_df)}")
+                
+                # Use filtered_df for analysis
+                analysis_df = filtered_df
+            else:
+                # Use original processed_df for analysis
+                analysis_df = processed_df
+            
             # Show data preview in collapsed expander
             with st.expander("Data Preview", expanded=False):
-                st.dataframe(processed_df.head())
+                if standardize_resistance:
+                    st.write("**Filtered Data Preview (Standard Resistance Only)**")
+                    st.dataframe(analysis_df.head())
+                    st.write("**Original Data Preview (All Data)**")
+                    st.dataframe(processed_df.head())
+                else:
+                    st.dataframe(processed_df.head())
                 
-            # Generate group-level analysis (needed for all tabs)
-            (power_counts, accel_counts, single_test_distribution,
-             power_transitions_detail, accel_transitions_detail,
-             power_average, accel_average,
-             avg_power_change_1_2, avg_accel_change_1_2,
-             avg_power_change_2_3, avg_accel_change_2_3,
-             avg_days_between_tests,
-             power_regression_users, accel_regression_users) = matrix_generator.generate_group_analysis(processed_df)
+            # Generate group-level analysis for original data (needed for Overview tab)
+            (power_counts_original, accel_counts_original, single_test_distribution_original,
+             power_transitions_detail_original, accel_transitions_detail_original,
+             power_average_original, accel_average_original,
+             avg_power_change_1_2_original, avg_accel_change_1_2_original,
+             avg_power_change_2_3_original, avg_accel_change_2_3_original,
+             avg_days_between_tests_original,
+             power_regression_users_original, accel_regression_users_original) = matrix_generator.generate_group_analysis(processed_df)
             
-            # Calculate body region averages (needed for body region tab)
-            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
-            
-            # Calculate improvement thresholds for all regions
-            improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df)
+            # If resistance standardization is enabled, generate analysis with filtered data
+            if standardize_resistance:
+                (power_counts, accel_counts, single_test_distribution,
+                 power_transitions_detail, accel_transitions_detail,
+                 power_average, accel_average,
+                 avg_power_change_1_2, avg_accel_change_1_2,
+                 avg_power_change_2_3, avg_accel_change_2_3,
+                 avg_days_between_tests,
+                 power_regression_users, accel_regression_users) = matrix_generator.generate_group_analysis(analysis_df)
+                
+                # Calculate body region averages with filtered data
+                body_region_averages = matrix_generator.calculate_body_region_averages(analysis_df)
+                
+                # Calculate improvement thresholds with filtered data
+                improvement_thresholds = matrix_generator.calculate_improvement_thresholds(analysis_df)
+            else:
+                # Use original data if no filtering
+                power_counts = power_counts_original
+                accel_counts = accel_counts_original
+                single_test_distribution = single_test_distribution_original
+                power_transitions_detail = power_transitions_detail_original
+                accel_transitions_detail = accel_transitions_detail_original
+                power_average = power_average_original
+                accel_average = accel_average_original
+                avg_power_change_1_2 = avg_power_change_1_2_original
+                avg_accel_change_1_2 = avg_accel_change_1_2_original
+                avg_power_change_2_3 = avg_power_change_2_3_original
+                avg_accel_change_2_3 = avg_accel_change_2_3_original
+                avg_days_between_tests = avg_days_between_tests_original
+                power_regression_users = power_regression_users_original
+                accel_regression_users = accel_regression_users_original
+                
+                # Calculate body region averages with original data
+                body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
+                
+                # Calculate improvement thresholds with original data
+                improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df)
             
             # Create main application tabs
             tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -486,8 +584,13 @@ def main():
                         accel_underperformers_1_to_2 = None
                         accel_underperformers_2_to_3 = None
                         
-                        # Get region metrics only once
-                        region_metrics = matrix_generator.get_region_metrics(processed_df, region)
+                        # Get region metrics only once, using filtered data if enabled
+                        if standardize_resistance:
+                            region_metrics = matrix_generator.get_region_metrics(analysis_df, region)
+                            # If filtering enabled, show info
+                            st.info(f"Showing {region} region analysis with standard resistance filter applied")
+                        else:
+                            region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                         
                         # Extract underperformers for all periods
                         if region_metrics[2] is not None and isinstance(region_metrics[2], dict):  # Power metrics
@@ -692,13 +795,24 @@ def main():
             with tab5:
                 # User selection for individual analysis
                 st.markdown("<h2 style='font-size: 1.875em;'>Individual User Analysis</h2>", unsafe_allow_html=True)
-                users = data_processor.get_user_list(processed_df)
+                
+                # Use filtered user list if resistance standardization is enabled
+                if standardize_resistance:
+                    users = data_processor.get_user_list(analysis_df)
+                    st.info("Showing user analysis with standard resistance filter applied")
+                else:
+                    users = data_processor.get_user_list(processed_df)
+                
                 selected_user = st.selectbox("Select User", users)
 
                 if selected_user:
-                    # Generate matrices
-                    matrices = matrix_generator.generate_user_matrices(
-                        processed_df, selected_user)
+                    # Generate matrices using filtered data if resistance standardization is enabled
+                    if standardize_resistance:
+                        matrices = matrix_generator.generate_user_matrices(
+                            analysis_df, selected_user)
+                    else:
+                        matrices = matrix_generator.generate_user_matrices(
+                            processed_df, selected_user)
 
                     power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
 
@@ -820,7 +934,15 @@ def main():
                 # First collect region metrics for all regions
                 region_metrics = {}
                 for region in VALID_EXERCISES.keys():
-                    region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
+                    # Use filtered or original data based on checkbox state
+                    if standardize_resistance:
+                        region_metrics[region] = matrix_generator.get_region_metrics(analysis_df, region)
+                    else:
+                        region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
+                
+                # Add filtering info for the report
+                if standardize_resistance:
+                    st.info("Report will be generated using data filtered by standard resistance values")
                 
                 # Only enable the download button if a site name is provided
                 if site_name.strip() != "":
@@ -856,8 +978,30 @@ def main():
 
                 # Display exercise information with standards
                 with st.expander("View Tracked Exercises and Goal Standards"):
+                    # First show Standard Resistances Table
+                    st.subheader("Standard Resistance Values")
+                    st.write("These are the standard resistance values used for filtering when 'Enable Resistance Standardization' is checked:")
+                    
+                    # Create a DataFrame from the standard resistances
+                    resistance_data = []
+                    for exercise, resistance in STANDARD_RESISTANCES.items():
+                        resistance_data.append({
+                            'Exercise': exercise,
+                            'Standard Resistance (lbs)': resistance
+                        })
+                    
+                    # Display standard resistances table
+                    if resistance_data:
+                        df_resistances = pd.DataFrame(resistance_data)
+                        st.dataframe(df_resistances, use_container_width=True)
+                    
+                    # Add a separator
+                    st.markdown("---")
+                    
+                    # Then show Goal Standards by category
+                    st.subheader("Goal Standards by Category")
                     for category, exercises in VALID_EXERCISES.items():
-                        st.subheader(category)
+                        st.write(f"**{category}**")
 
                         # Create a DataFrame to display standards
                         standards_data = []
@@ -867,8 +1011,16 @@ def main():
                             female_power = POWER_STANDARDS['female'][exercise]
                             female_accel = ACCELERATION_STANDARDS['female'][exercise]
 
+                            # Get standard resistance if available
+                            std_resistance = "N/A"
+                            for std_exercise, resistance in STANDARD_RESISTANCES.items():
+                                if std_exercise in exercise:
+                                    std_resistance = f"{resistance} lbs"
+                                    break
+
                             standards_data.append({
                                 'Exercise': exercise,
+                                'Standard Resistance': std_resistance,
                                 'Male Power': male_power,
                                 'Male Acceleration': male_accel,
                                 'Female Power': female_power,
