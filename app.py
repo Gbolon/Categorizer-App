@@ -555,7 +555,8 @@ def main():
                                                 label="Download Power Details",
                                                 data=csv_data,
                                                 file_name=f"{region}_power_underperformers_test1to2.csv",
-                                                mime="text/csv"
+                                                mime="text/csv",
+                                                key=f"{region}_power_test1to2_download"
                                             )
                                     with col2:
                                         if accel_underperformers_1_to_2:
@@ -565,7 +566,8 @@ def main():
                                                 label="Download Acceleration Details",
                                                 data=csv_data,
                                                 file_name=f"{region}_accel_underperformers_test1to2.csv",
-                                                mime="text/csv"
+                                                mime="text/csv",
+                                                key=f"{region}_accel_test1to2_download"
                                             )
                                 else:
                                     st.info("No underperforming users")
@@ -589,7 +591,8 @@ def main():
                                                 label="Download Power Details",
                                                 data=csv_data,
                                                 file_name=f"{region}_power_underperformers_test2to3.csv",
-                                                mime="text/csv"
+                                                mime="text/csv",
+                                                key=f"{region}_power_test2to3_download"
                                             )
                                     with col2:
                                         if accel_underperformers_2_to_3:
@@ -599,7 +602,8 @@ def main():
                                                 label="Download Acceleration Details",
                                                 data=csv_data,
                                                 file_name=f"{region}_accel_underperformers_test2to3.csv",
-                                                mime="text/csv"
+                                                mime="text/csv",
+                                                key=f"{region}_accel_test2to3_download"
                                             )
                                 else:
                                     st.info("No underperforming users")
@@ -688,7 +692,8 @@ def main():
                                             label="Download Power Details",
                                             data=csv_data,
                                             file_name=f"{region}_power_underperformers_test1to2.csv",
-                                            mime="text/csv"
+                                            mime="text/csv",
+                                            key=f"{region}_power_under_test1to2_download"
                                         )
                                 with col2:
                                     if accel_underperformers_1_to_2:
@@ -698,7 +703,8 @@ def main():
                                             label="Download Acceleration Details",
                                             data=csv_data,
                                             file_name=f"{region}_accel_underperformers_test1to2.csv",
-                                            mime="text/csv"
+                                            mime="text/csv",
+                                            key=f"{region}_accel_under_test1to2_download"
                                         )
                             else:
                                 st.info("No underperforming users")
@@ -722,7 +728,8 @@ def main():
                                             label="Download Power Details",
                                             data=csv_data,
                                             file_name=f"{region}_power_underperformers_test2to3.csv",
-                                            mime="text/csv"
+                                            mime="text/csv",
+                                            key=f"{region}_power_under_test2to3_download"
                                         )
                                 with col2:
                                     if accel_underperformers_2_to_3:
@@ -732,7 +739,8 @@ def main():
                                             label="Download Acceleration Details",
                                             data=csv_data,
                                             file_name=f"{region}_accel_underperformers_test2to3.csv",
-                                            mime="text/csv"
+                                            mime="text/csv",
+                                            key=f"{region}_accel_under_test2to3_download"
                                         )
                             else:
                                 st.info("No underperforming users")
@@ -911,7 +919,8 @@ def main():
                                     label=f"Download {name.replace('_', ' ').title()} Matrix CSV",
                                     data=download_matrix(matrix, name),
                                     file_name=f"{selected_user}_{name}_matrix.csv",
-                                    mime="text/csv"
+                                    mime="text/csv",
+                                    key=f"individual_{name}_download"
                                 )
                         
                 # Report Generator Section
@@ -948,11 +957,12 @@ def main():
                         data=comprehensive_report,
                         file_name="comprehensive_report.html",
                         mime="text/html",
+                        key="comprehensive_report_download"
                     )
                 else:
                     # Display disabled button with message
                     st.info("Please enter a site name to enable the report download")
-                    st.button("Download Comprehensive Report", disabled=True)
+                    st.button("Download Comprehensive Report", disabled=True, key="disabled_report_download")
                 
                 # Add an explanation about the report
                 st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")
