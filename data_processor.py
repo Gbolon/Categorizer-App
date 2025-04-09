@@ -148,3 +148,46 @@ class DataProcessor:
     def get_user_list(self, df):
         """Get list of unique users in the dataset."""
         return sorted(df['user name'].unique())
+        
+    def filter_by_minimum_days(self, df, min_days):
+        """
+        Filter dataframe to ensure tests for each user are separated by at least min_days days.
+        
+        Args:
+            df: Preprocessed dataframe with exercise data
+            min_days: Minimum number of days required between tests
+            
+        Returns:
+            DataFrame with filtered tests
+        """
+        if min_days <= 0:
+            return df  # No filtering needed
+        
+        # Create a copy to avoid modifying the original
+        filtered_df = pd.DataFrame()
+        
+        # Process each user separately
+        for user_name in df['user name'].unique():
+            user_df = df[df['user name'] == user_name].copy()
+            
+            # Sort by date
+            user_df = user_df.sort_values('exercise createdAt')
+            
+            # Initialize with the first test
+            valid_tests = [user_df.iloc[0]]
+            last_date = user_df.iloc[0]['exercise createdAt']
+            
+            # Check each subsequent test
+            for _, row in user_df.iloc[1:].iterrows():
+                current_date = row['exercise createdAt']
+                days_diff = (current_date - last_date).days
+                
+                if days_diff >= min_days:
+                    valid_tests.append(row)
+                    last_date = current_date
+            
+            # Concatenate the valid tests
+            if valid_tests:
+                filtered_df = pd.concat([filtered_df, pd.DataFrame(valid_tests)])
+        
+        return filtered_df

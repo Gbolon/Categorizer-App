@@ -303,6 +303,16 @@ def main():
             # Initialize analysis_df to the processed_df
             analysis_df = processed_df.copy()
             
+            # Add minimum days between tests filter
+            min_days_between_tests = st.number_input(
+                "Minimum Days Between Tests",
+                min_value=0,
+                max_value=365,
+                value=0,  # Default to no filtering
+                step=1,
+                help="Set the minimum number of days required between consecutive tests. Tests that occur before this threshold will be skipped."
+            )
+            
             # Apply date range filtering
             if start_date or end_date:
                 # Convert to datetime for comparison - ensure consistent timezone handling
@@ -322,6 +332,16 @@ def main():
                 
                 # Update analysis_df with date filtered results
                 analysis_df = date_filtered_df
+                
+            # Apply minimum days between tests filtering
+            if min_days_between_tests > 0:
+                before_count = len(analysis_df)
+                analysis_df = data_processor.filter_by_minimum_days(analysis_df, min_days_between_tests)
+                after_count = len(analysis_df)
+                
+                # Show filtering info
+                st.info(f"Minimum days filter applied: Ensuring at least {min_days_between_tests} days between tests.\n"
+                       f"Data rows before filtering: {before_count}, After filtering: {after_count}")
             
             # Apply resistance filtering when checkbox is checked
             if standardize_resistance:
@@ -362,7 +382,7 @@ def main():
             # Show data preview in collapsed expander
             with st.expander("Data Preview", expanded=False):
                 # Check if any filtering is applied
-                filtering_applied = standardize_resistance or (start_date > min_date or end_date < max_date)
+                filtering_applied = standardize_resistance or (start_date > min_date or end_date < max_date) or min_days_between_tests > 0
                 
                 if filtering_applied:
                     st.write("**Filtered Data Preview**")
@@ -373,6 +393,8 @@ def main():
                     # Show filtering summary
                     if start_date > min_date or end_date < max_date:
                         st.write(f"**Date filtering:** From {start_date} to {end_date}")
+                    if min_days_between_tests > 0:
+                        st.write(f"**Minimum days between tests:** {min_days_between_tests} days")
                     if standardize_resistance:
                         st.write("**Resistance filtering:** Using standard resistance values")
                 else:
@@ -388,7 +410,7 @@ def main():
              power_regression_users_original, accel_regression_users_original) = matrix_generator.generate_group_analysis(processed_df)
             
             # Check if any filtering is applied
-            filtering_applied = standardize_resistance or (start_date > min_date or end_date < max_date)
+            filtering_applied = standardize_resistance or (start_date > min_date or end_date < max_date) or min_days_between_tests > 0
             
             # If any filtering is enabled, generate analysis with filtered data
             if filtering_applied:
@@ -410,6 +432,8 @@ def main():
                 filter_note = "Note: Analysis is based on filtered data. "
                 if start_date > min_date or end_date < max_date:
                     filter_note += f"Date range: {start_date} to {end_date}. "
+                if min_days_between_tests > 0:
+                    filter_note += f"Minimum days between tests: {min_days_between_tests}. "
                 if standardize_resistance:
                     filter_note += "Using standard resistance values."
                 
@@ -657,6 +681,10 @@ def main():
                             filter_msg = f"Showing {region} region analysis with "
                             if start_date > min_date or end_date < max_date:
                                 filter_msg += f"date range: {start_date} to {end_date}"
+                                if min_days_between_tests > 0 or standardize_resistance:
+                                    filter_msg += " and "
+                            if min_days_between_tests > 0:
+                                filter_msg += f"minimum {min_days_between_tests} days between tests"
                                 if standardize_resistance:
                                     filter_msg += " and "
                             if standardize_resistance:
