@@ -42,7 +42,7 @@ class MatrixGenerator:
     def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
-        categories = list(self.development_brackets.keys()) + ['Total Users']
+        categories = list(self.development_brackets.keys()) + ['Total Users', 'Average Development']
         power_counts = pd.DataFrame(0, index=categories, columns=[])
         accel_counts = pd.DataFrame(0, index=categories, columns=[])
 
@@ -62,6 +62,10 @@ class MatrixGenerator:
         test2_to_3_accel = []
         test3_to_4_power = []
         test3_to_4_accel = []
+        
+        # Track development scores for each test to calculate averages
+        power_test_scores = {f"Test {i}": [] for i in range(1, max_tests + 1)}
+        accel_test_scores = {f"Test {i}": [] for i in range(1, max_tests + 1)}
 
         # Initialize transition tracking for all movements
         power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
@@ -128,6 +132,18 @@ class MatrixGenerator:
                                 accel_counts.loc[category, test] += 1
 
                     # Store test scores for calculating averages
+                    # Collect development scores for all tests
+                    for test in test_columns:
+                        if test in overall_dev.columns:
+                            power_score = overall_dev.loc['Power Average', test]
+                            accel_score = overall_dev.loc['Acceleration Average', test]
+                            
+                            if pd.notna(power_score):
+                                power_test_scores[test].append(power_score)
+                            if pd.notna(accel_score):
+                                accel_test_scores[test].append(accel_score)
+                                
+                    # Calculate changes between consecutive tests
                     if 'Test 1' in overall_dev.columns and 'Test 2' in overall_dev.columns:
                         power_1 = overall_dev.loc['Power Average', 'Test 1']
                         power_2 = overall_dev.loc['Power Average', 'Test 2']
@@ -263,6 +279,20 @@ class MatrixGenerator:
         avg_accel_change_2_3 = np.mean(test2_to_3_accel) if test2_to_3_accel else 0
         avg_power_change_3_4 = np.mean(test3_to_4_power) if test3_to_4_power else 0
         avg_accel_change_3_4 = np.mean(test3_to_4_accel) if test3_to_4_accel else 0
+        
+        # Calculate average development for each test column
+        for test in test_columns:
+            if power_test_scores[test]:
+                avg_power_dev = np.mean(power_test_scores[test])
+                power_counts.loc['Average Development', test] = avg_power_dev
+            else:
+                power_counts.loc['Average Development', test] = 0
+                
+            if accel_test_scores[test]:
+                avg_accel_dev = np.mean(accel_test_scores[test])
+                accel_counts.loc['Average Development', test] = avg_accel_dev
+            else:
+                accel_counts.loc['Average Development', test] = 0
 
         return (power_counts, accel_counts, single_test_distribution,
                 power_transitions_detail, accel_transitions_detail,
