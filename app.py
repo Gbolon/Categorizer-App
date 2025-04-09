@@ -158,7 +158,7 @@ def get_athlete_metrics(df):
         
     Returns:
         Dictionary with athlete metrics including total counts, most active athlete,
-        and most complete athlete (user with valid data for the most required exercises)
+        and most complete athlete (user with the most complete test instances)
     """
     # Total number of unique athletes
     total_athletes = df['user name'].nunique()
@@ -167,12 +167,16 @@ def get_athlete_metrics(df):
     valid_athlete_names = set()
     valid_tests_by_athlete = {}
     
-    # Track exercise completeness
-    exercise_completeness = {}
-    # Get the complete list of required exercises
+    # Track test instance completeness
     from exercise_constants import ALL_EXERCISES
     required_exercises = ALL_EXERCISES
     total_required_exercises = len(required_exercises)
+    
+    # Initialize matrix generator to create user matrices
+    matrix_generator = MatrixGenerator()
+    
+    # Track test completeness per athlete
+    test_completeness = {}
     
     for name in df['user name'].unique():
         athlete_df = df[df['user name'] == name]
@@ -182,32 +186,63 @@ def get_athlete_metrics(df):
             valid_athlete_names.add(name)
             valid_tests_by_athlete[name] = valid_entries.shape[0]
             
-            # Track unique exercises with valid data
-            valid_exercises = valid_entries['exercise name'].unique()
-            # Filter to only include exercises from our required list
-            valid_required_exercises = [ex for ex in valid_exercises if ex in required_exercises]
+            # Generate test instance matrices for this user
+            power_matrix, accel_matrix = matrix_generator.generate_user_matrices(df, name)
             
-            # Store completeness metrics
-            num_completed = len(valid_required_exercises)
-            exercise_completeness[name] = {
-                'count': num_completed,
-                'percentage': (num_completed / total_required_exercises) * 100,
-                'exercises': valid_required_exercises
-            }
+            # Calculate completeness for each test instance
+            test_instances = []
+            
+            # Loop through test columns (1-based index in matrix_generator)
+            max_tests = max(len(power_matrix.keys()), len(accel_matrix.keys()))
+            
+            for test_num in range(1, max_tests + 1):
+                if test_num in power_matrix and test_num in accel_matrix:
+                    # Count valid exercises in this test instance
+                    valid_exercises_power = sum(1 for ex, val in power_matrix[test_num].items() 
+                                            if ex in required_exercises and not pd.isna(val))
+                    valid_exercises_accel = sum(1 for ex, val in accel_matrix[test_num].items() 
+                                             if ex in required_exercises and not pd.isna(val))
+                    
+                    # Take minimum of power and accel counts since we need both for an exercise to be valid
+                    valid_exercises = min(valid_exercises_power, valid_exercises_accel)
+                    
+                    # Calculate completeness percentage
+                    completeness_pct = (valid_exercises / total_required_exercises) * 100
+                    
+                    test_instances.append({
+                        'test_num': test_num,
+                        'valid_count': valid_exercises,
+                        'percentage': completeness_pct,
+                        'exercise_list': [ex for ex in required_exercises 
+                                        if ex in power_matrix[test_num] and not pd.isna(power_matrix[test_num][ex]) and
+                                           ex in accel_matrix[test_num] and not pd.isna(accel_matrix[test_num][ex])]
+                    })
+            
+            # Sort test instances by completeness and keep the most complete one
+            if test_instances:
+                most_complete_test = max(test_instances, key=lambda x: (x['valid_count'], x['percentage']))
+                test_completeness[name] = most_complete_test
     
     valid_athletes = len(valid_athlete_names)
     
     # Find the athlete with the most valid test instances
     most_active_athlete = None
-    
     if valid_tests_by_athlete:
         most_active_athlete = max(valid_tests_by_athlete.items(), key=lambda x: x[1])
     
-    # Find the athlete with the most complete exercise coverage
+    # Find the athlete with the most complete test instance
     most_complete_athlete = None
-    if exercise_completeness:
-        most_complete_athlete = max(exercise_completeness.items(), 
-                                   key=lambda x: (x[1]['count'], x[1]['percentage']))
+    if test_completeness:
+        # Get the athlete with the highest valid_count in their most complete test
+        best_athlete = max(test_completeness.items(), 
+                           key=lambda x: (x[1]['valid_count'], x[1]['percentage']))
+        
+        most_complete_athlete = (best_athlete[0], {
+            'test_num': best_athlete[1]['test_num'],
+            'count': best_athlete[1]['valid_count'], 
+            'percentage': best_athlete[1]['percentage'],
+            'exercises': best_athlete[1]['exercise_list']
+        })
     
     return {
         'total_athletes': total_athletes,
@@ -329,7 +364,7 @@ def main():
                     name, data = athlete_metrics['most_complete_athlete']
                     st.metric(
                         "Most Complete Athlete", 
-                        f"{name} ({data['count']}/{athlete_metrics['total_required_exercises']} exercises)"
+                        f"{name} (Test {data['test_num']}: {data['count']}/{athlete_metrics['total_required_exercises']} exercises)"
                     )
                 else:
                     st.metric("Most Complete Athlete", "No data available")
@@ -338,6 +373,7 @@ def main():
             if athlete_metrics['most_complete_athlete']:
                 name, data = athlete_metrics['most_complete_athlete']
                 with st.expander(f"Details for Most Complete Athlete: {name}", expanded=False):
+                    st.write(f"**Test instance:** Test {data['test_num']}")
                     st.write(f"**Exercises completed:** {data['count']} out of {athlete_metrics['total_required_exercises']}")
                     st.write(f"**Completion percentage:** {data['percentage']:.1f}%")
                     st.write("**Completed exercises:**")
