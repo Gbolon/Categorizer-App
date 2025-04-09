@@ -309,6 +309,9 @@ def main():
             # Initialize analysis_df to the processed_df
             analysis_df = processed_df.copy()
             
+            # Store the original dataframe in the matrix_generator for metrics calculation
+            matrix_generator.original_df = processed_df.copy()
+            
             # Add minimum days between tests filter
             min_days_between_tests = st.number_input(
                 "Minimum Days Between Tests",

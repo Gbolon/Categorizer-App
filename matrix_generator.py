@@ -35,6 +35,9 @@ class MatrixGenerator:
             'Under Developed',
             'Severely Under Developed'
         ]
+        
+        # Store original dataframe for calculating original metrics
+        self.original_df = None
 
     def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
@@ -197,7 +200,7 @@ class MatrixGenerator:
         accel_transitions_detail, accel_regression_users = self._analyze_detailed_transitions(accel_transitions)
 
         # Calculate time differences between tests for the same movement
-        time_differences = []
+        # For filtered dataframe, only calculate constrained days (since it's already filtered)
         constrained_time_differences = []
         for user in df['user name'].unique():
             user_data = df[df['user name'] == user].copy()
@@ -210,15 +213,32 @@ class MatrixGenerator:
                         exercise_data = exercise_data.sort_values('exercise createdAt')
                         # Calculate differences in days
                         time_diffs = exercise_data['exercise createdAt'].diff().dropna().dt.days
-                        time_differences.extend(time_diffs.tolist())
-                        
-                        # Calculate constrained time differences (only include those that meet minimum days criteria)
-                        # This will naturally be higher or equal to the overall average
-                        constrained_diffs = [days for days in time_diffs if days > 0]  # Positive days only
-                        constrained_time_differences.extend(constrained_diffs)
+                        constrained_time_differences.extend(time_diffs.tolist())
         
-        avg_days_between_tests = np.mean(time_differences) if time_differences else 0
+        # If min_days filter was applied, this will naturally be higher or equal to the overall average
         avg_constrained_days = np.mean(constrained_time_differences) if constrained_time_differences else 0
+        
+        # Get original dataset from the class instance to calculate original average days
+        if hasattr(self, 'original_df') and self.original_df is not None:
+            # Calculate the original time differences (from unfiltered data)
+            time_differences = []
+            for user in self.original_df['user name'].unique():
+                user_data = self.original_df[self.original_df['user name'] == user].copy()
+                if len(user_data) > 1:
+                    # Group by exercise and calculate time differences within each exercise
+                    for exercise in user_data['full_exercise_name'].unique():
+                        exercise_data = user_data[user_data['full_exercise_name'] == exercise]
+                        if len(exercise_data) > 1:
+                            # Sort by timestamp
+                            exercise_data = exercise_data.sort_values('exercise createdAt')
+                            # Calculate differences in days
+                            time_diffs = exercise_data['exercise createdAt'].diff().dropna().dt.days
+                            time_differences.extend(time_diffs.tolist())
+            
+            avg_days_between_tests = np.mean(time_differences) if time_differences else 0
+        else:
+            # If no original data stored, use the current dataframe (happens on first run)
+            avg_days_between_tests = avg_constrained_days
 
         # Calculate average changes
         avg_power_change_1_2 = np.mean(test1_to_2_power) if test1_to_2_power else 0
