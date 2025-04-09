@@ -245,6 +245,13 @@ class MatrixGenerator:
         avg_accel_change_1_2 = np.mean(test1_to_2_accel) if test1_to_2_accel else 0
         avg_power_change_2_3 = np.mean(test2_to_3_power) if test2_to_3_power else 0
         avg_accel_change_2_3 = np.mean(test2_to_3_accel) if test2_to_3_accel else 0
+        
+        # Calculate progression rates for multi-test users (after all test instances are calculated)
+        progression_rates = self._calculate_progression_rates(df, avg_constrained_days)
+        power_progression_rate = progression_rates['power_progression_rate']
+        accel_progression_rate = progression_rates['accel_progression_rate']
+        power_total_change = progression_rates['power_total_change']
+        accel_total_change = progression_rates['accel_total_change']
 
         return (power_counts, accel_counts, single_test_distribution,
                 power_transitions_detail, accel_transitions_detail,
@@ -252,7 +259,9 @@ class MatrixGenerator:
                 avg_power_change_1_2, avg_accel_change_1_2,
                 avg_power_change_2_3, avg_accel_change_2_3,
                 avg_days_between_tests, avg_constrained_days,
-                power_regression_users, accel_regression_users)
+                power_regression_users, accel_regression_users,
+                power_progression_rate, accel_progression_rate,
+                power_total_change, accel_total_change)
 
     def _update_progression_counts(self, current_cat, next_cat, col, transitions_list, user_name=None):
         """Update progression counts based on category changes."""
@@ -1182,16 +1191,15 @@ class MatrixGenerator:
         """
         return self.get_region_metrics(df, 'Torso', max_tests)
         
-    def calculate_progression_rates(self, df, avg_constrained_days):
+    def _calculate_progression_rates(self, processed_df, avg_constrained_days):
         """
-        Calculate progression rates for multi-test users.
+        Helper method to calculate progression rates for multi-test users.
         
-        Progression rate is the average change in development score from first to last test,
-        divided by the average days between tests. This gives a normalized rate of improvement
-        that accounts for different time periods between tests.
+        This method should be called after test instances and development scores
+        have been calculated and added to the dataframe.
         
         Args:
-            df: The processed dataframe
+            processed_df: The processed dataframe with test_instance and development scores
             avg_constrained_days: Average number of days between tests after filtering
             
         Returns:
@@ -1204,7 +1212,7 @@ class MatrixGenerator:
             }
         """
         # Get list of multi-test users
-        user_test_counts = df.groupby('user name')['test_instance'].nunique()
+        user_test_counts = processed_df.groupby('user name')['test_instance'].nunique()
         multi_test_users = user_test_counts[user_test_counts > 1].index.tolist()
         
         if not multi_test_users or avg_constrained_days == 0:
@@ -1221,7 +1229,7 @@ class MatrixGenerator:
         
         # Process each multi-test user
         for user in multi_test_users:
-            user_df = df[df['user name'] == user]
+            user_df = processed_df[processed_df['user name'] == user]
             
             # Group by test instance and get average development scores
             user_test_instances = user_df.groupby('test_instance').agg({

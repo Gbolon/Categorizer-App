@@ -640,7 +640,9 @@ def main():
              avg_power_change_1_2_original, avg_accel_change_1_2_original,
              avg_power_change_2_3_original, avg_accel_change_2_3_original,
              avg_days_between_tests_original, avg_constrained_days_original,
-             power_regression_users_original, accel_regression_users_original) = matrix_generator.generate_group_analysis(processed_df)
+             power_regression_users_original, accel_regression_users_original,
+             power_progression_rate_original, accel_progression_rate_original,
+             power_total_change_original, accel_total_change_original) = matrix_generator.generate_group_analysis(processed_df)
             
             # Check if any filtering is applied
             filtering_applied = standardize_resistance or (start_date > min_date or end_date < max_date) or min_days_between_tests > 0
@@ -653,7 +655,9 @@ def main():
                  avg_power_change_1_2, avg_accel_change_1_2,
                  avg_power_change_2_3, avg_accel_change_2_3,
                  avg_days_between_tests, avg_constrained_days,
-                 power_regression_users, accel_regression_users) = matrix_generator.generate_group_analysis(analysis_df)
+                 power_regression_users, accel_regression_users,
+                 power_progression_rate, accel_progression_rate,
+                 power_total_change, accel_total_change) = matrix_generator.generate_group_analysis(analysis_df)
                 
                 # Calculate body region averages with filtered data
                 body_region_averages = matrix_generator.calculate_body_region_averages(analysis_df)
@@ -689,6 +693,10 @@ def main():
                 avg_constrained_days = avg_constrained_days_original
                 power_regression_users = power_regression_users_original
                 accel_regression_users = accel_regression_users_original
+                power_progression_rate = power_progression_rate_original
+                accel_progression_rate = accel_progression_rate_original
+                power_total_change = power_total_change_original
+                accel_total_change = accel_total_change_original
                 
                 # Calculate body region averages with original data
                 body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
@@ -801,9 +809,6 @@ def main():
                     st.metric("Avg. Constrained Days", f"{avg_constrained_days:.1f}", 
                              help="Average number of days between tests after minimum days filtering")
                 
-                # Calculate progression rates
-                progression_rates = matrix_generator.calculate_progression_rates(analysis_df, avg_constrained_days)
-                
                 # Display progression metrics
                 st.markdown("<h4 style='font-size: 1.2em;'>Progression Rates</h4>", unsafe_allow_html=True)
                 
@@ -812,22 +817,22 @@ def main():
                 
                 with prog_col1:
                     st.metric("Power Total Change", 
-                              f"{progression_rates['power_total_change']:+.2f}%",
+                              f"{power_total_change:+.2f}%",
                               help="Average change in power development from first to last test")
                 
                 with prog_col2:
                     st.metric("Power Progression Rate", 
-                              f"{progression_rates['power_progression_rate']:+.3f}% per day",
+                              f"{power_progression_rate:+.3f}% per day",
                               help="Average daily rate of power improvement")
                 
                 with prog_col3:
                     st.metric("Accel Total Change", 
-                              f"{progression_rates['accel_total_change']:+.2f}%",
+                              f"{accel_total_change:+.2f}%",
                               help="Average change in acceleration development from first to last test")
                 
                 with prog_col4:
                     st.metric("Accel Progression Rate", 
-                              f"{progression_rates['accel_progression_rate']:+.3f}% per day",
+                              f"{accel_progression_rate:+.3f}% per day",
                               help="Average daily rate of acceleration improvement")
 
                 # Display Power development distribution and changes
