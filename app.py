@@ -157,8 +157,7 @@ def get_athlete_metrics(df):
         df: The processed dataframe
         
     Returns:
-        Dictionary with athlete metrics including total counts, most active athlete,
-        and most complete athlete (user with the most complete test instances)
+        Dictionary with athlete metrics including total counts and most active athlete
     """
     # Total number of unique athletes
     total_athletes = df['user name'].nunique()
@@ -166,17 +165,6 @@ def get_athlete_metrics(df):
     # Valid athletes have at least one exercise with both power and acceleration values
     valid_athlete_names = set()
     valid_tests_by_athlete = {}
-    
-    # Track test instance completeness
-    from exercise_constants import ALL_EXERCISES
-    required_exercises = ALL_EXERCISES
-    total_required_exercises = len(required_exercises)
-    
-    # Initialize matrix generator to create user matrices
-    matrix_generator = MatrixGenerator()
-    
-    # Track test completeness per athlete
-    test_completeness = {}
     
     for name in df['user name'].unique():
         athlete_df = df[df['user name'] == name].copy()
@@ -186,56 +174,6 @@ def get_athlete_metrics(df):
         if len(valid_entries) > 0:  # Using len() instead of directly evaluating DataFrame
             valid_athlete_names.add(name)
             valid_tests_by_athlete[name] = valid_entries.shape[0]
-            
-            # Generate test instance matrices for this user
-            matrices = matrix_generator.generate_user_matrices(df, name)
-            power_matrix, accel_matrix = matrices[0], matrices[1]
-            
-            # Calculate completeness for each test instance
-            test_instances = []
-            
-            # Loop through test columns (1-based index in matrix_generator)
-            max_tests = max(len(power_matrix.keys()), len(accel_matrix.keys()))
-            
-            for test_num in range(1, max_tests + 1):
-                if test_num in power_matrix and test_num in accel_matrix:
-                    # Count valid exercises in this test instance
-                    valid_exercises_power = sum(1 for ex, val in power_matrix[test_num].items() 
-                                            if ex in required_exercises and not pd.isna(val))
-                    valid_exercises_accel = sum(1 for ex, val in accel_matrix[test_num].items() 
-                                             if ex in required_exercises and not pd.isna(val))
-                    
-                    # Take minimum of power and accel counts since we need both for an exercise to be valid
-                    valid_exercises = min(valid_exercises_power, valid_exercises_accel)
-                    
-                    # Calculate completeness percentage
-                    completeness_pct = (valid_exercises / total_required_exercises) * 100
-                    
-                    # Get the list of valid exercises for this test instance
-                    valid_exercise_list = []
-                    for ex in required_exercises:
-                        has_power = ex in power_matrix[test_num] and not pd.isna(power_matrix[test_num][ex])
-                        has_accel = ex in accel_matrix[test_num] and not pd.isna(accel_matrix[test_num][ex])
-                        
-                        if has_power and has_accel:
-                            valid_exercise_list.append(ex)
-                    
-                    # Debug print to see what exercises are being considered valid
-                    if len(valid_exercise_list) > 0:
-                        print(f"DEBUG: User {name}, Test {test_num} has {len(valid_exercise_list)} valid exercises")
-                        print(f"DEBUG: Valid exercises are: {valid_exercise_list}")
-                    
-                    test_instances.append({
-                        'test_num': test_num,
-                        'valid_count': valid_exercises,
-                        'percentage': completeness_pct,
-                        'exercise_list': valid_exercise_list
-                    })
-            
-            # Sort test instances by completeness and keep the most complete one
-            if test_instances:
-                most_complete_test = max(test_instances, key=lambda x: (x['valid_count'], x['percentage']))
-                test_completeness[name] = most_complete_test
     
     valid_athletes = len(valid_athlete_names)
     
@@ -244,32 +182,10 @@ def get_athlete_metrics(df):
     if valid_tests_by_athlete:
         most_active_athlete = max(valid_tests_by_athlete.items(), key=lambda x: x[1])
     
-    # Find the athlete with the most complete test instance
-    most_complete_athlete = None
-    
-    # Debug print to check if we have any test_completeness data
-    print(f"DEBUG: test_completeness has {len(test_completeness)} entries")
-    for name, data in test_completeness.items():
-        print(f"DEBUG: Athlete {name} has {data['valid_count']} valid exercises in Test {data['test_num']}")
-    
-    if test_completeness:
-        # Get the athlete with the highest valid_count in their most complete test
-        best_athlete = max(test_completeness.items(), 
-                           key=lambda x: (x[1]['valid_count'], x[1]['percentage']))
-        
-        most_complete_athlete = (best_athlete[0], {
-            'test_num': best_athlete[1]['test_num'],
-            'count': best_athlete[1]['valid_count'], 
-            'percentage': best_athlete[1]['percentage'],
-            'exercises': best_athlete[1]['exercise_list']
-        })
-    
     return {
         'total_athletes': total_athletes,
         'valid_athletes': valid_athletes,
-        'most_active_athlete': most_active_athlete,  # Tuple (athlete_name, test_count) or None
-        'most_complete_athlete': most_complete_athlete,  # Tuple (athlete_name, data_dict) or None
-        'total_required_exercises': total_required_exercises
+        'most_active_athlete': most_active_athlete  # Tuple (athlete_name, test_count) or None
     }
 
 def get_top_session_types(df):
@@ -351,7 +267,7 @@ def main():
             athlete_metrics = get_athlete_metrics(processed_df)
             
             # Create columns for displaying athlete metrics with smaller font size
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2, col3 = st.columns(3)
             
             # Custom CSS to reduce metric font size
             st.markdown("""
@@ -378,30 +294,6 @@ def main():
                     st.metric("Most Active Athlete", f"{name} ({count} tests)")
                 else:
                     st.metric("Most Active Athlete", "No data available")
-                    
-            with col4:
-                if athlete_metrics['most_complete_athlete']:
-                    name, data = athlete_metrics['most_complete_athlete']
-                    st.metric(
-                        "Most Complete Athlete", 
-                        f"{name} (Test {data['test_num']}: {data['count']}/{athlete_metrics['total_required_exercises']} exercises)"
-                    )
-                else:
-                    st.metric("Most Complete Athlete", "No data available")
-                    
-            # Add expandable section with details about the most complete athlete
-            if athlete_metrics['most_complete_athlete']:
-                name, data = athlete_metrics['most_complete_athlete']
-                with st.expander(f"Details for Most Complete Athlete: {name}", expanded=False):
-                    st.write(f"**Test instance:** Test {data['test_num']}")
-                    st.write(f"**Exercises completed:** {data['count']} out of {athlete_metrics['total_required_exercises']}")
-                    st.write(f"**Completion percentage:** {data['percentage']:.1f}%")
-                    st.write("**Completed exercises:**")
-                    # Create a two-column layout for the exercises
-                    exercise_cols = st.columns(2)
-                    for i, exercise in enumerate(sorted(data['exercises'])):
-                        with exercise_cols[i % 2]:
-                            st.write(f"- {exercise}")
             
             # Exercise Metrics Table
             st.markdown("<h3 style='font-size: 1.5em;'>Exercise Metrics</h3>", unsafe_allow_html=True)
