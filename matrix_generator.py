@@ -159,6 +159,8 @@ class MatrixGenerator:
                             accel_counts.loc['Total Users', test] += 1
 
                     # Process transitions for multi-test users
+                    # Store current user name for regression tracking
+                    current_user = user
                     for i in range(len(test_columns)-1):
                         current_test = test_columns[i]
                         next_test = test_columns[i+1]
@@ -171,7 +173,8 @@ class MatrixGenerator:
                             self._update_progression_counts(
                                 current_cat, next_cat,
                                 transition_col,
-                                power_transitions[transition_col]
+                                power_transitions[transition_col],
+                                current_user
                             )
 
                         # Acceleration transitions
@@ -181,16 +184,17 @@ class MatrixGenerator:
                             self._update_progression_counts(
                                 current_cat, next_cat,
                                 transition_col,
-                                accel_transitions[transition_col]
+                                accel_transitions[transition_col],
+                                current_user
                             )
 
         # Calculate actual averages for single test users
         power_average = np.mean(single_test_power_scores) if single_test_power_scores else 0
         accel_average = np.mean(single_test_accel_scores) if single_test_accel_scores else 0
 
-        # Generate detailed transition matrices
-        power_transitions_detail = self._analyze_detailed_transitions(power_transitions)
-        accel_transitions_detail = self._analyze_detailed_transitions(accel_transitions)
+        # Generate detailed transition matrices and track regression users
+        power_transitions_detail, power_regression_users = self._analyze_detailed_transitions(power_transitions)
+        accel_transitions_detail, accel_regression_users = self._analyze_detailed_transitions(accel_transitions)
 
         # Calculate time differences between tests for the same movement
         time_differences = []
@@ -220,14 +224,18 @@ class MatrixGenerator:
                 power_average, accel_average,
                 avg_power_change_1_2, avg_accel_change_1_2,
                 avg_power_change_2_3, avg_accel_change_2_3,
-                avg_days_between_tests)
+                avg_days_between_tests,
+                power_regression_users, accel_regression_users)
 
-    def _update_progression_counts(self, current_cat, next_cat, col, transitions_list):
+    def _update_progression_counts(self, current_cat, next_cat, col, transitions_list, user_name=None):
         """Update progression counts based on category changes."""
         if current_cat and next_cat and pd.notna(current_cat) and pd.notna(next_cat):
             try:
-                # Record the transition for detailed analysis
-                transitions_list.append((current_cat, next_cat))
+                # Record the transition for detailed analysis with user name if provided
+                if user_name:
+                    transitions_list.append((current_cat, next_cat, user_name))
+                else:
+                    transitions_list.append((current_cat, next_cat))
 
             except ValueError:
                 # Skip if category is not in bracket_order
@@ -241,17 +249,38 @@ class MatrixGenerator:
         - Below the diagonal (improvement) is Pale Green
         """
         transition_matrices = {}
+        regression_users_dict = {}
 
         for period, transitions in transitions_dict.items():
             # Create an empty transition matrix
             matrix = pd.DataFrame(0, 
                 index=self.bracket_order,
                 columns=self.bracket_order)
+                
+            # Track users who regressed
+            regression_users = []
 
-            # Count transitions from each bracket to another
-            for from_bracket, to_bracket in transitions:
-                if from_bracket in self.bracket_order and to_bracket in self.bracket_order:
-                    matrix.loc[from_bracket, to_bracket] += 1
+            # Count transitions from each bracket to another and track regressions
+            for transition in transitions:
+                if len(transition) == 3:
+                    from_bracket, to_bracket, user_name = transition
+                    
+                    # Check if this is a regression (moving from better to worse category)
+                    if (from_bracket in self.bracket_order and to_bracket in self.bracket_order and
+                        self.bracket_order.index(from_bracket) < self.bracket_order.index(to_bracket)):
+                        regression_users.append((user_name, from_bracket, to_bracket))
+                    
+                    # Update the matrix count
+                    if from_bracket in self.bracket_order and to_bracket in self.bracket_order:
+                        matrix.loc[from_bracket, to_bracket] += 1
+                else:
+                    # Handle old format data without user names
+                    from_bracket, to_bracket = transition
+                    if from_bracket in self.bracket_order and to_bracket in self.bracket_order:
+                        matrix.loc[from_bracket, to_bracket] += 1
+            
+            # Store regression users for this period
+            regression_users_dict[period] = regression_users
 
             # Function to apply background color based on cell position
             def highlight_cells(dataframe):
@@ -295,7 +324,7 @@ class MatrixGenerator:
 
             transition_matrices[period] = styled_matrix
 
-        return transition_matrices
+        return transition_matrices, regression_users_dict
 
     def _analyze_transition_patterns(self, transitions_dict):
         """Analyze common transition patterns for level ups."""
@@ -305,7 +334,13 @@ class MatrixGenerator:
             if transitions:
                 # Count frequency of each transition pattern
                 transition_counts = {}
-                for from_bracket, to_bracket in transitions:
+                for transition in transitions:
+                    # Handle transitions with or without user name
+                    if len(transition) == 3:
+                        from_bracket, to_bracket, _ = transition
+                    else:
+                        from_bracket, to_bracket = transition
+                        
                     key = (from_bracket, to_bracket)
                     transition_counts[key] = transition_counts.get(key, 0) + 1
 

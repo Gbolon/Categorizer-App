@@ -265,7 +265,8 @@ def main():
              power_average, accel_average,
              avg_power_change_1_2, avg_accel_change_1_2,
              avg_power_change_2_3, avg_accel_change_2_3,
-             avg_days_between_tests) = matrix_generator.generate_group_analysis(processed_df)
+             avg_days_between_tests,
+             power_regression_users, accel_regression_users) = matrix_generator.generate_group_analysis(processed_df)
             
             # Calculate body region averages (needed for body region tab)
             body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
@@ -425,6 +426,13 @@ def main():
                     for period, matrix in power_transitions_detail.items():
                         st.write(f"Period: {period}")
                         st.dataframe(matrix, use_container_width=True)
+                        
+                        # Display regression users for this period if they exist
+                        if period in power_regression_users and power_regression_users[period]:
+                            st.markdown(f"<h4 style='font-size: 1.2em; color: #ff6b6b;'>Users who regressed in {period}:</h4>", unsafe_allow_html=True)
+                            for user, from_bracket, to_bracket in power_regression_users[period]:
+                                st.write(f"- **{user}**: Moved from {from_bracket} to {to_bracket}")
+                        
                         st.write("---")
 
                 # Acceleration transitions tab
@@ -432,6 +440,13 @@ def main():
                     for period, matrix in accel_transitions_detail.items():
                         st.write(f"Period: {period}")
                         st.dataframe(matrix, use_container_width=True)
+                        
+                        # Display regression users for this period if they exist
+                        if period in accel_regression_users and accel_regression_users[period]:
+                            st.markdown(f"<h4 style='font-size: 1.2em; color: #ff6b6b;'>Users who regressed in {period}:</h4>", unsafe_allow_html=True)
+                            for user, from_bracket, to_bracket in accel_regression_users[period]:
+                                st.write(f"- **{user}**: Moved from {from_bracket} to {to_bracket}")
+                        
                         st.write("---")
             
             #############################################
