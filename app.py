@@ -257,6 +257,229 @@ def main():
     uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
                                       type=['csv', 'xlsx'])
 
+    # If no file is uploaded, show information content
+    if uploaded_file is None:
+        st.markdown("<h2 style='font-size: 1.875em;'>Welcome to the Site Development Bracketer</h2>", unsafe_allow_html=True)
+        st.markdown("Please upload a CSV or Excel file to begin analysis. In the meantime, here's some information about how the application works:")
+        
+        # Application Overview Section
+        with st.expander("Application Overview", expanded=True):
+            st.markdown("""
+            ### Site Development Bracketer
+            
+            This application processes exercise data to track athlete development over time. It categorizes performance into brackets based on power and acceleration metrics, and provides detailed analysis at both individual and group levels.
+            
+            #### Core Functionality
+            - Processes CSV or Excel files containing exercise performance data
+            - Organizes exercises into chronological "test instances" for each user
+            - Categorizes development into 6 brackets ranging from "Goal Hit" to "Severely Under Developed"
+            - Tracks progression between brackets over time
+            - Identifies underperforming users relative to group averages
+            - Generates comprehensive reports with detailed data visualizations
+            """)
+        
+        # Development Score Calculation
+        with st.expander("Development Score Calculation", expanded=False):
+            st.markdown("""
+            ### Development Score Calculation
+            
+            Development scores are calculated as a percentage of goal standards for each exercise:
+            
+            ```
+            Development Score = (User's value / Goal standard) × 100
+            ```
+            
+            #### Development Brackets
+            Development scores are categorized into the following brackets:
+            
+            | Bracket | Score Range |
+            |---------|-------------|
+            | Goal Hit | 100% and above |
+            | Elite | 90% - 99.99% |
+            | Above Average | 76% - 90% |
+            | Average | 51% - 75% |
+            | Under Developed | 26% - 50% |
+            | Severely Under Developed | 0% - 25% |
+            
+            #### Goal Standards
+            Goal standards are sex-specific reference values for each exercise. These values represent optimal performance targets.
+            """)
+            
+            # Create a table of goal standards by exercise
+            st.markdown("##### Power Standards (Watts)")
+            power_standards_data = []
+            for exercise in sorted(POWER_STANDARDS['male'].keys()):
+                power_standards_data.append({
+                    'Exercise': exercise,
+                    'Male': POWER_STANDARDS['male'].get(exercise, '-'),
+                    'Female': POWER_STANDARDS['female'].get(exercise, '-')
+                })
+            
+            st.dataframe(pd.DataFrame(power_standards_data), use_container_width=True)
+            
+            st.markdown("##### Acceleration Standards (m/s²)")
+            accel_standards_data = []
+            for exercise in sorted(ACCELERATION_STANDARDS['male'].keys()):
+                accel_standards_data.append({
+                    'Exercise': exercise,
+                    'Male': ACCELERATION_STANDARDS['male'].get(exercise, '-'),
+                    'Female': ACCELERATION_STANDARDS['female'].get(exercise, '-')
+                })
+            
+            st.dataframe(pd.DataFrame(accel_standards_data), use_container_width=True)
+        
+        # Exercise Information
+        with st.expander("Exercise Information", expanded=False):
+            st.markdown("""
+            ### Exercise Information
+            
+            #### Body Regions
+            Exercises are categorized into the following body regions:
+            """)
+            
+            for region, exercises in VALID_EXERCISES.items():
+                st.markdown(f"**{region}**")
+                for exercise in exercises:
+                    st.markdown(f"- {exercise}")
+            
+            st.markdown("#### Standard Resistance Values")
+            st.markdown("""
+            The application can filter data to include only exercises performed at standard resistance values.
+            This helps ensure comparability of results across users and tests.
+            """)
+            
+            resistance_data = []
+            for exercise, resistance in STANDARD_RESISTANCES.items():
+                resistance_data.append({
+                    'Exercise': exercise,
+                    'Standard Resistance (lbs)': resistance
+                })
+            
+            st.dataframe(pd.DataFrame(resistance_data), use_container_width=True)
+        
+        # Data Organization
+        with st.expander("Data Organization", expanded=False):
+            st.markdown("""
+            ### Data Organization
+            
+            #### Test Instances
+            Chronological "test instances" are created for each user by organizing exercises by date:
+            - The first chronological exercise becomes part of Test 1
+            - The next exercise becomes part of Test 2, and so on
+            - If an exercise is repeated, it occupies the next available test instance
+            
+            This approach allows tracking improvement over time across different exercises.
+            
+            #### Improvement Threshold
+            The improvement threshold is calculated as the average percentage change across all users
+            for a specific body region between consecutive tests. This serves as a reference point
+            to determine which users are underperforming relative to the group average.
+            
+            #### Minimum Days Between Tests
+            When the minimum days filter is applied:
+            1. The first chronological test for each exercise is always included
+            2. Subsequent tests are only included if they occur at least the specified number of days after the previous test
+            3. This filtering is done at the raw data level before organizing into test instances
+            """)
+        
+        # Tab Explanations
+        with st.expander("Tab Explanations", expanded=False):
+            st.markdown("""
+            ### Tab Explanations
+            
+            #### 1. Overview
+            Provides a high-level summary of the dataset including:
+            - Athlete metrics (total athletes, valid athletes, most active)
+            - Exercise metrics (execution counts, resistance patterns)
+            - Test session analysis (most common session types)
+            
+            #### 2. Group Development Analysis
+            Shows the distribution of users across development brackets:
+            - Separate analysis for single-test and multi-test users
+            - Power and acceleration distributions
+            - Average days between tests metrics
+            - Percentage changes between consecutive tests
+            
+            #### 3. Transition Analysis
+            Visualizes how users move between development brackets over time:
+            - Color-coded matrices (blue = no change, red = regression, green = improvement)
+            - Lists users who regressed between tests
+            - Separate analysis for power and acceleration
+            
+            #### 4. Body Region Analysis
+            Analyzes performance by body region:
+            - Group averages for multi-test users
+            - Detailed exercise metrics for each region
+            - Underperforming users tables
+            - Allows downloading underperformer lists as CSV
+            
+            #### 5. Individual Analysis
+            Provides detailed analysis for specific users:
+            - Test matrices showing all exercise values
+            - Development categorization
+            - Graph visualizations of progress
+            
+            #### 6. Report Generator
+            Creates comprehensive reports for sharing or documentation:
+            - Interactive HTML reports with separate pages for each section
+            - Comprehensive data visualizations
+            - Optional site name for identification
+            
+            #### 7. Information
+            Provides detailed documentation about the application:
+            - Development score calculation and bracket definitions
+            - Exercise standards and categorization
+            - Data organization and filtering methodologies
+            - Detailed explanation of all features and tabs
+            """)
+        
+        # Data Filtering
+        with st.expander("Data Filtering", expanded=False):
+            st.markdown("""
+            ### Data Filtering
+            
+            The application provides several filtering options to refine analysis:
+            
+            #### Resistance Standardization
+            When enabled, only includes data where exercises were performed at standard resistance values.
+            A small tolerance (±0.5 lbs) is allowed to account for minor variations.
+            
+            #### Evaluation Window
+            Filters data to a specific date range, allowing focus on particular testing periods.
+            
+            #### Minimum Days Between Tests
+            Ensures tests for the same exercise are separated by at least the specified number of days.
+            This helps prevent including tests that are too close together, which might not reflect
+            meaningful physiological changes.
+            
+            When filters are applied:
+            - The original metrics are preserved for reference in the Overview tab
+            - All other analyses reflect the filtered dataset
+            - Filter settings are noted at the top of each analysis section
+            """)
+        
+        # Data Requirements
+        with st.expander("Data Requirements", expanded=False):
+            st.markdown("""
+            ### Data Requirements
+            
+            For proper functioning, your CSV or Excel file must include the following columns:
+            
+            | Column | Description |
+            |--------|-------------|
+            | `user name` | The name or ID of the user |
+            | `sex` | User's sex (male/female) - needed for goal standards |
+            | `exercise name` | The name of the exercise performed |
+            | `dominance` | Hand/foot dominance for appropriate exercises |
+            | `exercise createdAt` | Timestamp when the exercise was performed |
+            | `power - high` | Power measurement (in watts) |
+            | `acceleration - high` | Acceleration measurement (in m/s²) |
+            | `resistance` | Weight/resistance used (optional, for filtering) |
+            | `session name` | Test session identifier (optional) |
+            
+            Missing values for power or acceleration will result in those exercises being excluded from analysis.
+            """)
+            
     if uploaded_file is not None:
         try:
             # Load and validate data
