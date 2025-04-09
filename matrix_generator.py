@@ -42,7 +42,7 @@ class MatrixGenerator:
     def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
-        categories = list(self.development_brackets.keys()) + ['Total Users', 'Average Score']
+        categories = list(self.development_brackets.keys()) + ['Total Users', 'Average Development Score (%)']
         power_counts = pd.DataFrame(0, index=categories, columns=[])
         accel_counts = pd.DataFrame(0, index=categories, columns=[])
 
@@ -328,24 +328,24 @@ class MatrixGenerator:
         avg_accel_test3 = np.mean(test3_accel_scores) if test3_accel_scores else 0
         avg_accel_test4 = np.mean(test4_accel_scores) if test4_accel_scores else 0
         
-        # Update the Average Score row in each distribution table
+        # Update the Average Development Score row in each distribution table
         if 'Test 1' in power_counts.columns:
-            power_counts.loc['Average Score', 'Test 1'] = avg_power_test1
+            power_counts.loc['Average Development Score (%)', 'Test 1'] = avg_power_test1
         if 'Test 2' in power_counts.columns:
-            power_counts.loc['Average Score', 'Test 2'] = avg_power_test2
+            power_counts.loc['Average Development Score (%)', 'Test 2'] = avg_power_test2
         if 'Test 3' in power_counts.columns:
-            power_counts.loc['Average Score', 'Test 3'] = avg_power_test3
+            power_counts.loc['Average Development Score (%)', 'Test 3'] = avg_power_test3
         if 'Test 4' in power_counts.columns:
-            power_counts.loc['Average Score', 'Test 4'] = avg_power_test4
+            power_counts.loc['Average Development Score (%)', 'Test 4'] = avg_power_test4
             
         if 'Test 1' in accel_counts.columns:
-            accel_counts.loc['Average Score', 'Test 1'] = avg_accel_test1
+            accel_counts.loc['Average Development Score (%)', 'Test 1'] = avg_accel_test1
         if 'Test 2' in accel_counts.columns:
-            accel_counts.loc['Average Score', 'Test 2'] = avg_accel_test2
+            accel_counts.loc['Average Development Score (%)', 'Test 2'] = avg_accel_test2
         if 'Test 3' in accel_counts.columns:
-            accel_counts.loc['Average Score', 'Test 3'] = avg_accel_test3
+            accel_counts.loc['Average Development Score (%)', 'Test 3'] = avg_accel_test3
         if 'Test 4' in accel_counts.columns:
-            accel_counts.loc['Average Score', 'Test 4'] = avg_accel_test4
+            accel_counts.loc['Average Development Score (%)', 'Test 4'] = avg_accel_test4
 
         return (power_counts, accel_counts, single_test_distribution,
                 power_transitions_detail, accel_transitions_detail,
