@@ -149,25 +149,42 @@ def generate_exercise_metrics(df):
     # Convert to DataFrame and sort by Total Executions (descending)
     return pd.DataFrame(exercise_metrics).sort_values(by='Total Executions', ascending=False).reset_index(drop=True)
 
-def get_most_frequent_session(df):
+def get_top_session_types(df):
     """
-    Get the most frequently performed test type from the 'session name' column.
+    Get the top 3 most frequently performed test types from the 'session name' column.
     
     Args:
         df: The processed dataframe
         
     Returns:
-        String with the most frequent session name and its count
+        Dictionary with the top 3 most common session names and their counts
     """
+    result = {
+        'most_common': "No session data available",
+        'second_most_common': "No data available",
+        'third_most_common': "No data available"
+    }
+    
     if 'session name' in df.columns and len(df) > 0:
-        # Get the most common session name
+        # Get the session name counts
         session_counts = df['session name'].value_counts()
-        if len(session_counts) > 0:
+        
+        if len(session_counts) >= 1:
             most_common_session = session_counts.index[0]
             count = session_counts.iloc[0]
-            return f"{most_common_session} ({count} instances)"
+            result['most_common'] = f"{most_common_session} ({count} instances)"
         
-    return "No session data available"
+        if len(session_counts) >= 2:
+            second_most_common = session_counts.index[1]
+            count = session_counts.iloc[1]
+            result['second_most_common'] = f"{second_most_common} ({count} instances)"
+            
+        if len(session_counts) >= 3:
+            third_most_common = session_counts.index[2]
+            count = session_counts.iloc[2]
+            result['third_most_common'] = f"{third_most_common} ({count} instances)"
+    
+    return result
 
 def main():
     st.markdown("<h1 style='font-size: 3em;'>Site Development Bracketer</h1>", unsafe_allow_html=True)
@@ -213,8 +230,19 @@ def main():
             
             # Test Session Analysis
             st.markdown("<h3 style='font-size: 1.5em;'>Test Session Analysis</h3>", unsafe_allow_html=True)
-            most_frequent_session = get_most_frequent_session(processed_df)
-            st.metric("Most Frequently Performed Test Type", most_frequent_session)
+            session_types = get_top_session_types(processed_df)
+            
+            # Create columns for displaying session metrics
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric("1st Most Common Session", session_types['most_common'])
+            
+            with col2:
+                st.metric("2nd Most Common Session", session_types['second_most_common'])
+                
+            with col3:
+                st.metric("3rd Most Common Session", session_types['third_most_common'])
             
             # Create a divider before moving to more detailed analysis
             st.markdown("---")
