@@ -246,6 +246,12 @@ def main():
     data_processor = DataProcessor()
     matrix_generator = MatrixGenerator()
     report_generator = ReportGenerator()
+    
+    # Initialize variables for metrics
+    avg_days_between_tests = 0
+    avg_constrained_days = 0
+    avg_days_between_tests_original = 0
+    avg_constrained_days_original = 0
 
     # File upload
     uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
@@ -406,7 +412,7 @@ def main():
              power_average_original, accel_average_original,
              avg_power_change_1_2_original, avg_accel_change_1_2_original,
              avg_power_change_2_3_original, avg_accel_change_2_3_original,
-             avg_days_between_tests_original,
+             avg_days_between_tests_original, avg_constrained_days_original,
              power_regression_users_original, accel_regression_users_original) = matrix_generator.generate_group_analysis(processed_df)
             
             # Check if any filtering is applied
@@ -419,7 +425,7 @@ def main():
                  power_average, accel_average,
                  avg_power_change_1_2, avg_accel_change_1_2,
                  avg_power_change_2_3, avg_accel_change_2_3,
-                 avg_days_between_tests,
+                 avg_days_between_tests, avg_constrained_days,
                  power_regression_users, accel_regression_users) = matrix_generator.generate_group_analysis(analysis_df)
                 
                 # Calculate body region averages with filtered data
@@ -453,6 +459,7 @@ def main():
                 avg_power_change_2_3 = avg_power_change_2_3_original
                 avg_accel_change_2_3 = avg_accel_change_2_3_original
                 avg_days_between_tests = avg_days_between_tests_original
+                avg_constrained_days = avg_constrained_days_original
                 power_regression_users = power_regression_users_original
                 accel_regression_users = accel_regression_users_original
                 
@@ -557,7 +564,14 @@ def main():
 
                 # Display Multi-Test User Averages
                 st.markdown("<h3 style='font-size: 1.5em;'>Multi-Test Users</h3>", unsafe_allow_html=True)
-                st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
+                
+                # Create two columns for the metrics
+                day_col1, day_col2 = st.columns(2)
+                with day_col1:
+                    st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
+                with day_col2:
+                    st.metric("Avg. Constrained Days", f"{avg_constrained_days:.1f}", 
+                             help="Average number of days between tests after minimum days filtering")
 
                 # Display Power development distribution and changes
                 st.write("Multi-Test Users Power Development Distribution")

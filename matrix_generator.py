@@ -198,6 +198,7 @@ class MatrixGenerator:
 
         # Calculate time differences between tests for the same movement
         time_differences = []
+        constrained_time_differences = []
         for user in df['user name'].unique():
             user_data = df[df['user name'] == user].copy()
             if len(user_data) > 1:
@@ -210,8 +211,14 @@ class MatrixGenerator:
                         # Calculate differences in days
                         time_diffs = exercise_data['exercise createdAt'].diff().dropna().dt.days
                         time_differences.extend(time_diffs.tolist())
+                        
+                        # Calculate constrained time differences (only include those that meet minimum days criteria)
+                        # This will naturally be higher or equal to the overall average
+                        constrained_diffs = [days for days in time_diffs if days > 0]  # Positive days only
+                        constrained_time_differences.extend(constrained_diffs)
         
         avg_days_between_tests = np.mean(time_differences) if time_differences else 0
+        avg_constrained_days = np.mean(constrained_time_differences) if constrained_time_differences else 0
 
         # Calculate average changes
         avg_power_change_1_2 = np.mean(test1_to_2_power) if test1_to_2_power else 0
@@ -224,7 +231,7 @@ class MatrixGenerator:
                 power_average, accel_average,
                 avg_power_change_1_2, avg_accel_change_1_2,
                 avg_power_change_2_3, avg_accel_change_2_3,
-                avg_days_between_tests,
+                avg_days_between_tests, avg_constrained_days,
                 power_regression_users, accel_regression_users)
 
     def _update_progression_counts(self, current_cat, next_cat, col, transitions_list, user_name=None):
