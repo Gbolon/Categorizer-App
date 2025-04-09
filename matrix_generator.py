@@ -245,13 +245,6 @@ class MatrixGenerator:
         avg_accel_change_1_2 = np.mean(test1_to_2_accel) if test1_to_2_accel else 0
         avg_power_change_2_3 = np.mean(test2_to_3_power) if test2_to_3_power else 0
         avg_accel_change_2_3 = np.mean(test2_to_3_accel) if test2_to_3_accel else 0
-        
-        # Calculate progression rates for multi-test users (after all test instances are calculated)
-        progression_rates = self._calculate_progression_rates(df, avg_constrained_days)
-        power_progression_rate = progression_rates['power_progression_rate']
-        accel_progression_rate = progression_rates['accel_progression_rate']
-        power_total_change = progression_rates['power_total_change']
-        accel_total_change = progression_rates['accel_total_change']
 
         return (power_counts, accel_counts, single_test_distribution,
                 power_transitions_detail, accel_transitions_detail,
@@ -259,9 +252,7 @@ class MatrixGenerator:
                 avg_power_change_1_2, avg_accel_change_1_2,
                 avg_power_change_2_3, avg_accel_change_2_3,
                 avg_days_between_tests, avg_constrained_days,
-                power_regression_users, accel_regression_users,
-                power_progression_rate, accel_progression_rate,
-                power_total_change, accel_total_change)
+                power_regression_users, accel_regression_users)
 
     def _update_progression_counts(self, current_cat, next_cat, col, transitions_list, user_name=None):
         """Update progression counts based on category changes."""
@@ -1190,114 +1181,6 @@ class MatrixGenerator:
             acceleration metrics, changes, and lowest change information.
         """
         return self.get_region_metrics(df, 'Torso', max_tests)
-        
-    def _calculate_progression_rates(self, processed_df, avg_constrained_days):
-        """
-        Helper method to calculate progression rates for multi-test users.
-        
-        This method should be called after test instances and development scores
-        have been calculated and added to the dataframe.
-        
-        Args:
-            processed_df: The processed dataframe with test_instance and development scores
-            avg_constrained_days: Average number of days between tests after filtering
-            
-        Returns:
-            Dictionary containing:
-            {
-                'power_progression_rate': Average power progression rate per day
-                'accel_progression_rate': Average acceleration progression rate per day
-                'power_total_change': Average total power change from first to last test
-                'accel_total_change': Average total acceleration change from first to last test
-            }
-        """
-        # Check if needed columns exist
-        if 'test_instance' not in processed_df.columns:
-            print("DEBUG: test_instance column not found in processed_df")
-            return {
-                'power_progression_rate': 0,
-                'accel_progression_rate': 0,
-                'power_total_change': 0,
-                'accel_total_change': 0
-            }
-        
-        if 'power_development' not in processed_df.columns or 'acceleration_development' not in processed_df.columns:
-            print("DEBUG: power_development or acceleration_development column not found in processed_df")
-            return {
-                'power_progression_rate': 0,
-                'accel_progression_rate': 0,
-                'power_total_change': 0,
-                'accel_total_change': 0
-            }
-        
-        try:
-            # Get list of multi-test users
-            user_test_counts = processed_df.groupby('user name')['test_instance'].nunique()
-            multi_test_users = user_test_counts[user_test_counts > 1].index.tolist()
-            
-            if not multi_test_users or avg_constrained_days == 0:
-                return {
-                    'power_progression_rate': 0,
-                    'accel_progression_rate': 0,
-                    'power_total_change': 0,
-                    'accel_total_change': 0
-                }
-            
-            # Initialize lists to store each user's changes
-            power_changes = []
-            accel_changes = []
-            
-            # Process each multi-test user
-            for user in multi_test_users:
-                user_df = processed_df[processed_df['user name'] == user]
-                
-                # Group by test instance and get average development scores
-                user_test_instances = user_df.groupby('test_instance').agg({
-                    'power_development': 'mean',
-                    'acceleration_development': 'mean'
-                }).reset_index()
-                
-                # Skip if less than 2 test instances with valid data
-                if len(user_test_instances) < 2:
-                    continue
-                    
-                # Calculate total change from first to last test
-                first_power = user_test_instances['power_development'].iloc[0]
-                last_power = user_test_instances['power_development'].iloc[-1]
-                first_accel = user_test_instances['acceleration_development'].iloc[0]
-                last_accel = user_test_instances['acceleration_development'].iloc[-1]
-                
-                # Calculate percentage change
-                if pd.notna(first_power) and pd.notna(last_power) and first_power > 0:
-                    power_change = ((last_power - first_power) / first_power) * 100
-                    power_changes.append(power_change)
-                    
-                if pd.notna(first_accel) and pd.notna(last_accel) and first_accel > 0:
-                    accel_change = ((last_accel - first_accel) / first_accel) * 100
-                    accel_changes.append(accel_change)
-            
-            # Calculate average total changes
-            power_total_change = np.mean(power_changes) if power_changes else 0
-            accel_total_change = np.mean(accel_changes) if accel_changes else 0
-            
-            # Calculate progression rates (change per day)
-            power_progression_rate = power_total_change / avg_constrained_days if avg_constrained_days > 0 else 0
-            accel_progression_rate = accel_total_change / avg_constrained_days if avg_constrained_days > 0 else 0
-            
-            return {
-                'power_progression_rate': power_progression_rate,
-                'accel_progression_rate': accel_progression_rate,
-                'power_total_change': power_total_change,
-                'accel_total_change': accel_total_change
-            }
-        except Exception as e:
-            print(f"DEBUG: Error in _calculate_progression_rates: {str(e)}")
-            return {
-                'power_progression_rate': 0,
-                'accel_progression_rate': 0,
-                'power_total_change': 0,
-                'accel_total_change': 0
-            }
         
     def calculate_improvement_thresholds(self, df):
         """
