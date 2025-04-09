@@ -276,10 +276,57 @@ def main():
                 help="When enabled, only includes data where exercises were performed at standard resistance values"
             )
             
+            # Get earliest and latest dates from the dataset for default values
+            min_date = processed_df['exercise createdAt'].min().date()
+            max_date = processed_df['exercise createdAt'].max().date()
+            
+            # Add Evaluation Window date range selection
+            st.write("### Evaluation Window")
+            st.write("Select a date range to filter the data. Only exercises performed between these dates will be included in the analysis.")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                start_date = st.date_input(
+                    "Start Date",
+                    value=min_date,
+                    min_value=min_date,
+                    max_value=max_date
+                )
+            with col2:
+                end_date = st.date_input(
+                    "End Date",
+                    value=max_date,
+                    min_value=min_date,
+                    max_value=max_date
+                )
+                
+            # Initialize analysis_df to the processed_df
+            analysis_df = processed_df.copy()
+            
+            # Apply date range filtering
+            if start_date or end_date:
+                # Convert to datetime for comparison
+                start_datetime = pd.Timestamp(start_date)
+                end_datetime = pd.Timestamp(end_date) + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)  # Set to end of the day
+                
+                # Apply date filter
+                date_filtered_df = analysis_df[
+                    (analysis_df['exercise createdAt'] >= start_datetime) & 
+                    (analysis_df['exercise createdAt'] <= end_datetime)
+                ]
+                
+                # Show date filtering info if dates are not the min/max values
+                if start_date > min_date or end_date < max_date:
+                    st.info(f"Date filtering applied: Showing exercises from {start_date} to {end_date}.\n"
+                           f"Original data rows: {len(analysis_df)}, Filtered data rows: {len(date_filtered_df)}")
+                
+                # Update analysis_df with date filtered results
+                analysis_df = date_filtered_df
+            
             # Apply resistance filtering when checkbox is checked
             if standardize_resistance:
                 # Create a copy of the DataFrame to avoid modifying the original
-                filtered_df = processed_df.copy()
+                resistance_filtered_df = analysis_df.copy()
                 
                 # Define a filtering function
                 def filter_by_standard_resistance(row):
@@ -303,25 +350,31 @@ def main():
                     return abs(float(row['resistance']) - standard_resistance) <= tolerance
                 
                 # Apply the filter
-                filtered_df = filtered_df[filtered_df.apply(filter_by_standard_resistance, axis=1)]
+                resistance_filtered_df = resistance_filtered_df[resistance_filtered_df.apply(filter_by_standard_resistance, axis=1)]
                 
                 # Show filtering info
-                st.info(f"Filtering applied: Only showing data with standard resistance values.\n"
-                       f"Original data rows: {len(processed_df)}, Filtered data rows: {len(filtered_df)}")
+                st.info(f"Resistance filtering applied: Only showing data with standard resistance values.\n"
+                       f"Data rows before resistance filtering: {len(analysis_df)}, After filtering: {len(resistance_filtered_df)}")
                 
-                # Use filtered_df for analysis
-                analysis_df = filtered_df
-            else:
-                # Use original processed_df for analysis
-                analysis_df = processed_df
+                # Update analysis_df with resistance filtered results
+                analysis_df = resistance_filtered_df
             
             # Show data preview in collapsed expander
             with st.expander("Data Preview", expanded=False):
-                if standardize_resistance:
-                    st.write("**Filtered Data Preview (Standard Resistance Only)**")
+                # Check if any filtering is applied
+                filtering_applied = standardize_resistance or (start_date > min_date or end_date < max_date)
+                
+                if filtering_applied:
+                    st.write("**Filtered Data Preview**")
                     st.dataframe(analysis_df.head())
                     st.write("**Original Data Preview (All Data)**")
                     st.dataframe(processed_df.head())
+                    
+                    # Show filtering summary
+                    if start_date > min_date or end_date < max_date:
+                        st.write(f"**Date filtering:** From {start_date} to {end_date}")
+                    if standardize_resistance:
+                        st.write("**Resistance filtering:** Using standard resistance values")
                 else:
                     st.dataframe(processed_df.head())
                 
@@ -334,8 +387,11 @@ def main():
              avg_days_between_tests_original,
              power_regression_users_original, accel_regression_users_original) = matrix_generator.generate_group_analysis(processed_df)
             
-            # If resistance standardization is enabled, generate analysis with filtered data
-            if standardize_resistance:
+            # Check if any filtering is applied
+            filtering_applied = standardize_resistance or (start_date > min_date or end_date < max_date)
+            
+            # If any filtering is enabled, generate analysis with filtered data
+            if filtering_applied:
                 (power_counts, accel_counts, single_test_distribution,
                  power_transitions_detail, accel_transitions_detail,
                  power_average, accel_average,
@@ -349,6 +405,16 @@ def main():
                 
                 # Calculate improvement thresholds with filtered data
                 improvement_thresholds = matrix_generator.calculate_improvement_thresholds(analysis_df)
+                
+                # Add a note about filtering being applied to analysis tabs
+                filter_note = "Note: Analysis is based on filtered data. "
+                if start_date > min_date or end_date < max_date:
+                    filter_note += f"Date range: {start_date} to {end_date}. "
+                if standardize_resistance:
+                    filter_note += "Using standard resistance values."
+                
+                st.info(filter_note)
+                
             else:
                 # Use original data if no filtering
                 power_counts = power_counts_original
@@ -584,11 +650,19 @@ def main():
                         accel_underperformers_1_to_2 = None
                         accel_underperformers_2_to_3 = None
                         
-                        # Get region metrics only once, using filtered data if enabled
-                        if standardize_resistance:
+                        # Get region metrics once, using filtered data if any filtering is enabled
+                        if filtering_applied:
                             region_metrics = matrix_generator.get_region_metrics(analysis_df, region)
-                            # If filtering enabled, show info
-                            st.info(f"Showing {region} region analysis with standard resistance filter applied")
+                            # If filtering enabled, show info message
+                            filter_msg = f"Showing {region} region analysis with "
+                            if start_date > min_date or end_date < max_date:
+                                filter_msg += f"date range: {start_date} to {end_date}"
+                                if standardize_resistance:
+                                    filter_msg += " and "
+                            if standardize_resistance:
+                                filter_msg += "standard resistance filter"
+                            filter_msg += " applied"
+                            st.info(filter_msg)
                         else:
                             region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                         
@@ -796,18 +870,28 @@ def main():
                 # User selection for individual analysis
                 st.markdown("<h2 style='font-size: 1.875em;'>Individual User Analysis</h2>", unsafe_allow_html=True)
                 
-                # Use filtered user list if resistance standardization is enabled
-                if standardize_resistance:
+                # Use filtered user list if any filtering is applied
+                if filtering_applied:
                     users = data_processor.get_user_list(analysis_df)
-                    st.info("Showing user analysis with standard resistance filter applied")
+                    
+                    # Show filtering info
+                    filter_msg = "Showing user analysis with "
+                    if start_date > min_date or end_date < max_date:
+                        filter_msg += f"date range: {start_date} to {end_date}"
+                        if standardize_resistance:
+                            filter_msg += " and "
+                    if standardize_resistance:
+                        filter_msg += "standard resistance filter"
+                    filter_msg += " applied"
+                    st.info(filter_msg)
                 else:
                     users = data_processor.get_user_list(processed_df)
                 
                 selected_user = st.selectbox("Select User", users)
 
                 if selected_user:
-                    # Generate matrices using filtered data if resistance standardization is enabled
-                    if standardize_resistance:
+                    # Generate matrices using filtered data if any filtering is applied
+                    if filtering_applied:
                         matrices = matrix_generator.generate_user_matrices(
                             analysis_df, selected_user)
                     else:
@@ -934,15 +1018,23 @@ def main():
                 # First collect region metrics for all regions
                 region_metrics = {}
                 for region in VALID_EXERCISES.keys():
-                    # Use filtered or original data based on checkbox state
-                    if standardize_resistance:
+                    # Use filtered or original data based on filtering state
+                    if filtering_applied:
                         region_metrics[region] = matrix_generator.get_region_metrics(analysis_df, region)
                     else:
                         region_metrics[region] = matrix_generator.get_region_metrics(processed_df, region)
                 
                 # Add filtering info for the report
-                if standardize_resistance:
-                    st.info("Report will be generated using data filtered by standard resistance values")
+                if filtering_applied:
+                    filter_msg = "Report will be generated using filtered data"
+                    if start_date > min_date or end_date < max_date:
+                        filter_msg += f" (date range: {start_date} to {end_date}"
+                        if standardize_resistance:
+                            filter_msg += ", with standard resistance values"
+                        filter_msg += ")"
+                    elif standardize_resistance:
+                        filter_msg += " (using standard resistance values)"
+                    st.info(filter_msg)
                 
                 # Only enable the download button if a site name is provided
                 if site_name.strip() != "":
