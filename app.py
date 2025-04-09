@@ -267,8 +267,18 @@ def get_athlete_metrics(df):
             max_exercises = 0
             best_test = None
             
-            for test_num in range(1, max(max(power_matrix.keys() if power_matrix else [0]), 
-                                       max(accel_matrix.keys() if accel_matrix else [0])) + 1):
+            # Calculate the maximum test number from both matrices
+            max_power_test = 0
+            if power_matrix and len(power_matrix) > 0:
+                max_power_test = max(power_matrix.keys())
+            
+            max_accel_test = 0
+            if accel_matrix and len(accel_matrix) > 0:
+                max_accel_test = max(accel_matrix.keys())
+            
+            max_test_num = max(max_power_test, max_accel_test)
+            
+            for test_num in range(1, max_test_num + 1):
                 if test_num in power_matrix or test_num in accel_matrix:
                     # Count power exercises
                     power_exercises = 0
