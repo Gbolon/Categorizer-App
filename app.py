@@ -806,7 +806,11 @@ def main():
 
                 # Display Power development distribution and changes
                 st.write("Multi-Test Users Power Development Distribution")
-                styled_power_counts = power_counts.style.format("{:.0f}")
+                # Apply different formatting to different rows
+                formatter = {
+                    'Average Score': '{:.1f}%'  # Format Average Score row with percentage sign
+                }
+                styled_power_counts = power_counts.style.format(formatter, na_rep="-").format("{:.0f}", subset=power_counts.index.difference(['Average Score']))
                 st.dataframe(styled_power_counts, use_container_width=True)
 
                 # Display Power changes directly below power distribution
@@ -823,7 +827,11 @@ def main():
 
                 # Display Acceleration development distribution
                 st.write("Multi-Test Users Acceleration Development Distribution")
-                styled_accel_counts = accel_counts.style.format("{:.0f}")
+                # Apply different formatting to different rows
+                formatter = {
+                    'Average Score': '{:.1f}%'  # Format Average Score row with percentage sign
+                }
+                styled_accel_counts = accel_counts.style.format(formatter, na_rep="-").format("{:.0f}", subset=accel_counts.index.difference(['Average Score']))
                 st.dataframe(styled_accel_counts, use_container_width=True)
 
                 # Display Acceleration changes directly below acceleration distribution
