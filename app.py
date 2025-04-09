@@ -149,6 +149,34 @@ def generate_exercise_metrics(df):
     # Convert to DataFrame and sort by Total Executions (descending)
     return pd.DataFrame(exercise_metrics).sort_values(by='Total Executions', ascending=False).reset_index(drop=True)
 
+def get_athlete_metrics(df):
+    """
+    Calculate metrics related to athletes in the dataset.
+    
+    Args:
+        df: The processed dataframe
+        
+    Returns:
+        Dictionary with athlete metrics (total and valid counts)
+    """
+    # Total number of unique athletes
+    total_athletes = df['name'].nunique()
+    
+    # Valid athletes have at least one exercise with both power and acceleration values
+    valid_athlete_names = set()
+    
+    for name in df['name'].unique():
+        athlete_df = df[df['name'] == name]
+        if athlete_df.dropna(subset=['power - high', 'acceleration - high']).shape[0] > 0:
+            valid_athlete_names.add(name)
+    
+    valid_athletes = len(valid_athlete_names)
+    
+    return {
+        'total_athletes': total_athletes,
+        'valid_athletes': valid_athletes
+    }
+
 def get_top_session_types(df):
     """
     Get the top 3 most frequently performed test types from the 'session name' column.
@@ -222,6 +250,19 @@ def main():
                 
             # Analysis Overview Section
             st.markdown("<h2 style='font-size: 1.875em;'>Analysis Overview</h2>", unsafe_allow_html=True)
+            
+            # Athlete Metrics
+            st.markdown("<h3 style='font-size: 1.5em;'>Athlete Metrics</h3>", unsafe_allow_html=True)
+            athlete_metrics = get_athlete_metrics(processed_df)
+            
+            # Create columns for displaying athlete metrics
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.metric("Total Number of Athletes", athlete_metrics['total_athletes'])
+            
+            with col2:
+                st.metric("Total Valid Athletes", athlete_metrics['valid_athletes'])
             
             # Exercise Metrics Table
             st.markdown("<h3 style='font-size: 1.5em;'>Exercise Metrics</h3>", unsafe_allow_html=True)
