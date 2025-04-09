@@ -540,7 +540,7 @@ def main():
                 "Minimum Days Between Tests",
                 min_value=0,
                 max_value=365,
-                value=0,  # Default to no filtering
+                value=30,  # Default to 30 days minimum between tests
                 step=1,
                 help="Set the minimum number of days required between consecutive tests. Tests that occur before this threshold will be skipped."
             )
