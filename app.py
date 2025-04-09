@@ -179,10 +179,11 @@ def get_athlete_metrics(df):
     test_completeness = {}
     
     for name in df['user name'].unique():
-        athlete_df = df[df['user name'] == name]
+        athlete_df = df[df['user name'] == name].copy()
+        # Use .shape[0] > 0 instead of direct DataFrame evaluation
         valid_entries = athlete_df.dropna(subset=['power - high', 'acceleration - high'])
         
-        if valid_entries.shape[0] > 0:
+        if len(valid_entries) > 0:  # Using len() instead of directly evaluating DataFrame
             valid_athlete_names.add(name)
             valid_tests_by_athlete[name] = valid_entries.shape[0]
             
@@ -250,71 +251,6 @@ def get_athlete_metrics(df):
     print(f"DEBUG: test_completeness has {len(test_completeness)} entries")
     for name, data in test_completeness.items():
         print(f"DEBUG: Athlete {name} has {data['valid_count']} valid exercises in Test {data['test_num']}")
-    
-    # Fallback: If no entries have both power and acceleration data, let's look for people
-    # who at least have some exercise data, even if just one type (power or accel)
-    if not test_completeness:
-        print("DEBUG: No test completeness entries found, using alternate approach")
-        # Implement simpler version that just looks for any valid exercise data
-        for name in df['user name'].unique():
-            athlete_df = df[df['user name'] == name].copy()
-            
-            # Generate matrices
-            matrices = matrix_generator.generate_user_matrices(df, name)
-            power_matrix, accel_matrix = matrices[0], matrices[1]
-            
-            # Find the test with the most exercises (even if only power or accel)
-            max_exercises = 0
-            best_test = None
-            
-            # Calculate the maximum test number from both matrices
-            max_power_test = 0
-            if power_matrix and len(power_matrix) > 0:
-                max_power_test = max(power_matrix.keys())
-            
-            max_accel_test = 0
-            if accel_matrix and len(accel_matrix) > 0:
-                max_accel_test = max(accel_matrix.keys())
-            
-            max_test_num = max(max_power_test, max_accel_test)
-            
-            for test_num in range(1, max_test_num + 1):
-                if test_num in power_matrix or test_num in accel_matrix:
-                    # Count power exercises
-                    power_exercises = 0
-                    if test_num in power_matrix:
-                        power_exercises = sum(1 for val in power_matrix[test_num].values() if not pd.isna(val))
-                    
-                    # Count acceleration exercises  
-                    accel_exercises = 0
-                    if test_num in accel_matrix:
-                        accel_exercises = sum(1 for val in accel_matrix[test_num].values() if not pd.isna(val))
-                    
-                    # Take the maximum of power or accel (not requiring both for the same exercise)
-                    total_exercises = max(power_exercises, accel_exercises)
-                    if total_exercises > max_exercises:
-                        max_exercises = total_exercises
-                        
-                        # Get the list of exercises (from either power or accel)
-                        exercise_list = []
-                        if test_num in power_matrix:
-                            exercise_list.extend([ex for ex, val in power_matrix[test_num].items() 
-                                              if not pd.isna(val) and ex in required_exercises])
-                        if test_num in accel_matrix:
-                            for ex, val in accel_matrix[test_num].items():
-                                if not pd.isna(val) and ex in required_exercises and ex not in exercise_list:
-                                    exercise_list.append(ex)
-                        
-                        best_test = {
-                            'test_num': test_num,
-                            'valid_count': max_exercises,
-                            'percentage': (max_exercises / total_required_exercises) * 100,
-                            'exercise_list': exercise_list
-                        }
-            
-            if best_test:
-                test_completeness[name] = best_test
-                print(f"DEBUG: Alternate method - Athlete {name} has {best_test['valid_count']} exercises in Test {best_test['test_num']}")
     
     if test_completeness:
         # Get the athlete with the highest valid_count in their most complete test
@@ -620,13 +556,13 @@ def main():
                     region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                     
                     # Extract underperformers for all periods
-                    if region_metrics[2]:  # Power metrics
+                    if region_metrics[2] is not None and isinstance(region_metrics[2], dict):  # Power metrics
                         if 'underperformers_1_to_2' in region_metrics[2]:
                             power_underperformers_1_to_2 = region_metrics[2]['underperformers_1_to_2']
                         if 'underperformers_2_to_3' in region_metrics[2]:
                             power_underperformers_2_to_3 = region_metrics[2]['underperformers_2_to_3']
                     
-                    if region_metrics[3]:  # Acceleration metrics
+                    if region_metrics[3] is not None and isinstance(region_metrics[3], dict):  # Acceleration metrics
                         if 'underperformers_1_to_2' in region_metrics[3]:
                             accel_underperformers_1_to_2 = region_metrics[3]['underperformers_1_to_2']
                         if 'underperformers_2_to_3' in region_metrics[3]:
@@ -755,7 +691,7 @@ def main():
                     # Get detailed region metrics using the generalized function for all regions
                     region_metrics = matrix_generator.get_region_metrics(processed_df, region)
                     # Unpack the values carefully, handling different return formats
-                    if region_metrics[0] is None:
+                    if region_metrics[0] is None or (isinstance(region_metrics[0], pd.DataFrame) and region_metrics[0].empty):
                         # No metrics available
                         power_df, accel_df, power_changes, accel_changes = None, None, None, None
                         lowest_power_exercise, lowest_power_value = None, None
@@ -775,7 +711,8 @@ def main():
                             lowest_power_exercise, lowest_power_value = None, None
                             lowest_accel_exercise, lowest_accel_value = None, None
             
-                    if power_df is not None and accel_df is not None:
+                    if (power_df is not None and isinstance(power_df, pd.DataFrame) and not power_df.empty and 
+                        accel_df is not None and isinstance(accel_df, pd.DataFrame) and not accel_df.empty):
                         # Create two columns for power and acceleration
                         col1, col2 = st.columns(2)
                         
