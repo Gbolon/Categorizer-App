@@ -157,24 +157,36 @@ def get_athlete_metrics(df):
         df: The processed dataframe
         
     Returns:
-        Dictionary with athlete metrics (total and valid counts)
+        Dictionary with athlete metrics including total counts and most active athlete
     """
     # Total number of unique athletes
     total_athletes = df['user name'].nunique()
     
     # Valid athletes have at least one exercise with both power and acceleration values
     valid_athlete_names = set()
+    valid_tests_by_athlete = {}
     
     for name in df['user name'].unique():
         athlete_df = df[df['user name'] == name]
-        if athlete_df.dropna(subset=['power - high', 'acceleration - high']).shape[0] > 0:
+        valid_entries = athlete_df.dropna(subset=['power - high', 'acceleration - high'])
+        if valid_entries.shape[0] > 0:
             valid_athlete_names.add(name)
+            # Count number of valid test instances for this athlete
+            valid_tests_by_athlete[name] = valid_entries.shape[0]
     
     valid_athletes = len(valid_athlete_names)
     
+    # Find the athlete with the most valid test instances
+    most_active_athlete = None
+    most_valid_tests = 0
+    
+    if valid_tests_by_athlete:
+        most_active_athlete = max(valid_tests_by_athlete.items(), key=lambda x: x[1])
+    
     return {
         'total_athletes': total_athletes,
-        'valid_athletes': valid_athletes
+        'valid_athletes': valid_athletes,
+        'most_active_athlete': most_active_athlete  # Tuple (athlete_name, test_count) or None
     }
 
 def get_top_session_types(df):
@@ -256,13 +268,20 @@ def main():
             athlete_metrics = get_athlete_metrics(processed_df)
             
             # Create columns for displaying athlete metrics
-            col1, col2 = st.columns(2)
+            col1, col2, col3 = st.columns(3)
             
             with col1:
                 st.metric("Total Number of Athletes", athlete_metrics['total_athletes'])
             
             with col2:
                 st.metric("Total Valid Athletes", athlete_metrics['valid_athletes'])
+                
+            with col3:
+                if athlete_metrics['most_active_athlete']:
+                    name, count = athlete_metrics['most_active_athlete']
+                    st.metric("Most Active Athlete", f"{name} ({count} tests)")
+                else:
+                    st.metric("Most Active Athlete", "No data available")
             
             # Exercise Metrics Table
             st.markdown("<h3 style='font-size: 1.5em;'>Exercise Metrics</h3>", unsafe_allow_html=True)
