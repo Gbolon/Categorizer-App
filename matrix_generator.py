@@ -38,6 +38,9 @@ class MatrixGenerator:
         
         # Store original dataframe for calculating original metrics
         self.original_df = None
+        
+        # Flag to track if we've reported test_instance error
+        self.reported_test_instance_error = False
 
     def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
@@ -403,6 +406,10 @@ class MatrixGenerator:
         power_matrix = {}
         accel_matrix = {}
         test_instances = {}
+        
+        # Add test_instance column to user_data for use in progression rate calculation
+        # This ensures the column exists for all parts of the pipeline
+        user_data['test_instance'] = 0
         
         # Explicitly track if Vertical Jump is present for this user
         has_vertical_jump = False
@@ -1211,50 +1218,46 @@ class MatrixGenerator:
                 'accel_total_change': Average total acceleration change from first to last test
             }
         """
-        # Get list of multi-test users
-        user_test_counts = processed_df.groupby('user name')['test_instance'].nunique()
-        multi_test_users = user_test_counts[user_test_counts > 1].index.tolist()
+        # Debug check if test_instance column exists
+        print(f"DEBUG - Columns in dataframe: {processed_df.columns.tolist()}")
         
-        if not multi_test_users or avg_constrained_days == 0:
+        # Initialize lists to store each user's changes
+        power_changes = []
+        accel_changes = []
+        
+        # If no data or no days between tests, return zeros
+        if processed_df.empty or avg_constrained_days <= 0:
             return {
                 'power_progression_rate': 0,
                 'accel_progression_rate': 0,
                 'power_total_change': 0,
                 'accel_total_change': 0
             }
-        
-        # Initialize lists to store each user's changes
-        power_changes = []
-        accel_changes = []
-        
-        # Process each multi-test user
-        for user in multi_test_users:
-            user_df = processed_df[processed_df['user name'] == user]
             
-            # Group by test instance and get average development scores
-            user_test_instances = user_df.groupby('test_instance').agg({
-                'power_development': 'mean',
-                'acceleration_development': 'mean'
-            }).reset_index()
+        # Process each user and calculate their progression
+        for user in processed_df['user name'].unique():
+            # Get user matrices which include development scores
+            matrices = self.generate_user_matrices(processed_df, user)
             
-            # Skip if less than 2 test instances with valid data
-            if len(user_test_instances) < 2:
-                continue
+            if matrices[2] is not None:  # If development matrices exist
+                _, _, power_dev, accel_dev, overall_dev, _, _ = matrices
                 
-            # Calculate total change from first to last test
-            first_power = user_test_instances['power_development'].iloc[0]
-            last_power = user_test_instances['power_development'].iloc[-1]
-            first_accel = user_test_instances['acceleration_development'].iloc[0]
-            last_accel = user_test_instances['acceleration_development'].iloc[-1]
-            
-            # Calculate percentage change
-            if pd.notna(first_power) and pd.notna(last_power) and first_power > 0:
-                power_change = ((last_power - first_power) / first_power) * 100
-                power_changes.append(power_change)
-                
-            if pd.notna(first_accel) and pd.notna(last_accel) and first_accel > 0:
-                accel_change = ((last_accel - first_accel) / first_accel) * 100
-                accel_changes.append(accel_change)
+                # If user has multiple tests
+                if len(overall_dev.columns) >= 2:
+                    # Get power and acceleration development for first and last test
+                    first_power = overall_dev.loc['Power Average', 'Test 1']
+                    last_power = overall_dev.loc['Power Average', overall_dev.columns[-1]]
+                    first_accel = overall_dev.loc['Acceleration Average', 'Test 1']
+                    last_accel = overall_dev.loc['Acceleration Average', overall_dev.columns[-1]]
+                    
+                    # Calculate percentage change
+                    if pd.notna(first_power) and pd.notna(last_power) and first_power > 0:
+                        power_change = ((last_power - first_power) / first_power) * 100
+                        power_changes.append(power_change)
+                        
+                    if pd.notna(first_accel) and pd.notna(last_accel) and first_accel > 0:
+                        accel_change = ((last_accel - first_accel) / first_accel) * 100
+                        accel_changes.append(accel_change)
         
         # Calculate average total changes
         power_total_change = np.mean(power_changes) if power_changes else 0
