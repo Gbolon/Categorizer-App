@@ -806,15 +806,7 @@ def main():
 
                 # Display Power development distribution and changes
                 st.write("Multi-Test Users Power Development Distribution")
-                # Apply default integer formatting
                 styled_power_counts = power_counts.style.format("{:.0f}")
-                
-                # If Average Score row exists, apply special formatting to it
-                if 'Average Score' in power_counts.index:
-                    # Create a custom formatter that only affects the Average Score row
-                    styled_power_counts = power_counts.style.format({
-                        'Average Score': lambda x: f"{x:.1f}%" if pd.notna(x) else "-"
-                    }, na_rep="-").format("{:.0f}", subset=power_counts.index.difference(['Average Score']))
                 st.dataframe(styled_power_counts, use_container_width=True)
 
                 # Display Power changes directly below power distribution
@@ -831,15 +823,7 @@ def main():
 
                 # Display Acceleration development distribution
                 st.write("Multi-Test Users Acceleration Development Distribution")
-                # Apply default integer formatting
                 styled_accel_counts = accel_counts.style.format("{:.0f}")
-                
-                # If Average Score row exists, apply special formatting to it
-                if 'Average Score' in accel_counts.index:
-                    # Create a custom formatter that only affects the Average Score row
-                    styled_accel_counts = accel_counts.style.format({
-                        'Average Score': lambda x: f"{x:.1f}%" if pd.notna(x) else "-"
-                    }, na_rep="-").format("{:.0f}", subset=accel_counts.index.difference(['Average Score']))
                 st.dataframe(styled_accel_counts, use_container_width=True)
 
                 # Display Acceleration changes directly below acceleration distribution
