@@ -801,7 +801,7 @@ def main():
                 with day_col1:
                     st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
                 with day_col2:
-                    st.metric("Avg. Constrained Days", f"{avg_constrained_days:.1f}", 
+                    st.metric("Avg Days\nBetween Tests, with Minimum", f"{avg_constrained_days:.1f}", 
                              help="Average number of days between tests after minimum days filtering")
 
                 # Display Power development distribution and changes
