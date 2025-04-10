@@ -1,5 +1,6 @@
 """Report generator module for exercise data visualization."""
 import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
@@ -686,15 +687,20 @@ class ReportGenerator:
             <tbody>
         """
         
-        # Add data rows
+        # Add data rows - exact format matching the app
         for category in power_counts.index:
             group_dev_page += f"<tr><td style='text-align: right; font-weight: 500;'>{category}</td>"
             for col in test_columns:
                 value = power_counts.loc[category, col]
-                if pd.isna(value) or value == 0:
+                if pd.isna(value):
                     group_dev_page += "<td>0.00%</td>"
                 else:
-                    group_dev_page += f"<td>{value:.2f}%</td>"
+                    # For integer count values, show whole numbers
+                    if isinstance(value, (int, np.int64)):
+                        group_dev_page += f"<td>{value}</td>"
+                    else:
+                        # For normal percentages, use 0.00% format
+                        group_dev_page += f"<td>{value:.2f}%</td>"
             group_dev_page += "</tr>"
         
         # Calculate total users per test
@@ -788,15 +794,20 @@ class ReportGenerator:
             <tbody>
         """
         
-        # Add data rows
+        # Add data rows - exact format matching the app
         for category in accel_counts.index:
             group_dev_page += f"<tr><td style='text-align: right; font-weight: 500;'>{category}</td>"
             for col in test_columns:
                 value = accel_counts.loc[category, col]
-                if pd.isna(value) or value == 0:
+                if pd.isna(value):
                     group_dev_page += "<td>0.00%</td>"
                 else:
-                    group_dev_page += f"<td>{value:.2f}%</td>"
+                    # For integer count values, show whole numbers
+                    if isinstance(value, (int, np.int64)):
+                        group_dev_page += f"<td>{value}</td>"
+                    else:
+                        # For normal percentages, use 0.00% format
+                        group_dev_page += f"<td>{value:.2f}%</td>"
             group_dev_page += "</tr>"
         
         # Calculate total users per test
