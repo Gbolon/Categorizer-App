@@ -501,7 +501,7 @@ def main():
             # Add checkbox for resistance standardization
             standardize_resistance = st.checkbox(
                 "Enable Resistance Standardization", 
-                value=False,
+                value=True,  # Default to enabled
                 help="When enabled, only includes data where exercises were performed at standard resistance values"
             )
             
