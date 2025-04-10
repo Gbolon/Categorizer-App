@@ -1340,16 +1340,39 @@ def main():
                         single_test_distribution=single_test_distribution
                     )
                     st.download_button(
-                        label="Download Comprehensive Report",
+                        label="Download Comprehensive Report (HTML)",
                         data=comprehensive_report,
-                        file_name="comprehensive_report.html",
+                        file_name=f"{site_name.strip()}_comprehensive_report.html" if site_name.strip() else "comprehensive_report.html",
                         mime="text/html",
                         key="comprehensive_report_download"
                     )
+                    
+                    # Generate PDF report
+                    comprehensive_pdf_report = report_generator.generate_comprehensive_pdf_report(
+                        power_counts,
+                        accel_counts,
+                        power_transitions_detail,
+                        accel_transitions_detail,
+                        body_region_averages,
+                        improvement_thresholds,
+                        region_metrics,
+                        site_name=site_name,
+                        single_test_distribution=single_test_distribution
+                    )
+                    
+                    # Add a PDF download button
+                    st.download_button(
+                        label="Download Comprehensive Report (PDF)",
+                        data=comprehensive_pdf_report,
+                        file_name=f"{site_name.strip()}_comprehensive_report.pdf" if site_name.strip() else "comprehensive_report.pdf",
+                        mime="application/pdf",
+                        key="comprehensive_pdf_report_download"
+                    )
                 else:
-                    # Display disabled button with message
-                    st.info("Please enter a site name to enable the report download")
-                    st.button("Download Comprehensive Report", disabled=True, key="disabled_report_download")
+                    # Display disabled buttons with message
+                    st.info("Please enter a site name to enable the report downloads")
+                    st.button("Download Comprehensive Report (HTML)", disabled=True, key="disabled_html_download")
+                    st.button("Download Comprehensive Report (PDF)", disabled=True, key="disabled_pdf_download")
                 
                 # Add an explanation about the report
                 st.write("**Comprehensive Report**: Includes all analysis data with interactive navigation between pages, site identification, and detailed region-specific metrics")

@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 import io
+from weasyprint import HTML
 
 class ReportGenerator:
     """Generates reports for exercise data analysis."""
@@ -266,6 +267,40 @@ class ReportGenerator:
         )
         
         return html_content.encode('utf-8')
+        
+    def generate_comprehensive_pdf_report(self, power_counts, accel_counts, power_transitions, accel_transitions,
+                                         body_region_averages, improvement_thresholds, region_metrics, 
+                                         site_name="", single_test_distribution=None):
+        """
+        Generate a comprehensive PDF report from the HTML report.
+        
+        Args:
+            power_counts (DataFrame): Power development distribution
+            accel_counts (DataFrame): Acceleration development distribution
+            power_transitions (dict): Dictionary of power transition matrices by period
+            accel_transitions (dict): Dictionary of acceleration transition matrices by period
+            body_region_averages (dict): Dictionary of body region averages
+            improvement_thresholds (dict): Dictionary of improvement thresholds by region
+            region_metrics (dict): Dictionary of region metrics including underperformers
+            site_name (str, optional): Name of the site/location for the report header
+            single_test_distribution (DataFrame, optional): Distribution data for single test users
+            
+        Returns:
+            bytes: Comprehensive PDF report as bytes
+        """
+        # Generate HTML content
+        html_content = self._generate_comprehensive_html(
+            power_counts, accel_counts, power_transitions, accel_transitions,
+            body_region_averages, improvement_thresholds, region_metrics, site_name,
+            single_test_distribution
+        )
+        
+        # Convert HTML to PDF
+        pdf_buffer = io.BytesIO()
+        HTML(string=html_content).write_pdf(pdf_buffer)
+        pdf_buffer.seek(0)
+        
+        return pdf_buffer.getvalue()
         
     def _generate_comprehensive_html(self, power_counts, accel_counts, power_transitions, accel_transitions,
                                    body_region_averages, improvement_thresholds, region_metrics, site_name="",
