@@ -246,7 +246,7 @@ def get_top_session_types(df):
     return result
 
 def main():
-    st.markdown("<h1 style='font-size: 3em;'>Pythagoras</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-size: 3em;'>Pythagoras <span style='font-size: 0.4em;'>By Proteus</span></h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='font-size: 1.5em; font-style: italic; margin-top: -10px;'>For the shortest distance between two goals...</h3>", unsafe_allow_html=True)
 
     # Initialize processors
