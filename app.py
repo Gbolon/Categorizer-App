@@ -3,11 +3,52 @@ import pandas as pd
 import numpy as np
 import io
 import csv
+import hashlib
 from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
 from report_generator import ReportGenerator
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
+
+# Function to check password
+def check_password():
+    """
+    Returns `True` if the user had the correct password and is authenticated.
+    """
+    # Initialize session state for authentication if not already done
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+    
+    # If already authenticated, return True
+    if st.session_state.authenticated:
+        return True
+    
+    # Set a default password - in a real app, you'd want to store this more securely
+    # For this example, we'll use "password" as the password
+    correct_password_hash = "5f4dcc3b5aa765d61d8327deb882cf99"  # md5 hash of "password"
+    
+    # Display header
+    st.markdown("<h1 style='font-size: 3em;'>Pythagoras <span style='font-size: 0.4em;'>By Proteus</span></h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1.5em; font-style: italic; margin-top: -10px;'>For the shortest distance between two goals...</h3>", unsafe_allow_html=True)
+    
+    # Create password input
+    password = st.text_input("Please enter the password to access Pythagoras", type="password")
+    
+    # Check if password was entered and validate it
+    if password:
+        # Hash the entered password
+        password_hash = hashlib.md5(password.encode()).hexdigest()
+        
+        # Verify the password
+        if password_hash == correct_password_hash:
+            st.session_state.authenticated = True
+            return True
+        else:
+            st.error("Invalid password. Please try again.")
+            return False
+    else:
+        # No password entered yet
+        return False
 
 # Dictionary of standard resistances for each exercise (in pounds)
 STANDARD_RESISTANCES = {
@@ -246,8 +287,12 @@ def get_top_session_types(df):
     return result
 
 def main():
-    st.markdown("<h1 style='font-size: 3em;'>Pythagoras <span style='font-size: 0.4em;'>By Proteus</span></h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='font-size: 1.5em; font-style: italic; margin-top: -10px;'>For the shortest distance between two goals...</h3>", unsafe_allow_html=True)
+    # Check authentication before proceeding
+    if not check_password():
+        # If not authenticated, stop here
+        return
+        
+    # If authenticated, show the main application (no need to show the title again as it's in the check_password function)
 
     # Initialize processors
     data_processor = DataProcessor()
