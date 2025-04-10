@@ -509,6 +509,9 @@ def main():
             min_date = processed_df['exercise createdAt'].dt.tz_localize(None).min().date()
             max_date = processed_df['exercise createdAt'].dt.tz_localize(None).max().date()
             
+            # Set the default start date to the first data point date rather than min_date
+            default_start_date = min_date
+            
             # Add Evaluation Window date range selection
             st.write("### Evaluation Window")
             st.write("Select a date range to filter the data. Only exercises performed between these dates will be included in the analysis.")
@@ -517,7 +520,7 @@ def main():
             with col1:
                 start_date = st.date_input(
                     "Start Date",
-                    value=min_date,
+                    value=default_start_date,
                     min_value=min_date,
                     max_value=max_date
                 )
