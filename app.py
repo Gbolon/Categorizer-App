@@ -100,17 +100,22 @@ def create_underperformers_table(region, period, power_underperformers, accel_un
     # Sort by name and create DataFrame
     return pd.DataFrame(table_data).sort_values(by="Name").reset_index(drop=True) if table_data else None
 
-def generate_exercise_metrics(df):
+def generate_exercise_metrics(df, filtered_df=None):
     """
     Generate exercise metrics including total executions, most common resistances,
     and valid entries count.
     
     Args:
-        df: The processed dataframe
+        df: The processed dataframe (original data)
+        filtered_df: Optional filtered dataframe for showing filtered valid entry counts
         
     Returns:
         DataFrame with exercise metrics
     """
+    # If no filtered_df is provided, use the original df for filtered counts too
+    if filtered_df is None:
+        filtered_df = df
+        
     # Create a list to store exercise metrics
     exercise_metrics = []
     
@@ -118,10 +123,10 @@ def generate_exercise_metrics(df):
     exercises = df['exercise name'].unique()
     
     for exercise in exercises:
-        # Filter data for this exercise
+        # Filter data for this exercise from the original data
         exercise_df = df[df['exercise name'] == exercise]
         
-        # Get total executions
+        # Get total executions from original data
         total_executions = len(exercise_df)
         
         # Get the top 3 most common resistances - handle empty or all-NaN cases
@@ -147,8 +152,12 @@ def generate_exercise_metrics(df):
             second_most_common = "N/A"
             third_most_common = "N/A"
         
-        # Get valid entries count - entries with both power and acceleration values
-        valid_entries = exercise_df.dropna(subset=['power - high', 'acceleration - high']).shape[0]
+        # Get valid entries count from the ORIGINAL data
+        original_valid_entries = exercise_df.dropna(subset=['power - high', 'acceleration - high']).shape[0]
+        
+        # Get valid entries count from the FILTERED data
+        filtered_exercise_df = filtered_df[filtered_df['exercise name'] == exercise]
+        filtered_valid_entries = filtered_exercise_df.dropna(subset=['power - high', 'acceleration - high']).shape[0]
         
         # Add to list
         exercise_metrics.append({
@@ -157,7 +166,8 @@ def generate_exercise_metrics(df):
             '1st Most Common Resistance': most_common_resistance,
             '2nd Most Common Resistance': second_most_common,
             '3rd Most Common Resistance': third_most_common,
-            'Valid Entries Count': valid_entries
+            'Valid Entries (Original)': original_valid_entries,
+            'Valid Entries (Filtered)': filtered_valid_entries
         })
     
     # Convert to DataFrame and sort by Total Executions (descending)
@@ -754,7 +764,8 @@ def main():
                 
                 # Exercise Metrics Table
                 st.markdown("<h3 style='font-size: 1.5em;'>Exercise Metrics</h3>", unsafe_allow_html=True)
-                exercise_metrics_df = generate_exercise_metrics(processed_df)
+                # Pass both original and filtered dataframes to show both valid entries counts
+                exercise_metrics_df = generate_exercise_metrics(processed_df, analysis_df)
                 st.dataframe(exercise_metrics_df, use_container_width=True)
                 
                 # Test Session Analysis
