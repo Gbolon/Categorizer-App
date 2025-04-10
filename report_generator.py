@@ -736,6 +736,12 @@ class ReportGenerator:
         for period, matrix in power_transitions.items():
             power_transitions_page += f'<h2>Period: {period}</h2>'
             
+            # If matrix is a Styler object, get the underlying DataFrame
+            if hasattr(matrix, 'data'):
+                matrix_df = matrix.data
+            else:
+                matrix_df = matrix
+                
             # Apply styling to highlight cells (can't use Styler functions directly in HTML)
             power_transitions_page += """
             <table class="table">
@@ -745,7 +751,7 @@ class ReportGenerator:
             """
             
             # Add column headers
-            for col in matrix.columns:
+            for col in matrix_df.columns:
                 power_transitions_page += f'<th>{col}</th>'
             
             power_transitions_page += """
@@ -755,11 +761,11 @@ class ReportGenerator:
             """
             
             # Add rows with appropriate cell highlighting
-            for i, row_idx in enumerate(matrix.index):
+            for i, row_idx in enumerate(matrix_df.index):
                 power_transitions_page += f'<tr><td>{row_idx}</td>'
                 
-                for j, col in enumerate(matrix.columns):
-                    value = matrix.iloc[i, j]
+                for j, col in enumerate(matrix_df.columns):
+                    value = matrix_df.iloc[i, j]
                     # Determine cell color based on position
                     if i == j:  # Diagonal - no change
                         cell_class = "diagonal"
@@ -812,6 +818,12 @@ class ReportGenerator:
         for period, matrix in accel_transitions.items():
             accel_transitions_page += f'<h2>Period: {period}</h2>'
             
+            # If matrix is a Styler object, get the underlying DataFrame
+            if hasattr(matrix, 'data'):
+                matrix_df = matrix.data
+            else:
+                matrix_df = matrix
+                
             # Apply styling to highlight cells
             accel_transitions_page += """
             <table class="table">
@@ -821,7 +833,7 @@ class ReportGenerator:
             """
             
             # Add column headers
-            for col in matrix.columns:
+            for col in matrix_df.columns:
                 accel_transitions_page += f'<th>{col}</th>'
             
             accel_transitions_page += """
@@ -831,11 +843,11 @@ class ReportGenerator:
             """
             
             # Add rows with appropriate cell highlighting
-            for i, row_idx in enumerate(matrix.index):
+            for i, row_idx in enumerate(matrix_df.index):
                 accel_transitions_page += f'<tr><td>{row_idx}</td>'
                 
-                for j, col in enumerate(matrix.columns):
-                    value = matrix.iloc[i, j]
+                for j, col in enumerate(matrix_df.columns):
+                    value = matrix_df.iloc[i, j]
                     # Determine cell color based on position
                     if i == j:  # Diagonal - no change
                         cell_class = "diagonal"
