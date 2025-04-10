@@ -288,16 +288,72 @@ class ReportGenerator:
         Returns:
             bytes: Comprehensive PDF report as bytes
         """
-        # Generate HTML content
+        # Generate print-optimized HTML content
         html_content = self._generate_comprehensive_html(
             power_counts, accel_counts, power_transitions, accel_transitions,
             body_region_averages, improvement_thresholds, region_metrics, site_name,
             single_test_distribution
         )
         
-        # Convert HTML to PDF
+        # Add print-specific CSS for PDF formatting
+        print_css = """
+        <style>
+            @page {
+                size: landscape;
+                margin: 1cm;
+            }
+            body {
+                font-size: 10pt;
+            }
+            .nav {
+                display: none !important;
+            }
+            .content {
+                margin-top: 20px !important;
+            }
+            .page {
+                page-break-after: always;
+            }
+            h1 {
+                page-break-before: always;
+                margin-top: 20px;
+            }
+            h1:first-of-type {
+                page-break-before: avoid;
+            }
+            .table {
+                font-size: 9pt;
+                width: 100%;
+                max-width: 100%;
+                page-break-inside: avoid;
+                border-collapse: collapse;
+            }
+            .table th, .table td {
+                padding: 4px 6px;
+                word-break: break-word;
+            }
+            .metric-box {
+                display: inline-block;
+                width: 30%;
+                margin: 5px;
+                vertical-align: top;
+            }
+            .metric-row {
+                text-align: center;
+            }
+        </style>
+        """
+        
+        # Insert the print CSS right before closing head tag
+        html_content = html_content.replace('</head>', f'{print_css}</head>')
+        
+        # Convert HTML to PDF with specific page settings
         pdf_buffer = io.BytesIO()
-        HTML(string=html_content).write_pdf(pdf_buffer)
+        HTML(string=html_content).write_pdf(
+            pdf_buffer,
+            presentational_hints=True,
+            optimize_size=('fonts', 'images')
+        )
         pdf_buffer.seek(0)
         
         return pdf_buffer.getvalue()
