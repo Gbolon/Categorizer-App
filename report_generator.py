@@ -945,7 +945,19 @@ class ReportGenerator:
         
         # Individual region analysis sections
         region_counter = 1
-        for region_name, metrics in region_metrics.items():
+        for region_name in body_region_averages.keys():
+            # Get threshold data for this region
+            region_thresholds = {}
+            if region_name in improvement_thresholds:
+                region_thresholds = improvement_thresholds[region_name]
+            
+            # Format for display, with sensible defaults
+            power_1_to_2 = region_thresholds.get('power_1_to_2', 'N/A')
+            power_2_to_3 = region_thresholds.get('power_2_to_3', 'N/A')
+            accel_1_to_2 = region_thresholds.get('accel_1_to_2', 'N/A')
+            accel_2_to_3 = region_thresholds.get('accel_2_to_3', 'N/A')
+            
+            # Start building content for this region
             html_content += f"""
             <h2>4.{region_counter}. {region_name} Region Analysis</h2>
             <div class="section">
@@ -963,13 +975,13 @@ class ReportGenerator:
                     <tbody>
                         <tr>
                             <td>Power</td>
-                            <td>{improvement_thresholds.get(region_name, {}).get('power_1_to_2', 'N/A')}%</td>
-                            <td>{improvement_thresholds.get(region_name, {}).get('power_2_to_3', 'N/A')}%</td>
+                            <td>{power_1_to_2}%</td>
+                            <td>{power_2_to_3}%</td>
                         </tr>
                         <tr>
                             <td>Acceleration</td>
-                            <td>{improvement_thresholds.get(region_name, {}).get('accel_1_to_2', 'N/A')}%</td>
-                            <td>{improvement_thresholds.get(region_name, {}).get('accel_2_to_3', 'N/A')}%</td>
+                            <td>{accel_1_to_2}%</td>
+                            <td>{accel_2_to_3}%</td>
                         </tr>
                     </tbody>
                 </table>
@@ -978,9 +990,19 @@ class ReportGenerator:
                 <p>These users showed less improvement than the group average for this region.</p>
             """
             
-            # Extract underperformers lists
-            power_underperformers_1_2 = metrics.get(7, [])  # Index 7 is the power underperformers 1-2
-            accel_underperformers_1_2 = metrics.get(8, [])  # Index 8 is the accel underperformers 1-2
+            # Extract underperformers lists if available
+            power_underperformers_1_2 = []
+            accel_underperformers_1_2 = []
+            
+            # Check if we have metrics data for this region
+            if region_name in region_metrics and isinstance(region_metrics[region_name], tuple):
+                region_data = region_metrics[region_name]
+                # Check if we have underperformers data at index 7 and 8
+                if len(region_data) > 8:
+                    if isinstance(region_data[7], list):
+                        power_underperformers_1_2 = region_data[7]
+                    if isinstance(region_data[8], list):
+                        accel_underperformers_1_2 = region_data[8]
             
             # Create underperformers table for Test 1 → Test 2
             html_content += """
@@ -1040,8 +1062,18 @@ class ReportGenerator:
             """
             
             # Extract underperformers lists for Test 2 → Test 3
-            power_underperformers_2_3 = metrics.get(9, [])  # Index 9 is the power underperformers 2-3
-            accel_underperformers_2_3 = metrics.get(10, [])  # Index 10 is the accel underperformers 2-3
+            power_underperformers_2_3 = []
+            accel_underperformers_2_3 = []
+            
+            # Check if we have metrics data for this region with test 2-3 underperformers
+            if region_name in region_metrics and isinstance(region_metrics[region_name], tuple):
+                region_data = region_metrics[region_name]
+                # Check if we have underperformers data at index 9 and 10
+                if len(region_data) > 10:
+                    if isinstance(region_data[9], list):
+                        power_underperformers_2_3 = region_data[9]
+                    if isinstance(region_data[10], list):
+                        accel_underperformers_2_3 = region_data[10]
             
             # Create underperformers table for Test 2 → Test 3
             html_content += """
