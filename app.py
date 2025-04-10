@@ -25,7 +25,7 @@ STANDARD_RESISTANCES = {
 
 # Configure the page at the very beginning
 st.set_page_config(
-    page_title="Proteus Progression Analyzer",
+    page_title="Pythagoras",
     page_icon="📊",
     layout="wide",  # This will make the page wider
     initial_sidebar_state="auto"
