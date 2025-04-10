@@ -246,7 +246,8 @@ def get_top_session_types(df):
     return result
 
 def main():
-    st.markdown("<h1 style='font-size: 3em;'>Proteus Progression Analyzer</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-size: 3em;'>Pythagoras</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1.5em; font-style: italic; margin-top: -10px;'>For the shortest distance between two goals...</h3>", unsafe_allow_html=True)
 
     # Initialize processors
     data_processor = DataProcessor()
@@ -265,13 +266,13 @@ def main():
 
     # If no file is uploaded, show information content
     if uploaded_file is None:
-        st.markdown("<h2 style='font-size: 1.875em;'>Welcome to the Proteus Progression Analyzer</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='font-size: 1.875em;'>Welcome to Pythagoras</h2>", unsafe_allow_html=True)
         st.markdown("Please upload a CSV or Excel file to begin analysis. In the meantime, here's some information about how the application works:")
         
         # Application Overview Section
         with st.expander("Application Overview", expanded=True):
             st.markdown("""
-            ### Proteus Progression Analyzer
+            ### Pythagoras
             
             This application processes exercise data to track athlete development over time. It categorizes performance into brackets based on power and acceleration metrics, and provides detailed analysis at both individual and group levels.
             
@@ -1452,7 +1453,7 @@ def main():
                 # Application Overview Section
                 with st.expander("Application Overview", expanded=True):
                     st.markdown("""
-                    ### Proteus Progression Analyzer
+                    ### Pythagoras
                     
                     This application processes exercise data to track athlete development over time. It categorizes performance into brackets based on power and acceleration metrics, and provides detailed analysis at both individual and group levels.
                     
