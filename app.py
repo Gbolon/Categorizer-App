@@ -152,12 +152,9 @@ def generate_exercise_metrics(df, filtered_df=None):
             second_most_common = "N/A"
             third_most_common = "N/A"
         
-        # Get valid entries count from the ORIGINAL data
-        original_valid_entries = exercise_df.dropna(subset=['power - high', 'acceleration - high']).shape[0]
-        
-        # Get valid entries count from the FILTERED data
+        # Get valid entries count from the FILTERED data only
         filtered_exercise_df = filtered_df[filtered_df['exercise name'] == exercise]
-        filtered_valid_entries = filtered_exercise_df.dropna(subset=['power - high', 'acceleration - high']).shape[0]
+        valid_entries = filtered_exercise_df.dropna(subset=['power - high', 'acceleration - high']).shape[0]
         
         # Add to list
         exercise_metrics.append({
@@ -166,8 +163,7 @@ def generate_exercise_metrics(df, filtered_df=None):
             '1st Most Common Resistance': most_common_resistance,
             '2nd Most Common Resistance': second_most_common,
             '3rd Most Common Resistance': third_most_common,
-            'Valid Entries (Original)': original_valid_entries,
-            'Valid Entries (Filtered)': filtered_valid_entries
+            'Valid Entries': valid_entries
         })
     
     # Convert to DataFrame and sort by Total Executions (descending)
