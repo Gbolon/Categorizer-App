@@ -692,9 +692,9 @@ class ReportGenerator:
             for col in test_columns:
                 value = power_counts.loc[category, col]
                 if pd.isna(value) or value == 0:
-                    group_dev_page += "<td>0.00%</td>"
+                    group_dev_page += "<td>0.00</td>"
                 else:
-                    group_dev_page += f"<td>{value:.2f}%</td>"
+                    group_dev_page += f"<td>{value:.2f}</td>"
             group_dev_page += "</tr>"
         
         # Calculate total users per test
@@ -702,9 +702,9 @@ class ReportGenerator:
         for col in test_columns:
             total = power_counts[col].sum()
             if pd.isna(total) or total == 0:
-                total_users_row += "<td>0.00%</td>"
+                total_users_row += "<td>0.00</td>"
             else:
-                total_users_row += f"<td>{total:.2f}%</td>"
+                total_users_row += f"<td>{total:.2f}</td>"
         total_users_row += "</tr>"
         
         # Add Average Development Score row
@@ -712,9 +712,9 @@ class ReportGenerator:
         for col in test_columns:
             avg = power_avgs.get(col, None)
             if avg is None or pd.isna(avg) or avg == 0:
-                avg_dev_score_row += "<td>0.00%</td>"
+                avg_dev_score_row += "<td>0.00</td>"
             else:
-                avg_dev_score_row += f"<td>{avg:.2f}%</td>"
+                avg_dev_score_row += f"<td>{avg:.2f}</td>"
         avg_dev_score_row += "</tr>"
         
         # Add the totals and average rows
@@ -794,9 +794,9 @@ class ReportGenerator:
             for col in test_columns:
                 value = accel_counts.loc[category, col]
                 if pd.isna(value) or value == 0:
-                    group_dev_page += "<td>0.00%</td>"
+                    group_dev_page += "<td>0.00</td>"
                 else:
-                    group_dev_page += f"<td>{value:.2f}%</td>"
+                    group_dev_page += f"<td>{value:.2f}</td>"
             group_dev_page += "</tr>"
         
         # Calculate total users per test
@@ -804,9 +804,9 @@ class ReportGenerator:
         for col in test_columns:
             total = accel_counts[col].sum()
             if pd.isna(total) or total == 0:
-                total_users_row += "<td>0.00%</td>"
+                total_users_row += "<td>0.00</td>"
             else:
-                total_users_row += f"<td>{total:.2f}%</td>"
+                total_users_row += f"<td>{total:.2f}</td>"
         total_users_row += "</tr>"
         
         # Add Average Development Score row
@@ -814,9 +814,9 @@ class ReportGenerator:
         for col in test_columns:
             avg = accel_avgs.get(col, None)
             if avg is None or pd.isna(avg) or avg == 0:
-                avg_dev_score_row += "<td>0.00%</td>"
+                avg_dev_score_row += "<td>0.00</td>"
             else:
-                avg_dev_score_row += f"<td>{avg:.2f}%</td>"
+                avg_dev_score_row += f"<td>{avg:.2f}</td>"
         avg_dev_score_row += "</tr>"
         
         # Add the totals and average rows
