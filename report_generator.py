@@ -239,7 +239,8 @@ class ReportGenerator:
         return html_content.encode('utf-8')
         
     def generate_comprehensive_report(self, power_counts, accel_counts, power_transitions, accel_transitions,
-                                    body_region_averages, improvement_thresholds, region_metrics, site_name=""):
+                                    body_region_averages, improvement_thresholds, region_metrics, 
+                                    site_name="", single_test_distribution=None):
         """
         Generate a comprehensive HTML report with separate pages for each section.
         
@@ -252,6 +253,7 @@ class ReportGenerator:
             improvement_thresholds (dict): Dictionary of improvement thresholds by region
             region_metrics (dict): Dictionary of region metrics including underperformers
             site_name (str, optional): Name of the site/location for the report header
+            single_test_distribution (DataFrame, optional): Distribution data for single test users
             
         Returns:
             bytes: Comprehensive HTML report as bytes
@@ -259,13 +261,15 @@ class ReportGenerator:
         # Start building the HTML report
         html_content = self._generate_comprehensive_html(
             power_counts, accel_counts, power_transitions, accel_transitions,
-            body_region_averages, improvement_thresholds, region_metrics, site_name
+            body_region_averages, improvement_thresholds, region_metrics, site_name,
+            single_test_distribution
         )
         
         return html_content.encode('utf-8')
         
     def _generate_comprehensive_html(self, power_counts, accel_counts, power_transitions, accel_transitions,
-                                   body_region_averages, improvement_thresholds, region_metrics, site_name=""):
+                                   body_region_averages, improvement_thresholds, region_metrics, site_name="",
+                                   single_test_distribution=None):
         """
         Generate comprehensive HTML report content with separate pages.
         
@@ -278,6 +282,7 @@ class ReportGenerator:
             improvement_thresholds (dict): Dictionary of improvement thresholds by region
             region_metrics (dict): Dictionary of region metrics including underperformers
             site_name (str, optional): Name of the site/location for the report header
+            single_test_distribution (DataFrame, optional): Distribution data for single test users
             
         Returns:
             str: HTML content
@@ -612,27 +617,81 @@ class ReportGenerator:
                                 </tr>
                             </thead>
                             <tbody>
+                            """
+        
+        # Add dynamic single test distribution data if available
+        if single_test_distribution is not None:
+            # Get the categories from index
+            categories = single_test_distribution.index
+            for category in categories:
+                group_dev_page += f"<tr><td>{category}</td>"
+                # Power column
+                if "Power" in single_test_distribution.columns:
+                    power_value = single_test_distribution.loc[category, "Power"]
+                    if pd.isna(power_value):
+                        group_dev_page += f"<td>0</td>"
+                    else:
+                        group_dev_page += f"<td>{int(power_value)}</td>"
+                else:
+                    group_dev_page += "<td>0</td>"
+                
+                # Acceleration column
+                if "Acceleration" in single_test_distribution.columns:
+                    accel_value = single_test_distribution.loc[category, "Acceleration"]
+                    if pd.isna(accel_value):
+                        group_dev_page += f"<td>0</td>"
+                    else:
+                        group_dev_page += f"<td>{int(accel_value)}</td>"
+                else:
+                    group_dev_page += "<td>0</td>"
+                
+                group_dev_page += "</tr>"
+        else:
+            # Fallback to placeholder data if no actual data available
+            group_dev_page += """
                                 <tr>
                                     <td>Goal Hit</td>
-                                    <td>3</td>
-                                    <td>2</td>
+                                    <td>0</td>
+                                    <td>0</td>
                                 </tr>
                                 <tr>
                                     <td>Elite</td>
-                                    <td>5</td>
-                                    <td>4</td>
+                                    <td>0</td>
+                                    <td>0</td>
                                 </tr>
-                                <!-- More rows would be added here -->
+                                <tr>
+                                    <td>Above Average</td>
+                                    <td>0</td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>Average</td>
+                                    <td>0</td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>Under Developed</td>
+                                    <td>0</td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>Severely Under Developed</td>
+                                    <td>0</td>
+                                    <td>0</td>
+                                </tr>
+            """
+        
+        group_dev_page += """
                             </tbody>
                         </table>
                     </div>
                     <div class="metric-col">
                         <div class="metric-box">
-                            <div class="metric-value">68.5%</div>
+                            <div class="metric-value">N/A</div>
                             <div class="metric-label">Average Overall Power Development</div>
                         </div>
                         <div class="metric-box">
-                            <div class="metric-value">72.3%</div>
+                            <div class="metric-value">N/A</div>
                             <div class="metric-label">Average Overall Acceleration Development</div>
                         </div>
                     </div>

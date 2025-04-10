@@ -1336,7 +1336,8 @@ def main():
                         body_region_averages,
                         improvement_thresholds,
                         region_metrics,
-                        site_name=site_name
+                        site_name=site_name,
+                        single_test_distribution=single_test_distribution
                     )
                     st.download_button(
                         label="Download Comprehensive Report",
