@@ -697,29 +697,6 @@ class ReportGenerator:
                     group_dev_page += f"<td>{value:.2f}</td>"
             group_dev_page += "</tr>"
         
-        # Calculate total users per test
-        total_users_row = "<tr><td style='text-align: right; font-weight: 500;'>Total Users</td>"
-        for col in test_columns:
-            total = power_counts[col].sum()
-            if pd.isna(total) or total == 0:
-                total_users_row += "<td>0.00</td>"
-            else:
-                total_users_row += f"<td>{total:.2f}</td>"
-        total_users_row += "</tr>"
-        
-        # Add Average Development Score row
-        avg_dev_score_row = "<tr><td style='text-align: right; font-weight: 500;'>Average Development Score (%)</td>"
-        for col in test_columns:
-            avg = power_avgs.get(col, None)
-            if avg is None or pd.isna(avg) or avg == 0:
-                avg_dev_score_row += "<td>0.00</td>"
-            else:
-                avg_dev_score_row += f"<td>{avg:.2f}</td>"
-        avg_dev_score_row += "</tr>"
-        
-        # Add the totals and average rows
-        group_dev_page += total_users_row + avg_dev_score_row
-        
         group_dev_page += """
             </tbody>
         </table>
