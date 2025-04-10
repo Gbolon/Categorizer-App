@@ -24,8 +24,8 @@ def check_password():
         return True
     
     # Set a default password - in a real app, you'd want to store this more securely
-    # For this example, we'll use "password" as the password
-    correct_password_hash = "5f4dcc3b5aa765d61d8327deb882cf99"  # md5 hash of "password"
+    # For this example, we'll use "000Rah!" as the password
+    correct_password_hash = "c0f8dfd2df2fcfb784eab25b53803d58"  # md5 hash of "000Rah!"
     
     # Display header
     st.markdown("<h1 style='font-size: 3em;'>Pythagoras <span style='font-size: 0.4em;'>By Proteus</span></h1>", unsafe_allow_html=True)
