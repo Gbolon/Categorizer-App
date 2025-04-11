@@ -529,36 +529,48 @@ class MatrixGenerator:
             for _, row in press_pull_exercises.iterrows():
                 print(f"Debug: Exercise: {row['full_exercise_name']}, Power: {row['power - high']}, Accel: {row['acceleration - high']}")
 
+        # Pre-process user data to group by date for session-based test instance assignment
+        # This ensures exercises from the same session stay in the same test instance
+        user_data['date'] = user_data['exercise createdAt'].dt.date
+        date_groups = {}
+        
+        # Assign test instances based on unique dates (each unique date becomes a test instance)
+        for date in sorted(user_data['date'].unique()):
+            # Find the next available test instance number
+            target_instance = len(date_groups) + 1
+            date_groups[date] = target_instance
+            print(f"DEBUG: Assigned date {date} to test instance {target_instance}")
+            
         # Process each exercise chronologically and keep power/acceleration paired
         for _, row in user_data.iterrows():
             exercise = row['full_exercise_name']
             power_value = row['power - high']
             accel_value = row['acceleration - high']
+            date = row['date']
             
-            # For Vertical Jump, NOTE: we're removing forced standardization
+            # For Vertical Jump, NOTE: we're keeping the original full name 
             if 'Vertical Jump' in exercise:
                 has_vertical_jump = True  # Mark that user has Vertical Jump exercises
                 print(f"Debug: Processing Vertical Jump: {exercise}")
                 
-            # For Shot Put, NOTE: we're removing forced standardization
+            # For Shot Put, NOTE: we're keeping the original full name with dominance
             if 'Shot Put' in exercise:
                 print(f"DEBUG: Processing Shot Put: {exercise}")
             
             # Debug Shot Put and Vertical Jump exercises
             if 'Shot Put' in exercise:
-                print(f"DEBUG: Processing Shot Put for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
+                print(f"DEBUG: Processing Shot Put for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}, Date: {date}")
             elif 'Vertical Jump' in exercise:
-                print(f"Debug: Processing Vertical Jump for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
+                print(f"Debug: Processing Vertical Jump for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}, Date: {date}")
             # Debug Press/Pull exercises
             elif 'Horizontal Row' in exercise or 'Chest Press' in exercise:
-                print(f"Debug: Processing Press/Pull for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
+                print(f"Debug: Processing Press/Pull for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}, Date: {date}")
 
             # Only process if both power and acceleration are present
             if pd.notna(power_value) and pd.notna(accel_value):
-                # Find earliest available test instance for this exercise
-                target_instance = 1
-                while target_instance in test_instances and exercise in test_instances[target_instance]:
-                    target_instance += 1
+                # Get the test instance for this date (from our date_groups mapping)
+                target_instance = date_groups[date]
+                print(f"DEBUG: Assigning exercise {exercise} to test instance {target_instance} (Date: {date})")
 
                 # Initialize new test instance if needed
                 if target_instance not in power_matrix:
@@ -566,10 +578,14 @@ class MatrixGenerator:
                     accel_matrix[target_instance] = {}
                     test_instances[target_instance] = set()
 
-                # Add exercise data to matrices as a pair
-                power_matrix[target_instance][exercise] = power_value
-                accel_matrix[target_instance][exercise] = accel_value
-                test_instances[target_instance].add(exercise)
+                # Add exercise data to matrices as a pair - but only if not already present
+                if exercise not in test_instances[target_instance]:
+                    power_matrix[target_instance][exercise] = power_value
+                    accel_matrix[target_instance][exercise] = accel_value
+                    test_instances[target_instance].add(exercise)
+                    print(f"DEBUG: Added to matrices - Test {target_instance}, Exercise: {exercise}")
+                else:
+                    print(f"DEBUG: Skipping duplicate entry for {exercise} in test instance {target_instance}")
                 
                 # Debug Shot Put and Vertical Jump exercises
                 if 'Shot Put' in exercise:
@@ -580,33 +596,37 @@ class MatrixGenerator:
                 elif 'Horizontal Row' in exercise or 'Chest Press' in exercise:
                     print(f"Debug: Added to matrices - Test {target_instance}, Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
 
-        # Check for Vertical Jump in the matrices
-        has_vertical_jump = False
+        # Check for Vertical Jump in the matrices (all variants)
+        vertical_jump_variants = set()
         for instance in power_matrix:
-            if 'Vertical Jump (Countermovement)' in power_matrix[instance]:
-                has_vertical_jump = True
-                break
+            for exercise in power_matrix[instance]:
+                if 'Vertical Jump' in exercise:
+                    vertical_jump_variants.add(exercise)
+                    print(f"DEBUG: Found Vertical Jump variant in matrices: {exercise}")
         
-        # Check for Shot Put in the matrices
-        has_shot_put = False
+        # Check for Shot Put in the matrices (all variants)
+        shot_put_variants = set()
         for instance in power_matrix:
-            if 'Shot Put (Countermovement)' in power_matrix[instance]:
-                has_shot_put = True
-                print(f"DEBUG: Shot Put found in power_matrix[{instance}] with value: {power_matrix[instance]['Shot Put (Countermovement)']}")
-                break
+            for exercise in power_matrix[instance]:
+                if 'Shot Put' in exercise:
+                    shot_put_variants.add(exercise)
+                    print(f"DEBUG: Found Shot Put variant in matrices: {exercise}")
         
         # Fill empty cells with NaN
         for instance in power_matrix:
-            # Ensure Vertical Jump is added if it exists for this user
-            if has_vertical_jump and 'Vertical Jump (Countermovement)' not in power_matrix[instance]:
-                power_matrix[instance]['Vertical Jump (Countermovement)'] = np.nan
-                accel_matrix[instance]['Vertical Jump (Countermovement)'] = np.nan
+            # Ensure all Vertical Jump variants are present in all test instances
+            for vj_variant in vertical_jump_variants:
+                if vj_variant not in power_matrix[instance]:
+                    print(f"DEBUG: Adding Vertical Jump variant {vj_variant} placeholder to instance {instance}")
+                    power_matrix[instance][vj_variant] = np.nan
+                    accel_matrix[instance][vj_variant] = np.nan
                 
-            # Ensure Shot Put is added if it exists for this user
-            if has_shot_put and 'Shot Put (Countermovement)' not in power_matrix[instance]:
-                print(f"DEBUG: Adding Shot Put placeholder to instance {instance}")
-                power_matrix[instance]['Shot Put (Countermovement)'] = np.nan
-                accel_matrix[instance]['Shot Put (Countermovement)'] = np.nan
+            # Ensure all Shot Put variants are present in all test instances
+            for sp_variant in shot_put_variants:
+                if sp_variant not in power_matrix[instance]:
+                    print(f"DEBUG: Adding Shot Put variant {sp_variant} placeholder to instance {instance}")
+                    power_matrix[instance][sp_variant] = np.nan
+                    accel_matrix[instance][sp_variant] = np.nan
                 
             # Fill remaining exercises from the exercises list
             for exercise in self.exercises:
@@ -648,15 +668,9 @@ class MatrixGenerator:
                 print(f"DEBUG: Adding matrix exercise to combined list: {exercise}")
                 combined_exercises.append(exercise)
                 
-        # Explicitly ensure Vertical Jump is in the combined list
-        if 'Vertical Jump (Countermovement)' not in combined_exercises:
-            print(f"DEBUG: Explicitly adding Vertical Jump to combined exercises list")
-            combined_exercises.append('Vertical Jump (Countermovement)')
-            
-        # Explicitly ensure Shot Put is in the combined list
-        if 'Shot Put (Countermovement)' not in combined_exercises:
-            print(f"DEBUG: Explicitly adding Shot Put to combined exercises list")
-            combined_exercises.append('Shot Put (Countermovement)')
+        # No need to explicitly add standardized names for Vertical Jump and Shot Put
+        # since we're now keeping the original exercise names with dominance information
+        pass
             
         # Debug what's in the matrices for Vertical Jump
         for instance in power_matrix:
