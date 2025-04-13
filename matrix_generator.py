@@ -496,17 +496,18 @@ class MatrixGenerator:
         power_matrix = {}
         accel_matrix = {}
         test_instances = {}
+        test_dates = {}  # New dictionary to store dates for each test instance
         
         # Explicitly track if Vertical Jump is present for this user
         has_vertical_jump = False
 
         # Get user's sex for development calculations
         if user_data.empty:
-            return power_matrix, accel_matrix, None, None, None, None, None
+            return power_matrix, accel_matrix, None, None, None, None, None, None  # Added None for dates
 
         user_sex = user_data['sex'].iloc[0]
         if not isinstance(user_sex, str) or user_sex.lower() not in ['male', 'female']:
-            return power_matrix, accel_matrix, None, None, None, None, None
+            return power_matrix, accel_matrix, None, None, None, None, None, None  # Added None for dates
 
         # Debug for Shot Put and Vertical Jump exercises
         shot_put_exercises = user_data[user_data['full_exercise_name'].str.contains('Shot Put', na=False)]
@@ -569,11 +570,17 @@ class MatrixGenerator:
                     power_matrix[target_instance] = {}
                     accel_matrix[target_instance] = {}
                     test_instances[target_instance] = set()
+                    test_dates[target_instance] = {}  # Initialize test dates dictionary
 
                 # Add exercise data to matrices as a pair
                 power_matrix[target_instance][exercise] = power_value
                 accel_matrix[target_instance][exercise] = accel_value
                 test_instances[target_instance].add(exercise)
+                
+                # Store the date for this test instance and exercise
+                exercise_date = row['exercise createdAt'].strftime('%Y-%m-%d')
+                if exercise not in test_dates[target_instance]:
+                    test_dates[target_instance][exercise] = exercise_date
                 
                 # Debug Shot Put and Vertical Jump exercises
                 if 'Shot Put' in exercise:
@@ -633,8 +640,22 @@ class MatrixGenerator:
         # Add bracketing information
         power_brackets = self._categorize_development(power_dev_df)
         accel_brackets = self._categorize_development(accel_dev_df)
+        
+        # Convert test dates dictionary to DataFrame with same column format
+        dates_df = None
+        if test_dates:
+            # Create a DataFrame from the test dates dictionary
+            dates_matrix = {}
+            for instance, exercises_dates in test_dates.items():
+                dates_matrix[instance] = exercises_dates
+                
+            # Convert to DataFrame
+            dates_df = pd.DataFrame(dates_matrix)
+            # Use the same column names as the other matrices
+            if not dates_df.empty:
+                dates_df.columns = [f"Test {i}" for i in range(1, len(dates_df.columns) + 1)]
 
-        return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df, power_brackets, accel_brackets
+        return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df, power_brackets, accel_brackets, dates_df
 
     def _convert_to_dataframes(self, power_matrix, accel_matrix):
         """Convert dictionary matrices to pandas DataFrames."""
