@@ -1232,7 +1232,7 @@ def main():
                         matrices = matrix_generator.generate_user_matrices(
                             processed_df, selected_user)
 
-                    power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
+                    power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets, test_dates_matrix = matrices
 
                     # Special handling to ensure Vertical Jump is visible
                     if 'Vertical Jump (Countermovement)' not in power_matrix.index:
@@ -1257,6 +1257,11 @@ def main():
 
                     # Display raw value matrices in a collapsible section
                     with st.expander("Raw Value Matrices", expanded=False):
+                        # Display test dates if available
+                        if test_dates_matrix is not None and not test_dates_matrix.empty:
+                            st.write("Test Dates")
+                            st.dataframe(test_dates_matrix)
+                        
                         st.write("Power Matrix (Raw Values)")
                         st.dataframe(power_matrix)
 
@@ -1316,6 +1321,7 @@ def main():
                         for matrix, name in [
                             (power_matrix, "power"),
                             (accel_matrix, "acceleration"),
+                            (test_dates_matrix, "test_dates"),
                             (power_dev_matrix, "power_development"),
                             (accel_dev_matrix, "acceleration_development"),
                             (overall_dev_matrix, "overall_development"),
