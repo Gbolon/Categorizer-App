@@ -84,7 +84,7 @@ class MatrixGenerator:
             matrices = self.generate_user_matrices(df, user)
 
             if matrices[2] is not None:  # If development matrices exist
-                _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
+                _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets, _ = matrices
 
                 # Determine if user has multiple tests
                 has_multiple_tests = len(power_brackets) >= 2
