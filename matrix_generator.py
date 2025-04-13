@@ -535,14 +535,18 @@ class MatrixGenerator:
             power_value = row['power - high']
             accel_value = row['acceleration - high']
             
-            # For Vertical Jump, NOTE: we're removing forced standardization
+            # For Vertical Jump, ensure we use the standard name without dominance
             if 'Vertical Jump' in exercise:
+                # Normalize to use just the base name for Vertical Jump
+                exercise = 'Vertical Jump (Countermovement)'
                 has_vertical_jump = True  # Mark that user has Vertical Jump exercises
-                print(f"Debug: Processing Vertical Jump: {exercise}")
+                print(f"Debug: Standardizing Vertical Jump name to: {exercise}")
                 
-            # For Shot Put, NOTE: we're removing forced standardization
+            # For Shot Put, ensure we use the standard name
             if 'Shot Put' in exercise:
-                print(f"DEBUG: Processing Shot Put: {exercise}")
+                # Normalize to use just the base name for Shot Put
+                exercise = 'Shot Put (Countermovement)'
+                print(f"DEBUG: Standardizing Shot Put name to: {exercise}")
             
             # Debug Shot Put and Vertical Jump exercises
             if 'Shot Put' in exercise:
