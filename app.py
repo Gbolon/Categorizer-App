@@ -1396,21 +1396,39 @@ def main():
                     source_df = analysis_df if filtering_applied else processed_df
                     
                     # Generate session matrices
-                    power_df, accel_df, dates_df = matrix_generator.generate_session_matrices(source_df, selected_user)
+                    power_df, accel_df, dates_df, exercise_presence_df = matrix_generator.generate_session_matrices(source_df, selected_user)
                     
                     if power_df is not None and not power_df.empty:
-                        # Display session dates if available
-                        if dates_df is not None:
-                            st.write("Session Dates")
-                            st.dataframe(dates_df)
+                        # First display the standard exercise table
+                        st.write("### Standard Exercises by Session")
+                        st.write("This table shows which standard exercises were performed in each session (✓ indicates presence)")
                         
-                        # Display power matrix
-                        st.write("Power Matrix (Raw Values)")
-                        st.dataframe(power_df)
+                        # Style the exercise presence dataframe to highlight the table headers
+                        styled_presence_df = exercise_presence_df.style.apply(
+                            lambda _: ['background-color: #f0f2f6' for _ in range(len(exercise_presence_df.columns))],
+                            axis=1
+                        )
                         
-                        # Display acceleration matrix
-                        st.write("Acceleration Matrix (Raw Values)")
-                        st.dataframe(accel_df)
+                        # Display exercise presence matrix with improved styling
+                        st.dataframe(styled_presence_df, use_container_width=True)
+                        
+                        # Create tabs for raw value matrices
+                        raw_values_tab, session_dates_tab = st.tabs(["Raw Values", "Session Dates"])
+                        
+                        with raw_values_tab:
+                            # Display power matrix
+                            st.write("Power Matrix (Watts)")
+                            st.dataframe(power_df, use_container_width=True)
+                            
+                            # Display acceleration matrix
+                            st.write("Acceleration Matrix (m/s²)")
+                            st.dataframe(accel_df, use_container_width=True)
+                        
+                        with session_dates_tab:
+                            # Display session dates if available
+                            if dates_df is not None:
+                                st.write("Session Dates")
+                                st.dataframe(dates_df, use_container_width=True)
                         
                         # Add export functionality
                         st.write("### Export Session Data")
@@ -1419,7 +1437,7 @@ def main():
                             return matrix.to_csv().encode('utf-8')
                         
                         # Session Downloads
-                        col1, col2, col3 = st.columns(3)
+                        col1, col2, col3, col4 = st.columns(4)
                         with col1:
                             if dates_df is not None:
                                 st.download_button(
@@ -1444,6 +1462,14 @@ def main():
                                 file_name=f"{selected_user}_session_accel_matrix.csv",
                                 mime="text/csv",
                                 key="session_accel_download"
+                            )
+                        with col4:
+                            st.download_button(
+                                label="Download Exercise Presence",
+                                data=download_matrix(exercise_presence_df, "exercise_presence"),
+                                file_name=f"{selected_user}_exercise_presence.csv",
+                                mime="text/csv",
+                                key="exercise_presence_download"
                             )
                     else:
                         st.warning(f"No session data available for {selected_user} with the current filters.")

@@ -785,7 +785,7 @@ class MatrixGenerator:
             user_name: Name of the user to generate matrices for
             
         Returns:
-            Tuple containing power, acceleration, and session date matrices
+            Tuple containing power, acceleration, session date matrices, and standard exercise presence matrix
         """
         user_data = df[df['user name'] == user_name].copy()
         
@@ -796,7 +796,7 @@ class MatrixGenerator:
         
         # Return empty matrices if no data
         if user_data.empty:
-            return None, None, None
+            return None, None, None, None
             
         # Sort by session date
         user_data = user_data.sort_values('session createdAt')
@@ -849,16 +849,60 @@ class MatrixGenerator:
         power_df = pd.DataFrame(power_matrix)
         accel_df = pd.DataFrame(accel_matrix)
         
-        # Use consistent column names
+        # Use consistent column names with session dates
+        column_names = {}
+        for i in range(1, len(session_dates) + 1):
+            column_names[i] = f"Session {i} ({session_dates[i]})"
+            
         if not power_df.empty:
-            power_df.columns = [f"Session {i}" for i in range(1, len(power_df.columns) + 1)]
+            power_df = power_df.rename(columns=column_names)
         if not accel_df.empty:
-            accel_df.columns = [f"Session {i}" for i in range(1, len(accel_df.columns) + 1)]
+            accel_df = accel_df.rename(columns=column_names)
         
         # Create session dates DataFrame
         dates_df = pd.DataFrame({f"Session {i}": date for i, date in session_dates.items()}, index=['Session Date'])
         
-        return power_df, accel_df, dates_df
+        # Create standardized exercise presence matrix
+        # Collect all standard exercises from VALID_EXERCISES
+        standard_exercises = []
+        for region, exercises in VALID_EXERCISES.items():
+            standard_exercises.extend(exercises)
+        
+        # Remove duplicates and sort
+        standard_exercises = sorted(list(set(standard_exercises)))
+        
+        # Initialize presence matrix with empty strings
+        presence_data = {}
+        for exercise in standard_exercises:
+            presence_data[exercise] = {}
+            for col_id, col_name in column_names.items():
+                presence_data[exercise][col_name] = ""
+        
+        # Fill in checkmarks for exercises present in each session
+        for session_num, session_exercises in power_matrix.items():
+            col_name = column_names[session_num]
+            for exercise in session_exercises:
+                if exercise in standard_exercises:
+                    has_power = pd.notna(power_matrix[session_num].get(exercise, np.nan))
+                    has_accel = pd.notna(accel_matrix[session_num].get(exercise, np.nan))
+                    if has_power or has_accel:
+                        presence_data[exercise][col_name] = "✓"
+        
+        # Convert to DataFrame
+        presence_df = pd.DataFrame(presence_data).T
+        
+        # Sort exercises by body region for better organization
+        region_order = []
+        for region in VALID_EXERCISES.keys():
+            region_exercises = VALID_EXERCISES[region]
+            for exercise in region_exercises:
+                if exercise in presence_df.index:
+                    region_order.append(exercise)
+        
+        # Reindex the DataFrame with the region-based ordering
+        presence_df = presence_df.reindex(region_order)
+        
+        return power_df, accel_df, dates_df, presence_df
             
     def _calculate_overall_development(self, power_dev_df, accel_dev_df):
         """Calculate overall development categorization for each test instance."""
