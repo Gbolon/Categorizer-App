@@ -754,14 +754,15 @@ def main():
                 improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df)
             
             # Create main application tabs
-            tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
                 "1. Overview", 
                 "2. Group Development Analysis", 
                 "3. Transition Analysis",
                 "4. Body Region Analysis",
                 "5. Individual Analysis",
-                "6. Report Generator",
-                "7. Information"
+                "6. Session View",
+                "7. Report Generator",
+                "8. Information"
             ])
             
             # Add custom CSS for metric font size

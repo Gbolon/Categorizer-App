@@ -775,6 +775,91 @@ class MatrixGenerator:
 
         return dev_matrix
 
+    def generate_session_matrices(self, df, user_name):
+        """
+        Generate session-based matrices for a specific user.
+        Groups exercises by session id and orders chronologically by session createdAt.
+        
+        Args:
+            df: Processed dataframe
+            user_name: Name of the user to generate matrices for
+            
+        Returns:
+            Tuple containing power, acceleration, and session date matrices
+        """
+        user_data = df[df['user name'] == user_name].copy()
+        
+        # Initialize matrices
+        power_matrix = {}
+        accel_matrix = {}
+        session_dates = {}
+        
+        # Return empty matrices if no data
+        if user_data.empty:
+            return None, None, None
+            
+        # Sort by session date
+        user_data = user_data.sort_values('session createdAt')
+        
+        # Get unique session IDs ordered by date
+        session_info = user_data[['session id', 'session createdAt']].drop_duplicates().sort_values('session createdAt')
+        session_mapping = {}  # Maps actual session IDs to sequential session numbers
+        
+        # Create session mapping (actual ID -> "Session X")
+        for i, (_, row) in enumerate(session_info.iterrows(), 1):
+            session_id = row['session id']
+            session_mapping[session_id] = i
+            # Initialize session matrices
+            power_matrix[i] = {}
+            accel_matrix[i] = {}
+            # Store session date
+            session_dates[i] = row['session createdAt'].strftime('%Y-%m-%d %H:%M')
+        
+        # Process each exercise row
+        for _, row in user_data.iterrows():
+            exercise = row['full_exercise_name']
+            power_value = row['power - high']
+            accel_value = row['acceleration - high']
+            session_id = row['session id']
+            session_num = session_mapping[session_id]
+            
+            # Standardize Vertical Jump and Shot Put names
+            if 'Vertical Jump' in exercise:
+                exercise = 'Vertical Jump (Countermovement)'
+                
+            if 'Shot Put' in exercise:
+                exercise = 'Shot Put (Countermovement)'
+            
+            # Add values to matrices if valid
+            if pd.notna(power_value):
+                power_matrix[session_num][exercise] = power_value
+            
+            if pd.notna(accel_value):
+                accel_matrix[session_num][exercise] = accel_value
+        
+        # Fill in missing exercises with NaN
+        for session_num in power_matrix:
+            for exercise in self.exercises:
+                if exercise not in power_matrix[session_num]:
+                    power_matrix[session_num][exercise] = np.nan
+                if exercise not in accel_matrix[session_num]:
+                    accel_matrix[session_num][exercise] = np.nan
+        
+        # Convert to DataFrames
+        power_df = pd.DataFrame(power_matrix)
+        accel_df = pd.DataFrame(accel_matrix)
+        
+        # Use consistent column names
+        if not power_df.empty:
+            power_df.columns = [f"Session {i}" for i in range(1, len(power_df.columns) + 1)]
+        if not accel_df.empty:
+            accel_df.columns = [f"Session {i}" for i in range(1, len(accel_df.columns) + 1)]
+        
+        # Create session dates DataFrame
+        dates_df = pd.DataFrame({f"Session {i}": date for i, date in session_dates.items()}, index=['Session Date'])
+        
+        return power_df, accel_df, dates_df
+            
     def _calculate_overall_development(self, power_dev_df, accel_dev_df):
         """Calculate overall development categorization for each test instance."""
         # Create data structure to store calculated values
