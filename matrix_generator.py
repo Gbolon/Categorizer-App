@@ -578,7 +578,7 @@ class MatrixGenerator:
                 test_instances[target_instance].add(exercise)
                 
                 # Store the date for this test instance and exercise
-                exercise_date = row['exercise createdAt'].strftime('%Y-%m-%d')
+                exercise_date = row['exercise createdAt'].strftime('%Y %b %d')
                 if exercise not in test_dates[target_instance]:
                     test_dates[target_instance][exercise] = exercise_date
                 
@@ -813,7 +813,7 @@ class MatrixGenerator:
             power_matrix[i] = {}
             accel_matrix[i] = {}
             # Store session date
-            session_dates[i] = row['session createdAt'].strftime('%Y-%m-%d %H:%M')
+            session_dates[i] = row['session createdAt'].strftime('%Y %b %d')
         
         # Process each exercise row
         for _, row in user_data.iterrows():
