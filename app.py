@@ -1212,11 +1212,20 @@ def main():
                                 st.markdown("<hr>", unsafe_allow_html=True)
 
             #############################################
-            # TAB 5: INDIVIDUAL ANALYSIS
+            # TAB 3: ATHLETE ANALYSIS
             #############################################
-            with tab5:
-                # User selection for individual analysis
-                st.markdown("<h2 style='font-size: 1.875em;'>Individual User Analysis</h2>", unsafe_allow_html=True)
+            with athlete_analysis_tab:
+                # Create subtabs for Athlete Analysis
+                individual_tab, session_tab = st.tabs([
+                    "Individual Analysis",
+                    "Session View"
+                ])
+                
+                # SUBTAB 1: INDIVIDUAL ANALYSIS
+                #----------------------------------------
+                with individual_tab:
+                    # User selection for individual analysis
+                    st.markdown("<h2 style='font-size: 1.875em;'>Individual User Analysis</h2>", unsafe_allow_html=True)
                 
                 # Use filtered user list if any filtering is applied
                 if filtering_applied:
@@ -1354,12 +1363,11 @@ def main():
                                     key=f"individual_{name}_download"
                                 )
                         
-            #############################################
-            # TAB 6: SESSION VIEW
-            #############################################
-            with tab6:
-                st.markdown("<h2 style='font-size: 1.875em;'>Session View</h2>", unsafe_allow_html=True)
-                st.write("This view displays exercises grouped by actual screening sessions chronologically.")
+                # SUBTAB 2: SESSION VIEW
+                #----------------------------------------
+                with session_tab:
+                    st.markdown("<h2 style='font-size: 1.875em;'>Session View</h2>", unsafe_allow_html=True)
+                    st.write("This view displays exercises grouped by actual screening sessions chronologically.")
                 
                 # Session view explanation
                 with st.expander("About Session View", expanded=True):
