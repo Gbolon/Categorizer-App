@@ -1217,17 +1217,14 @@ def main():
             #############################################
             with athlete_analysis_tab:
                 # Create subtabs for Athlete Analysis
-                individual_tab, session_tab = st.tabs([
-                    "Individual Analysis",
-                    "Session View"
+                overview_tab, fillin_tab, session_tab, data_tab = st.tabs([
+                    "Individual Overview",
+                    "Fill-in View",
+                    "Session View",
+                    "Data"
                 ])
                 
-                # SUBTAB 1: INDIVIDUAL ANALYSIS
-                #----------------------------------------
-                with individual_tab:
-                    # User selection for individual analysis
-                    st.markdown("<h2 style='font-size: 1.875em;'>Individual User Analysis</h2>", unsafe_allow_html=True)
-                
+                # Shared user selection logic for all tabs
                 # Use filtered user list if any filtering is applied
                 if filtering_applied:
                     users = data_processor.get_user_list(analysis_df)
@@ -1245,221 +1242,196 @@ def main():
                 else:
                     users = data_processor.get_user_list(processed_df)
                 
-                selected_user = st.selectbox("Select User", users)
-
-                if selected_user:
-                    # Generate matrices using filtered data if any filtering is applied
-                    if filtering_applied:
-                        matrices = matrix_generator.generate_user_matrices(
-                            analysis_df, selected_user)
-                    else:
-                        matrices = matrix_generator.generate_user_matrices(
-                            processed_df, selected_user)
-
-                    power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets, test_dates_matrix = matrices
-
-                    # Special handling to ensure Vertical Jump is visible
-                    if 'Vertical Jump (Countermovement)' not in power_matrix.index:
-                        print("DEBUG: Vertical Jump missing from power_matrix index - attempting to add it")
-                        # Try to add it if it's missing
-                        try:
-                            # Create a new row with NaN values for all columns
-                            new_row = pd.Series([np.nan] * len(power_matrix.columns), index=power_matrix.columns, name='Vertical Jump (Countermovement)')
-                            # Add the row to the DataFrame
-                            power_matrix = pd.concat([power_matrix, pd.DataFrame(new_row).T])
-                            # Same for acceleration matrix
-                            new_row_accel = pd.Series([np.nan] * len(accel_matrix.columns), index=accel_matrix.columns, name='Vertical Jump (Countermovement)')
-                            accel_matrix = pd.concat([accel_matrix, pd.DataFrame(new_row_accel).T])
-                        except Exception as e:
-                            print(f"ERROR: Failed to add Vertical Jump row: {e}")
-
-                    # Ensure Vertical Jump is always shown, even if it has NaN values
-                    if 'Vertical Jump (Countermovement)' in power_matrix.index:
-                        print(f"DEBUG: Vertical Jump IS in power_matrix index with values: {power_matrix.loc['Vertical Jump (Countermovement)'].values}")
-                    else:
-                        print("DEBUG: Vertical Jump still missing from power_matrix after attempted fix")
-
-                    # Display raw value matrices in a collapsible section
-                    with st.expander("Raw Value Matrices", expanded=False):
-                        # Display test dates if available
-                        if test_dates_matrix is not None and not test_dates_matrix.empty:
-                            st.write("Test Dates")
-                            st.dataframe(test_dates_matrix)
-                        
-                        st.write("Power Matrix (Raw Values)")
-                        st.dataframe(power_matrix)
-
-                        st.write("Acceleration Matrix (Raw Values)")
-                        st.dataframe(accel_matrix)
-
-                    # Display development matrices if available
-                    if power_dev_matrix is not None and accel_dev_matrix is not None:
-                        # Special handling to ensure Vertical Jump is visible in development matrices too
-                        if 'Vertical Jump (Countermovement)' not in power_dev_matrix.index:
-                            print("DEBUG: Vertical Jump missing from power_dev_matrix index - attempting to add it")
-                            try:
-                                # Create a new row with NaN values for all columns
-                                new_row = pd.Series([np.nan] * len(power_dev_matrix.columns), index=power_dev_matrix.columns, name='Vertical Jump (Countermovement)')
-                                # Add the row to the DataFrame
-                                power_dev_matrix = pd.concat([power_dev_matrix, pd.DataFrame(new_row).T])
-                                # Same for acceleration matrix
-                                new_row_accel = pd.Series([np.nan] * len(accel_dev_matrix.columns), index=accel_dev_matrix.columns, name='Vertical Jump (Countermovement)')
-                                accel_dev_matrix = pd.concat([accel_dev_matrix, pd.DataFrame(new_row_accel).T])
-                            except Exception as e:
-                                print(f"ERROR: Failed to add Vertical Jump row to dev matrices: {e}")
-
-                        # Display development matrices in a collapsible section
-                        with st.expander("Development Score Matrices (%)", expanded=False):
-                            st.write("Power Development Matrix")
-                            styled_power_dev = power_dev_matrix.style.format("{:.1f}%")
-                            st.dataframe(styled_power_dev)
-
-                            st.write("Acceleration Development Matrix")
-                            styled_accel_dev = accel_dev_matrix.style.format("{:.1f}%")
-                            st.dataframe(styled_accel_dev)
-
-                        # Display overall development categorization
-                        if overall_dev_matrix is not None:
-                            with st.expander("Overall Development Categorization", expanded=True):
-                                styled_overall_dev = overall_dev_matrix.style.format("{:.1f}%")
-                                st.dataframe(styled_overall_dev)
-
-                        # Display development brackets
-                        if power_brackets is not None and accel_brackets is not None:
-                            with st.expander("Development Brackets", expanded=False):
-                                col1, col2 = st.columns(2)
-
-                                with col1:
-                                    st.write("Power Development Brackets")
-                                    st.dataframe(power_brackets)
-
-                                with col2:
-                                    st.write("Acceleration Development Brackets")
-                                    st.dataframe(accel_brackets)
-
-                    # Export functionality in a collapsible section
-                    with st.expander("Export Data", expanded=False):
-                        def download_matrix(matrix, name):
-                            return matrix.to_csv().encode('utf-8')
-
-                        for matrix, name in [
-                            (power_matrix, "power"),
-                            (accel_matrix, "acceleration"),
-                            (test_dates_matrix, "test_dates"),
-                            (power_dev_matrix, "power_development"),
-                            (accel_dev_matrix, "acceleration_development"),
-                            (overall_dev_matrix, "overall_development"),
-                            (power_brackets, "power_brackets"),
-                            (accel_brackets, "acceleration_brackets"),
-                            (power_counts, "power_group_analysis"),
-                            (accel_counts, "acceleration_group_analysis"),
-                            (single_test_distribution, "single_test_distribution")
-                        ]:
-                            if matrix is not None:
-                                st.download_button(
-                                    label=f"Download {name.replace('_', ' ').title()} Matrix CSV",
-                                    data=download_matrix(matrix, name),
-                                    file_name=f"{selected_user}_{name}_matrix.csv",
-                                    mime="text/csv",
-                                    key=f"individual_{name}_download"
-                                )
-                        
-                # SUBTAB 2: SESSION VIEW
+                # SUBTAB 1: INDIVIDUAL OVERVIEW
                 #----------------------------------------
-                with session_tab:
-                    st.markdown("<h2 style='font-size: 1.875em;'>Session View</h2>", unsafe_allow_html=True)
-                    st.write("This view displays exercises grouped by actual screening sessions chronologically.")
+                with overview_tab:
+                    # User selection for individual analysis
+                    st.markdown("<h2 style='font-size: 1.875em;'>Individual Overview</h2>", unsafe_allow_html=True)
+                    st.write("This tab provides an overview of the user's most common session types and exercise chronology.")
+                    
+                    selected_user = st.selectbox("Select User", users, key="overview_user_select")
                 
-                # Session view explanation
-                with st.expander("About Session View", expanded=True):
-                    st.markdown("""
-                    ### Session View vs. Individual View
-                    
-                    - **Session View**: Displays exercises grouped by actual screening session IDs ("session id") and chronologically ordered
-                      by session date ("session createdAt"). Each column represents an actual screening session.
-                    
-                    - **Individual View**: Groups exercises chronologically across all dates without regard to screening sessions.
-                      Exercises are automatically organized into chronological "test instances" based on the earliest available slot.
-                    
-                    This view is useful for analyzing actual screening sessions and understanding what exercises were performed
-                    during each specific screening event.
-                    """)
-                
-                # Get list of users
-                users = processed_df['user name'].unique().tolist()
-                users.sort()
-                
-                selected_user = st.selectbox("Select User", users, key="session_view_user_select")
-                
-                if selected_user:
-                    # Use filtered data if any filtering is applied
-                    source_df = analysis_df if filtering_applied else processed_df
-                    
-                    # First display the user's most common session types
-                    st.write("### Most Common Session Types")
-                    st.write("These are the most frequent test sessions performed by this user:")
-                    
-                    try:
-                        # Check if session name and id columns exist
-                        if 'session name' in source_df.columns and 'session id' in source_df.columns:
-                            # Get top 3 session types for this user
-                            top_sessions_df = matrix_generator.get_user_top_session_types(source_df, selected_user)
-                            
-                            # Display top sessions with styling
-                            if not top_sessions_df.empty:
-                                # Add percentage column if there's data
-                                total_sessions = top_sessions_df['Count'].sum()
-                                if total_sessions > 0:
-                                    top_sessions_df['Percentage'] = (top_sessions_df['Count'] / total_sessions * 100).round(1).astype(str) + '%'
-                                    
-                                    # Style the dataframe
-                                    st.dataframe(top_sessions_df, use_container_width=True)
-                                else:
-                                    st.info("No session count data available for this user.")
-                            else:
-                                st.info("No session type data available for this user.")
-                        else:
-                            st.info("Session name or ID columns not found in the data.")
-                    except Exception as e:
-                        st.error(f"Error displaying session types: {str(e)}")
-                        st.info("Session analysis requires 'session name' and 'session id' columns in the data.")
-                    
-                    st.markdown("---")
-                    
-                    # Generate session matrices
-                    power_df, accel_df, power_dev_df, accel_dev_df, dates_df, exercise_presence_df = matrix_generator.generate_session_matrices(source_df, selected_user)
-                    
-                    if power_df is not None and not power_df.empty:
-                        # First display the chronological exercise table
-                        st.write("### Exercise Chronology")
-                        st.write("This table shows when each exercise was performed by the user. Each column represents the sequential occurrence of an exercise, with dates shown.")
+                    if selected_user:
+                        # Use filtered data if any filtering is applied
+                        source_df = analysis_df if filtering_applied else processed_df
                         
-                        # Style the dataframe for better readability
+                        # First display the user's most common session types
+                        st.write("### Most Common Session Types")
+                        st.write("These are the most frequent test sessions performed by this user:")
+                        
+                        try:
+                            # Check if session name and id columns exist
+                            if 'session name' in source_df.columns and 'session id' in source_df.columns:
+                                # Get top 3 session types for this user
+                                top_sessions_df = matrix_generator.get_user_top_session_types(source_df, selected_user)
+                                
+                                # Display top sessions with styling
+                                if not top_sessions_df.empty:
+                                    # Add percentage column if there's data
+                                    total_sessions = top_sessions_df['Count'].sum()
+                                    if total_sessions > 0:
+                                        top_sessions_df['Percentage'] = (top_sessions_df['Count'] / total_sessions * 100).round(1).astype(str) + '%'
+                                        
+                                        # Style the dataframe
+                                        st.dataframe(top_sessions_df, use_container_width=True)
+                                    else:
+                                        st.info("No session count data available for this user.")
+                                else:
+                                    st.info("No session type data available for this user.")
+                            else:
+                                st.info("Session name or ID columns not found in the data.")
+                        except Exception as e:
+                            st.error(f"Error displaying session types: {str(e)}")
+                            st.info("Session analysis requires 'session name' and 'session id' columns in the data.")
+                        
+                        st.markdown("---")
+                        
+                        # Generate session matrices to get exercise chronology
+                        power_df, accel_df, power_dev_df, accel_dev_df, dates_df, exercise_presence_df = matrix_generator.generate_session_matrices(source_df, selected_user)
+                        
                         if exercise_presence_df is not None and not exercise_presence_df.empty:
+                            # Display the chronological exercise table
+                            st.write("### Exercise Chronology")
+                            st.write("This table shows when each exercise was performed by the user. Each column represents the sequential occurrence of an exercise, with dates shown.")
+                            
                             # Apply styling directly to dataframe without subset
                             st.write("Exercise names will be shown in the left column:")
                             st.dataframe(exercise_presence_df, use_container_width=True)
                         else:
                             st.info("No exercise chronology data available for this user.")
+                
+                # SUBTAB 2: FILL-IN VIEW
+                #----------------------------------------
+                with fillin_tab:
+                    st.markdown("<h2 style='font-size: 1.875em;'>Fill-in View</h2>", unsafe_allow_html=True)
+                    st.write("This tab shows the development categorization and matrices with chronological 'test instances'.")
+                    
+                    selected_user = st.selectbox("Select User", users, key="fillin_user_select")
+
+                    if selected_user:
+                        # Generate matrices using filtered data if any filtering is applied
+                        if filtering_applied:
+                            matrices = matrix_generator.generate_user_matrices(
+                                analysis_df, selected_user)
+                        else:
+                            matrices = matrix_generator.generate_user_matrices(
+                                processed_df, selected_user)
+
+                        power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets, test_dates_matrix = matrices
+
+                        # Special handling to ensure Vertical Jump is visible
+                        if 'Vertical Jump (Countermovement)' not in power_matrix.index:
+                            print("DEBUG: Vertical Jump missing from power_matrix index - attempting to add it")
+                            # Try to add it if it's missing
+                            try:
+                                # Create a new row with NaN values for all columns
+                                new_row = pd.Series([np.nan] * len(power_matrix.columns), index=power_matrix.columns, name='Vertical Jump (Countermovement)')
+                                # Add the row to the DataFrame
+                                power_matrix = pd.concat([power_matrix, pd.DataFrame(new_row).T])
+                                # Same for acceleration matrix
+                                new_row_accel = pd.Series([np.nan] * len(accel_matrix.columns), index=accel_matrix.columns, name='Vertical Jump (Countermovement)')
+                                accel_matrix = pd.concat([accel_matrix, pd.DataFrame(new_row_accel).T])
+                            except Exception as e:
+                                print(f"ERROR: Failed to add Vertical Jump row: {e}")
+
+                        # Ensure Vertical Jump is always shown, even if it has NaN values
+                        if 'Vertical Jump (Countermovement)' in power_matrix.index:
+                            print(f"DEBUG: Vertical Jump IS in power_matrix index with values: {power_matrix.loc['Vertical Jump (Countermovement)'].values}")
+                        else:
+                            print("DEBUG: Vertical Jump still missing from power_matrix after attempted fix")
                         
-                        # Create tabs for raw value matrices and development scores
-                        raw_values_tab, development_tab, session_dates_tab = st.tabs(["Raw Values", "Development Scores", "Session Dates"])
-                        
-                        with raw_values_tab:
-                            # Display power matrix
-                            st.write("Power Matrix (Watts)")
-                            st.dataframe(power_df, use_container_width=True)
+                        # First display overall development categorization
+                        if overall_dev_matrix is not None:
+                            st.write("### Overall Development Categorization")
+                            styled_overall_dev = overall_dev_matrix.style.format("{:.1f}%")
+                            st.dataframe(styled_overall_dev, use_container_width=True)
+
+                        # Display development matrices if available
+                        if power_dev_matrix is not None and accel_dev_matrix is not None:
+                            # Special handling to ensure Vertical Jump is visible in development matrices too
+                            if 'Vertical Jump (Countermovement)' not in power_dev_matrix.index:
+                                print("DEBUG: Vertical Jump missing from power_dev_matrix index - attempting to add it")
+                                try:
+                                    # Create a new row with NaN values for all columns
+                                    new_row = pd.Series([np.nan] * len(power_dev_matrix.columns), index=power_dev_matrix.columns, name='Vertical Jump (Countermovement)')
+                                    # Add the row to the DataFrame
+                                    power_dev_matrix = pd.concat([power_dev_matrix, pd.DataFrame(new_row).T])
+                                    # Same for acceleration matrix
+                                    new_row_accel = pd.Series([np.nan] * len(accel_dev_matrix.columns), index=accel_dev_matrix.columns, name='Vertical Jump (Countermovement)')
+                                    accel_dev_matrix = pd.concat([accel_dev_matrix, pd.DataFrame(new_row_accel).T])
+                                except Exception as e:
+                                    print(f"ERROR: Failed to add Vertical Jump row to dev matrices: {e}")
+
+                            # Display development matrices
+                            st.write("### Development Score Matrices (%)")
+                            st.write("Power Development Matrix")
+                            styled_power_dev = power_dev_matrix.style.format("{:.1f}%")
+                            st.dataframe(styled_power_dev, use_container_width=True)
+
+                            st.write("Acceleration Development Matrix")
+                            styled_accel_dev = accel_dev_matrix.style.format("{:.1f}%")
+                            st.dataframe(styled_accel_dev, use_container_width=True)
+
+                            # Display development brackets in a collapsible section
+                            if power_brackets is not None and accel_brackets is not None:
+                                with st.expander("Development Brackets", expanded=False):
+                                    col1, col2 = st.columns(2)
+
+                                    with col1:
+                                        st.write("Power Development Brackets")
+                                        st.dataframe(power_brackets, use_container_width=True)
+
+                                    with col2:
+                                        st.write("Acceleration Development Brackets")
+                                        st.dataframe(accel_brackets, use_container_width=True)
+
+                        # Display raw value matrices in a collapsible section
+                        with st.expander("Raw Value Matrices", expanded=False):
+                            # Display test dates if available
+                            if test_dates_matrix is not None and not test_dates_matrix.empty:
+                                st.write("Test Dates")
+                                st.dataframe(test_dates_matrix, use_container_width=True)
                             
-                            # Display acceleration matrix
-                            st.write("Acceleration Matrix (m/s²)")
-                            st.dataframe(accel_df, use_container_width=True)
+                            st.write("Power Matrix (Raw Values)")
+                            st.dataframe(power_matrix, use_container_width=True)
+
+                            st.write("Acceleration Matrix (Raw Values)")
+                            st.dataframe(accel_matrix, use_container_width=True)
+                
+                # SUBTAB 3: SESSION VIEW
+                #----------------------------------------
+                with session_tab:
+                    st.markdown("<h2 style='font-size: 1.875em;'>Session View</h2>", unsafe_allow_html=True)
+                    st.write("This tab displays exercises grouped by actual screening sessions chronologically.")
+                
+                    # Session view explanation
+                    with st.expander("About Session View", expanded=False):
+                        st.markdown("""
+                        ### Session View vs. Fill-in View
                         
-                        with development_tab:
+                        - **Session View**: Displays exercises grouped by actual screening session IDs ("session id") and chronologically ordered
+                          by session date ("session createdAt"). Each column represents an actual screening session.
+                        
+                        - **Fill-in View**: Groups exercises chronologically across all dates without regard to screening sessions.
+                          Exercises are automatically organized into chronological "test instances" based on the earliest available slot.
+                        
+                        This view is useful for analyzing actual screening sessions and understanding what exercises were performed
+                        during each specific screening event.
+                        """)
+                    
+                    selected_user = st.selectbox("Select User", users, key="session_view_user_select")
+                    
+                    if selected_user:
+                        # Use filtered data if any filtering is applied
+                        source_df = analysis_df if filtering_applied else processed_df
+                        
+                        # Generate session matrices
+                        power_df, accel_df, power_dev_df, accel_dev_df, dates_df, exercise_presence_df = matrix_generator.generate_session_matrices(source_df, selected_user)
+                        
+                        if power_df is not None and not power_df.empty:
+                            # Display development scores first (they're the focus of this view)
                             st.write("### Development Scores (% of Goal Standards)")
                             st.write("These matrices show each value as a percentage of the goal standard for the exercise, based on the user's sex.")
-                            
-                            # Display power development matrix
-                            st.write("Power Development (% of Goal)")
                             
                             # Apply styling to highlight values based on their development level
                             def highlight_development(val):
@@ -1475,8 +1447,9 @@ def main():
                                     return 'background-color: #FFEBEB'  # Very pale red
                                 else:  # Severely Under Developed
                                     return 'background-color: #FFCCCC'  # Pale red
-                                
-                            # Style and display the power development matrix
+                            
+                            # Display power development matrix
+                            st.write("Power Development (% of Goal)")
                             styled_power_dev = power_dev_df.style.applymap(highlight_development)
                             st.dataframe(styled_power_dev, use_container_width=True)
                             
@@ -1484,12 +1457,177 @@ def main():
                             st.write("Acceleration Development (% of Goal)")
                             styled_accel_dev = accel_dev_df.style.applymap(highlight_development)
                             st.dataframe(styled_accel_dev, use_container_width=True)
+                            
+                            # Put raw values in a collapsible section
+                            with st.expander("Raw Values and Session Dates", expanded=False):
+                                # Display session dates if available
+                                if dates_df is not None:
+                                    st.write("Session Dates")
+                                    st.dataframe(dates_df, use_container_width=True)
+                                
+                                # Display power matrix
+                                st.write("Power Matrix (Watts)")
+                                st.dataframe(power_df, use_container_width=True)
+                                
+                                # Display acceleration matrix
+                                st.write("Acceleration Matrix (m/s²)")
+                                st.dataframe(accel_df, use_container_width=True)
+                        else:
+                            st.warning(f"No session data available for {selected_user} with the current filters.")
+                
+                # SUBTAB 4: DATA
+                #----------------------------------------
+                with data_tab:
+                    st.markdown("<h2 style='font-size: 1.875em;'>Data Tables</h2>", unsafe_allow_html=True)
+                    st.write("This tab contains additional data tables and export options.")
+                    
+                    selected_user = st.selectbox("Select User", users, key="data_user_select")
+
+                    if selected_user:
+                        # Generate matrices using filtered data if any filtering is applied
+                        if filtering_applied:
+                            matrices = matrix_generator.generate_user_matrices(
+                                analysis_df, selected_user)
+                            source_df = analysis_df
+                        else:
+                            matrices = matrix_generator.generate_user_matrices(
+                                processed_df, selected_user)
+                            source_df = processed_df
+
+                        power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets, test_dates_matrix = matrices
                         
-                        with session_dates_tab:
-                            # Display session dates if available
-                            if dates_df is not None:
-                                st.write("Session Dates")
-                                st.dataframe(dates_df, use_container_width=True)
+                        # Generate session matrices as well
+                        session_matrices = matrix_generator.generate_session_matrices(source_df, selected_user)
+                        power_df, accel_df, power_dev_df, accel_dev_df, dates_df, exercise_presence_df = session_matrices
+
+                        # User raw data
+                        with st.expander("User Raw Data", expanded=True):
+                            # Filter data for this user
+                            user_data = source_df[source_df['user name'] == selected_user].copy()
+                            
+                            if not user_data.empty:
+                                # Sort by date
+                                if 'date' in user_data.columns:
+                                    user_data = user_data.sort_values(by='date')
+                                
+                                # Display the data
+                                st.dataframe(user_data, use_container_width=True)
+                            else:
+                                st.info(f"No data available for {selected_user}")
+
+                        # Export functionality
+                        with st.expander("Export Data", expanded=True):
+                            def download_matrix(matrix, name):
+                                return matrix.to_csv().encode('utf-8')
+                            
+                            st.write("### Export Individual View Data")
+                            col1, col2, col3 = st.columns(3)
+                            
+                            with col1:
+                                if power_matrix is not None:
+                                    st.download_button(
+                                        label="Download Power Matrix",
+                                        data=download_matrix(power_matrix, "power"),
+                                        file_name=f"{selected_user}_power_matrix.csv",
+                                        mime="text/csv",
+                                        key="power_download"
+                                    )
+                            
+                            with col2:
+                                if accel_matrix is not None:
+                                    st.download_button(
+                                        label="Download Acceleration Matrix",
+                                        data=download_matrix(accel_matrix, "acceleration"),
+                                        file_name=f"{selected_user}_acceleration_matrix.csv",
+                                        mime="text/csv",
+                                        key="accel_download"
+                                    )
+                            
+                            with col3:
+                                if test_dates_matrix is not None:
+                                    st.download_button(
+                                        label="Download Test Dates",
+                                        data=download_matrix(test_dates_matrix, "test_dates"),
+                                        file_name=f"{selected_user}_test_dates.csv",
+                                        mime="text/csv",
+                                        key="dates_download"
+                                    )
+                            
+                            st.write("### Export Development Data")
+                            col1, col2, col3 = st.columns(3)
+                            
+                            with col1:
+                                if power_dev_matrix is not None:
+                                    st.download_button(
+                                        label="Download Power Development",
+                                        data=download_matrix(power_dev_matrix, "power_development"),
+                                        file_name=f"{selected_user}_power_development.csv",
+                                        mime="text/csv",
+                                        key="power_dev_download"
+                                    )
+                            
+                            with col2:
+                                if accel_dev_matrix is not None:
+                                    st.download_button(
+                                        label="Download Acceleration Development",
+                                        data=download_matrix(accel_dev_matrix, "acceleration_development"),
+                                        file_name=f"{selected_user}_acceleration_development.csv",
+                                        mime="text/csv",
+                                        key="accel_dev_download"
+                                    )
+                            
+                            with col3:
+                                if overall_dev_matrix is not None:
+                                    st.download_button(
+                                        label="Download Overall Development",
+                                        data=download_matrix(overall_dev_matrix, "overall_development"),
+                                        file_name=f"{selected_user}_overall_development.csv",
+                                        mime="text/csv",
+                                        key="overall_dev_download"
+                                    )
+                            
+                            st.write("### Export Session Data")
+                            col1, col2, col3, col4 = st.columns(4)
+                            
+                            with col1:
+                                if dates_df is not None:
+                                    st.download_button(
+                                        label="Download Session Dates",
+                                        data=download_matrix(dates_df, "session_dates"),
+                                        file_name=f"{selected_user}_session_dates.csv",
+                                        mime="text/csv",
+                                        key="session_dates_download"
+                                    )
+                            
+                            with col2:
+                                if power_df is not None:
+                                    st.download_button(
+                                        label="Download Session Power Matrix",
+                                        data=download_matrix(power_df, "session_power"),
+                                        file_name=f"{selected_user}_session_power.csv",
+                                        mime="text/csv",
+                                        key="session_power_download"
+                                    )
+                            
+                            with col3:
+                                if accel_df is not None:
+                                    st.download_button(
+                                        label="Download Session Acceleration Matrix",
+                                        data=download_matrix(accel_df, "session_accel"),
+                                        file_name=f"{selected_user}_session_accel.csv",
+                                        mime="text/csv",
+                                        key="session_accel_download"
+                                    )
+                            
+                            with col4:
+                                if exercise_presence_df is not None:
+                                    st.download_button(
+                                        label="Download Exercise Chronology",
+                                        data=download_matrix(exercise_presence_df, "exercise_chronology"),
+                                        file_name=f"{selected_user}_exercise_chronology.csv",
+                                        mime="text/csv",
+                                        key="exercise_chronology_download"
+                                    )
                         
                         # Add export functionality
                         st.write("### Export Session Data")
