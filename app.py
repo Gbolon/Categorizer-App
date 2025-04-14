@@ -1448,9 +1448,9 @@ def main():
                         st.warning(f"No session data available for {selected_user} with the current filters.")
                 
             #############################################
-            # TAB 7: REPORT GENERATOR
+            # TAB 4: REPORT GENERATOR
             #############################################
-            with tab7:
+            with report_tab:
                 # Report Generator Section
                 st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
                 st.write("Generate comprehensive reports with interactive analysis")
@@ -1602,9 +1602,9 @@ def main():
                             st.dataframe(styled_standards, use_container_width=True)
                             
             #############################################
-            # TAB 8: INFORMATION
+            # TAB 5: INFORMATION
             #############################################
-            with tab8:
+            with info_tab:
                 st.markdown("<h2 style='font-size: 1.875em;'>Information</h2>", unsafe_allow_html=True)
                 
                 # Application Overview Section
