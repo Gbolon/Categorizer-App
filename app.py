@@ -1430,32 +1430,18 @@ def main():
                         
                         if power_df is not None and not power_df.empty:
                             # Display development scores first (they're the focus of this view)
-                            st.write("### Development Scores (% of Goal Standards)")
+                            st.write("### Session Development Score")
                             st.write("These matrices show each value as a percentage of the goal standard for the exercise, based on the user's sex.")
                             
-                            # Apply styling to highlight values based on their development level
-                            def highlight_development(val):
-                                if pd.isna(val):
-                                    return ''
-                                elif val >= 85:  # Goal Hit or Elite
-                                    return 'background-color: lightgreen'
-                                elif val >= 70:  # Above Average
-                                    return 'background-color: #E8F8E8'  # Very pale green
-                                elif val >= 55:  # Average
-                                    return 'background-color: #F0F0F0'  # Light gray
-                                elif val >= 40:  # Under Developed
-                                    return 'background-color: #FFEBEB'  # Very pale red
-                                else:  # Severely Under Developed
-                                    return 'background-color: #FFCCCC'  # Pale red
-                            
-                            # Display power development matrix
+                            # Display power development matrix without color coding
                             st.write("Power Development (% of Goal)")
-                            styled_power_dev = power_dev_df.style.applymap(highlight_development)
+                            # Format the values with one decimal place and a % sign
+                            styled_power_dev = power_dev_df.style.format("{:.1f}%")
                             st.dataframe(styled_power_dev, use_container_width=True)
                             
-                            # Display acceleration development matrix
+                            # Display acceleration development matrix without color coding
                             st.write("Acceleration Development (% of Goal)")
-                            styled_accel_dev = accel_dev_df.style.applymap(highlight_development)
+                            styled_accel_dev = accel_dev_df.style.format("{:.1f}%")
                             st.dataframe(styled_accel_dev, use_container_width=True)
                             
                             # Put raw values in a collapsible section
