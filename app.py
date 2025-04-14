@@ -876,22 +876,8 @@ def main():
 
                     # Display Power development distribution and changes
                     st.write("Multi-Test Users Power Development Distribution")
-                    # Format the power counts dataframe
-                    # First create a formatter function that will be applied cell by cell
-                    def format_cell(val):
-                        if pd.isna(val):  # Handle NaN values
-                            return ''
-                        return f"{val:.0f}"
-                    
-                    # Create a mask for the blank row
-                    blank_mask = power_counts.index == ''
-                    
-                    # Apply formatting with the mask
-                    styled_power_counts = power_counts.style.format(format_cell)
-                    
-                    # Hide values in the blank row by applying empty string
-                    for col in power_counts.columns:
-                        styled_power_counts = styled_power_counts.applymap(lambda _: '', subset=pd.IndexSlice[blank_mask, col])
+                    # Format the power counts dataframe - just apply integer formatting
+                    styled_power_counts = power_counts.style.format("{:.0f}")
                     st.dataframe(styled_power_counts, use_container_width=True)
 
                     # Display Power changes directly below power distribution
@@ -908,16 +894,8 @@ def main():
 
                     # Display Acceleration development distribution
                     st.write("Multi-Test Users Acceleration Development Distribution")
-                    # Apply the same formatting approach to acceleration counts
-                    # Create a mask for the blank row
-                    blank_mask = accel_counts.index == ''
-                    
-                    # Apply formatting with the mask
-                    styled_accel_counts = accel_counts.style.format(format_cell)
-                    
-                    # Hide values in the blank row by applying empty string
-                    for col in accel_counts.columns:
-                        styled_accel_counts = styled_accel_counts.applymap(lambda _: '', subset=pd.IndexSlice[blank_mask, col])
+                    # Format the acceleration counts dataframe - just apply integer formatting
+                    styled_accel_counts = accel_counts.style.format("{:.0f}")
                     st.dataframe(styled_accel_counts, use_container_width=True)
 
                     # Display Acceleration changes directly below acceleration distribution

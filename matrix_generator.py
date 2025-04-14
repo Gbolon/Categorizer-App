@@ -42,7 +42,7 @@ class MatrixGenerator:
     def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
-        categories = list(self.development_brackets.keys()) + ['Total Users', '', 'Average Development Score (%)']
+        categories = list(self.development_brackets.keys()) + ['Total Users', 'Average Development Score (%)']
         power_counts = pd.DataFrame(0, index=categories, columns=[])
         accel_counts = pd.DataFrame(0, index=categories, columns=[])
 
@@ -346,6 +346,15 @@ class MatrixGenerator:
             accel_counts.loc['Average Development Score (%)', 'Test 3'] = avg_accel_test3
         if 'Test 4' in accel_counts.columns:
             accel_counts.loc['Average Development Score (%)', 'Test 4'] = avg_accel_test4
+            
+        # Insert a blank row between "Total Users" and "Average Development Score (%)" in both DataFrames
+        # First create a new DataFrame with the desired row order
+        power_row_order = list(power_counts.index[:-1]) + [''] + ['Average Development Score (%)']
+        accel_row_order = list(accel_counts.index[:-1]) + [''] + ['Average Development Score (%)']
+        
+        # Reindex with the new row order, which adds the blank row with NaN values
+        power_counts = power_counts.reindex(power_row_order)
+        accel_counts = accel_counts.reindex(accel_row_order)
 
         return (power_counts, accel_counts, single_test_distribution,
                 power_transitions_detail, accel_transitions_detail,
