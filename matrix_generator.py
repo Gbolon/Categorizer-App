@@ -186,12 +186,17 @@ class MatrixGenerator:
                         accel_2 = overall_dev.loc['Acceleration Average', 'Test 2']
 
                         if pd.notna(power_1) and pd.notna(power_2):
-                            power_change_1_2 = power_2 - power_1
-                            test1_to_2_power.append(power_change_1_2)
+                            # Only include the change if either value is below 100% 
+                            # (which means at least one value is not above goal standard)
+                            if power_1 < 100 or power_2 < 100:
+                                power_change_1_2 = power_2 - power_1
+                                test1_to_2_power.append(power_change_1_2)
 
                         if pd.notna(accel_1) and pd.notna(accel_2):
-                            accel_change_1_2 = accel_2 - accel_1
-                            test1_to_2_accel.append(accel_change_1_2)
+                            # Only include the change if either value is below 100%
+                            if accel_1 < 100 or accel_2 < 100:
+                                accel_change_1_2 = accel_2 - accel_1
+                                test1_to_2_accel.append(accel_change_1_2)
 
                     # Calculate changes between tests for Test 2-3
                     if 'Test 2' in overall_dev.columns and 'Test 3' in overall_dev.columns:
@@ -201,12 +206,16 @@ class MatrixGenerator:
                         accel_3 = overall_dev.loc['Acceleration Average', 'Test 3']
 
                         if pd.notna(power_2) and pd.notna(power_3):
-                            power_change_2_3 = power_3 - power_2
-                            test2_to_3_power.append(power_change_2_3)
+                            # Only include the change if either value is below 100%
+                            if power_2 < 100 or power_3 < 100:
+                                power_change_2_3 = power_3 - power_2
+                                test2_to_3_power.append(power_change_2_3)
 
                         if pd.notna(accel_2) and pd.notna(accel_3):
-                            accel_change_2_3 = accel_3 - accel_2
-                            test2_to_3_accel.append(accel_change_2_3)
+                            # Only include the change if either value is below 100%
+                            if accel_2 < 100 or accel_3 < 100:
+                                accel_change_2_3 = accel_3 - accel_2
+                                test2_to_3_accel.append(accel_change_2_3)
                             
                     # Calculate changes between tests for Test 3-4
                     if 'Test 3' in overall_dev.columns and 'Test 4' in overall_dev.columns:
@@ -216,12 +225,16 @@ class MatrixGenerator:
                         accel_4 = overall_dev.loc['Acceleration Average', 'Test 4']
 
                         if pd.notna(power_3) and pd.notna(power_4):
-                            power_change_3_4 = power_4 - power_3
-                            test3_to_4_power.append(power_change_3_4)
+                            # Only include the change if either value is below 100%
+                            if power_3 < 100 or power_4 < 100:
+                                power_change_3_4 = power_4 - power_3
+                                test3_to_4_power.append(power_change_3_4)
 
                         if pd.notna(accel_3) and pd.notna(accel_4):
-                            accel_change_3_4 = accel_4 - accel_3
-                            test3_to_4_accel.append(accel_change_3_4)
+                            # Only include the change if either value is below 100%
+                            if accel_3 < 100 or accel_4 < 100:
+                                accel_change_3_4 = accel_4 - accel_3
+                                test3_to_4_accel.append(accel_change_3_4)
 
                     # Increment total users once for all test columns
                     for test in test_columns:
@@ -1120,9 +1133,16 @@ class MatrixGenerator:
             # Get valid rows (non-NaN in both columns)
             valid_rows = data_df[data_df['Test 1'].notna() & data_df['Test 2'].notna()]
             if not valid_rows.empty:
-                # Calculate changes
-                changes['test1_to_test2'] = (valid_rows['Test 2'] - valid_rows['Test 1']).mean()
-                changes['test1_to_test2_pct'] = ((valid_rows['Test 2'] - valid_rows['Test 1']) / valid_rows['Test 1'] * 100).mean()
+                # Filter rows to only include those where either Test 1 or Test 2 is below 100%
+                filtered_rows = valid_rows[(valid_rows['Test 1'] < 100) | (valid_rows['Test 2'] < 100)]
+                if not filtered_rows.empty:
+                    # Calculate changes using filtered rows
+                    changes['test1_to_test2'] = (filtered_rows['Test 2'] - filtered_rows['Test 1']).mean()
+                    changes['test1_to_test2_pct'] = ((filtered_rows['Test 2'] - filtered_rows['Test 1']) / filtered_rows['Test 1'] * 100).mean()
+                else:
+                    # No rows where either value is below 100%
+                    changes['test1_to_test2'] = 0
+                    changes['test1_to_test2_pct'] = 0
                 # Store individual user changes for improvement threshold
                 changes['test1_to_test2_individual'] = (valid_rows['Test 2'] - valid_rows['Test 1']) / valid_rows['Test 1'] * 100
                 
