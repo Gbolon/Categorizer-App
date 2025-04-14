@@ -912,25 +912,10 @@ class MatrixGenerator:
             # Return empty DataFrame on error
             return power_df, accel_df, dates_df, pd.DataFrame()
         
+        # Simply sort by exercise name alphabetically without region grouping
         try:
-            # Sort exercises by body region for better organization
             if not chronology_df.empty:
-                region_mapping = {}
-                for region, exercises in VALID_EXERCISES.items():
-                    for ex in exercises:
-                        # Find all exercises that contain this base exercise name
-                        for actual_ex in chronology_df.index:
-                            if ex in actual_ex:
-                                region_mapping[actual_ex] = region
-                
-                # Create a series mapping exercise to region for sorting
-                if region_mapping:
-                    exercise_regions = pd.Series(region_mapping)
-                    
-                    # Sort chronology_df by region and then by exercise name
-                    chronology_df['Region'] = chronology_df.index.map(lambda x: exercise_regions.get(x, 'Other'))
-                    chronology_df = chronology_df.sort_values(by=['Region', chronology_df.index])
-                    chronology_df = chronology_df.drop(columns=['Region'])
+                chronology_df = chronology_df.sort_index()
         except Exception as e:
             print(f"Error in sorting exercise chronology: {str(e)}")
             # If sorting fails, just return the unsorted dataframe
