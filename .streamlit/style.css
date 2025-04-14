@@ -1,0 +1,66 @@
+/* Scrollable Tabs CSS */
+[data-testid="stHorizontalTabs"] {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    max-width: 100% !important;
+}
+
+[data-testid="stHorizontalTabs"] [role="tablist"] {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    display: flex !important;
+    min-width: min-content !important;
+    scrollbar-width: thin !important;
+}
+
+[data-testid="stHorizontalTabs"] [role="tab"] {
+    white-space: nowrap !important;
+    min-width: fit-content !important;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+}
+
+/* Custom scrollbar */
+[data-testid="stHorizontalTabs"] [role="tablist"]::-webkit-scrollbar {
+    height: 6px !important;
+}
+
+[data-testid="stHorizontalTabs"] [role="tablist"]::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05) !important;
+    border-radius: 10px !important;
+}
+
+[data-testid="stHorizontalTabs"] [role="tablist"]::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2) !important;
+    border-radius: 10px !important;
+}
+
+/* Top-level tabs */
+.main > div > [data-testid="stHorizontalBlock"] > div {
+    min-width: 120px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+.main > div > [data-testid="stHorizontalBlock"] {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    max-width: 100% !important;
+    scrollbar-width: thin !important;
+    padding-bottom: 5px !important;
+}
+
+/* Custom scrollbar for tabs */
+.main > div > [data-testid="stHorizontalBlock"]::-webkit-scrollbar {
+    height: 6px !important;
+}
+
+.main > div > [data-testid="stHorizontalBlock"]::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05) !important;
+    border-radius: 10px !important;
+}
+
+.main > div > [data-testid="stHorizontalBlock"]::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2) !important;
+    border-radius: 10px !important;
+}

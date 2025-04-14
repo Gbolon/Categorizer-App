@@ -765,7 +765,7 @@ def main():
                 "8. Information"
             ])
             
-            # Add custom CSS for metric font size and scrollable tabs
+            # Add custom CSS for metric font size
             st.markdown("""
             <style>
             /* Metric styling */
@@ -777,50 +777,11 @@ def main():
                 font-weight: 500;
             }
             </style>
-            
-            <script>
-            // JavaScript to make tabs scrollable
-            document.addEventListener('DOMContentLoaded', function() {
-                // Function to apply scrollable behavior to tab lists
-                function makeTabsScrollable() {
-                    // Find all tab lists
-                    const tabLists = document.querySelectorAll('[role="tablist"]');
-                    
-                    tabLists.forEach(tabList => {
-                        // Apply scrollable styles
-                        tabList.style.display = 'flex';
-                        tabList.style.flexWrap = 'nowrap';
-                        tabList.style.overflowX = 'auto';
-                        tabList.style.scrollbarWidth = 'thin';
-                        tabList.style.maxWidth = '100%';
-                        tabList.style.paddingBottom = '5px';
-                        
-                        // Style individual tabs
-                        const tabs = tabList.querySelectorAll('[role="tab"]');
-                        tabs.forEach(tab => {
-                            tab.style.whiteSpace = 'nowrap';
-                            tab.style.minWidth = 'fit-content';
-                            tab.style.padding = '8px 16px';
-                        });
-                    });
-                }
-                
-                // Initial application
-                makeTabsScrollable();
-                
-                // Monitor for dynamic changes (Streamlit can re-render components)
-                const observer = new MutationObserver(function(mutations) {
-                    makeTabsScrollable();
-                });
-                
-                // Start observing the document for changes
-                observer.observe(document.body, { 
-                    childList: true, 
-                    subtree: true 
-                });
-            });
-            </script>
             """, unsafe_allow_html=True)
+            
+            # Include external CSS file for tab styling
+            with open('.streamlit/style.css') as f:
+                st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
             
             #############################################
             # TAB 1: OVERVIEW
