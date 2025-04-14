@@ -871,8 +871,10 @@ class MatrixGenerator:
         power_df = power_df[power_cols]
         accel_df = accel_df[accel_cols]
         
-        # Create session dates DataFrame
-        dates_df = pd.DataFrame({f"Session {i}": date for i, date in session_dates.items()}, index=['Session Date'])
+        # Create session dates DataFrame with proper index to match expected column names
+        dates_cols = [f"Session {i}" for i in range(1, len(session_dates) + 1)]
+        dates_data = [session_dates[i] for i in range(1, len(session_dates) + 1)]
+        dates_df = pd.DataFrame([dates_data], columns=dates_cols, index=['Session Date'])
         
         return power_df, accel_df, dates_df
             
