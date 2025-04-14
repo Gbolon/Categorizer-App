@@ -907,85 +907,85 @@ def main():
                         st.metric("Acceleration Change (Test 3→4)", f"{avg_accel_change_3_4:+.1f}%",
                                  delta_color="normal")
             
-            #############################################
-            # TAB 3: TRANSITION ANALYSIS
-            #############################################
-            with tab3:
-                st.markdown("<h2 style='font-size: 1.875em;'>Detailed Transition Analysis</h2>", unsafe_allow_html=True)
+                #----------------------------------------
+                # SUBTAB 2: TRANSITION ANALYSIS
+                #----------------------------------------
+                with transition_tab:
+                    st.markdown("<h2 style='font-size: 1.875em;'>Detailed Transition Analysis</h2>", unsafe_allow_html=True)
 
-                # Display reading guide once at the top
-                st.markdown("""
-                <div style="background-color: #262730; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-                    <h4 style="margin-top: 0; color: white;">Reading Guide:</h4>
-                    <ul>
-                        <li>Rows show starting bracket, columns show ending bracket.</li>
-                        <li><span style="color: #4da6ff; font-weight: bold;">Diagonal values (blue)</span> show users who remained in the same bracket.</li>
-                        <li><span style="color: #ff6b6b; font-weight: bold;">Above diagonal (red)</span> shows regression to lower brackets.</li>
-                        <li><span style="color: #4dff4d; font-weight: bold;">Below diagonal (green)</span> shows improvement to higher brackets.</li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
+                    # Display reading guide once at the top
+                    st.markdown("""
+                    <div style="background-color: #262730; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+                        <h4 style="margin-top: 0; color: white;">Reading Guide:</h4>
+                        <ul>
+                            <li>Rows show starting bracket, columns show ending bracket.</li>
+                            <li><span style="color: #4da6ff; font-weight: bold;">Diagonal values (blue)</span> show users who remained in the same bracket.</li>
+                            <li><span style="color: #ff6b6b; font-weight: bold;">Above diagonal (red)</span> shows regression to lower brackets.</li>
+                            <li><span style="color: #4dff4d; font-weight: bold;">Below diagonal (green)</span> shows improvement to higher brackets.</li>
+                        </ul>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                # Create tabs for Power and Acceleration transitions
-                power_tab, accel_tab = st.tabs(["Power Transitions", "Acceleration Transitions"])
+                    # Create tabs for Power and Acceleration transitions
+                    power_tab, accel_tab = st.tabs(["Power Transitions", "Acceleration Transitions"])
 
-                # Power transitions tab
-                with power_tab:
-                    for period, matrix in power_transitions_detail.items():
-                        st.write(f"Period: {period}")
-                        st.dataframe(matrix, use_container_width=True)
-                        
-                        # Display regression users for this period if they exist
-                        if period in power_regression_users and power_regression_users[period]:
-                            st.markdown(f"<h4 style='font-size: 1.2em; color: #ff6b6b;'>Users who regressed in {period}:</h4>", unsafe_allow_html=True)
-                            for user, from_bracket, to_bracket in power_regression_users[period]:
-                                st.write(f"- **{user}**: Moved from {from_bracket} to {to_bracket}")
-                        
-                        st.write("---")
+                    # Power transitions tab
+                    with power_tab:
+                        for period, matrix in power_transitions_detail.items():
+                            st.write(f"Period: {period}")
+                            st.dataframe(matrix, use_container_width=True)
+                            
+                            # Display regression users for this period if they exist
+                            if period in power_regression_users and power_regression_users[period]:
+                                st.markdown(f"<h4 style='font-size: 1.2em; color: #ff6b6b;'>Users who regressed in {period}:</h4>", unsafe_allow_html=True)
+                                for user, from_bracket, to_bracket in power_regression_users[period]:
+                                    st.write(f"- **{user}**: Moved from {from_bracket} to {to_bracket}")
+                            
+                            st.write("---")
 
-                # Acceleration transitions tab
-                with accel_tab:
-                    for period, matrix in accel_transitions_detail.items():
-                        st.write(f"Period: {period}")
-                        st.dataframe(matrix, use_container_width=True)
-                        
-                        # Display regression users for this period if they exist
-                        if period in accel_regression_users and accel_regression_users[period]:
-                            st.markdown(f"<h4 style='font-size: 1.2em; color: #ff6b6b;'>Users who regressed in {period}:</h4>", unsafe_allow_html=True)
-                            for user, from_bracket, to_bracket in accel_regression_users[period]:
-                                st.write(f"- **{user}**: Moved from {from_bracket} to {to_bracket}")
-                        
-                        st.write("---")
+                    # Acceleration transitions tab
+                    with accel_tab:
+                        for period, matrix in accel_transitions_detail.items():
+                            st.write(f"Period: {period}")
+                            st.dataframe(matrix, use_container_width=True)
+                            
+                            # Display regression users for this period if they exist
+                            if period in accel_regression_users and accel_regression_users[period]:
+                                st.markdown(f"<h4 style='font-size: 1.2em; color: #ff6b6b;'>Users who regressed in {period}:</h4>", unsafe_allow_html=True)
+                                for user, from_bracket, to_bracket in accel_regression_users[period]:
+                                    st.write(f"- **{user}**: Moved from {from_bracket} to {to_bracket}")
+                            
+                            st.write("---")
             
-            #############################################
-            # TAB 4: BODY REGION ANALYSIS
-            #############################################
-            with tab4:
-                # Body Region Meta Analysis
-                st.markdown("<h2 style='font-size: 1.875em;'>Body Region Meta Analysis</h2>", unsafe_allow_html=True)
-                st.write("Group averages by body region for multi-test users")
+                #----------------------------------------
+                # SUBTAB 3: BODY REGION ANALYSIS
+                #----------------------------------------
+                with body_region_tab:
+                    # Body Region Meta Analysis
+                    st.markdown("<h2 style='font-size: 1.875em;'>Body Region Meta Analysis</h2>", unsafe_allow_html=True)
+                    st.write("Group averages by body region for multi-test users")
 
-                # Create columns for each body region
-                region_cols = st.columns(len(VALID_EXERCISES))
+                    # Create columns for each body region
+                    region_cols = st.columns(len(VALID_EXERCISES))
 
-                # Display each region's data
-                for i, (region, averages) in enumerate(body_region_averages.items()):
-                    with region_cols[i]:
-                        st.write(f"**{region}**")
-                        styled_averages = averages.style.format("{:.1f}%")
-                        st.dataframe(styled_averages)
-                
-                # Detailed Body Region Analysis
-                st.markdown("<h2 style='font-size: 1.875em;'>Detailed Body Region Analysis</h2>", unsafe_allow_html=True)
-                st.write("Detailed exercise metrics by body region (multi-test users only)")
-                
-                # Create tabs for each body region
-                region_tabs = st.tabs(list(VALID_EXERCISES.keys()))
-                
-                # Process each region in its own tab
-                for i, region in enumerate(VALID_EXERCISES.keys()):
-                    with region_tabs[i]:
-                        st.markdown(f"<h3 style='font-size: 1.5em;'>{region} Region Analysis</h3>", unsafe_allow_html=True)
+                    # Display each region's data
+                    for i, (region, averages) in enumerate(body_region_averages.items()):
+                        with region_cols[i]:
+                            st.write(f"**{region}**")
+                            styled_averages = averages.style.format("{:.1f}%")
+                            st.dataframe(styled_averages)
+                    
+                    # Detailed Body Region Analysis
+                    st.markdown("<h2 style='font-size: 1.875em;'>Detailed Body Region Analysis</h2>", unsafe_allow_html=True)
+                    st.write("Detailed exercise metrics by body region (multi-test users only)")
+                    
+                    # Create tabs for each body region
+                    region_tabs = st.tabs(list(VALID_EXERCISES.keys()))
+                    
+                    # Process each region in its own tab
+                    for i, region in enumerate(VALID_EXERCISES.keys()):
+                        with region_tabs[i]:
+                            st.markdown(f"<h3 style='font-size: 1.5em;'>{region} Region Analysis</h3>", unsafe_allow_html=True)
                         st.write(f"Separate power and acceleration metrics for {region.lower()} region movements (multi-test users only)")
                         
                         # Initialize all underperformer variables
