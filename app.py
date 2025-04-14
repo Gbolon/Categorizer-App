@@ -765,15 +765,43 @@ def main():
                 "8. Information"
             ])
             
-            # Add custom CSS for metric font size
+            # Add custom CSS for metric font size and scrollable tabs
             st.markdown("""
             <style>
+            /* Metric styling */
             [data-testid="stMetricValue"] {
                 font-size: 1rem;
             }
             [data-testid="stMetricLabel"] {
                 font-size: 0.8rem;
                 font-weight: 500;
+            }
+            
+            /* Make tabs scrollable */
+            div[data-testid="stHorizontalBlock"] {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                white-space: nowrap;
+                padding-bottom: 5px;
+            }
+            
+            /* Tab button styling */
+            button[role="tab"] {
+                min-width: fit-content;
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            /* Remove scrollbar but keep functionality */
+            div[data-testid="stHorizontalBlock"]::-webkit-scrollbar {
+                height: 5px;
+            }
+            div[data-testid="stHorizontalBlock"]::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            div[data-testid="stHorizontalBlock"]::-webkit-scrollbar-thumb {
+                background-color: rgba(0, 0, 0, 0.1);
+                border-radius: 10px;
             }
             </style>
             """, unsafe_allow_html=True)
