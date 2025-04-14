@@ -890,19 +890,28 @@ class MatrixGenerator:
         # Create the chronology dataframe
         max_appearances = max([len(dates) for dates in exercise_chronology.values()]) if exercise_chronology else 0
         
-        # Initialize with empty strings
-        chronology_data = {f"Session {i+1}": [] for i in range(max_appearances)}
+        # If no data, return an empty dataframe
+        if max_appearances == 0:
+            chronology_df = pd.DataFrame()
+            return power_df, accel_df, dates_df, chronology_df
         
-        # Add each exercise and its chronological dates
+        # Initialize with empty strings and with exercise names as keys
+        chronology_data = {}
+        for exercise in exercise_chronology.keys():
+            chronology_data[exercise] = ["" for _ in range(max_appearances)]
+            
+        # Fill in the dates for each exercise
         for exercise, dates in exercise_chronology.items():
-            for i in range(max_appearances):
-                if i < len(dates):
-                    chronology_data[f"Session {i+1}"].append(dates[i])
-                else:
-                    chronology_data[f"Session {i+1}"].append("")
+            for i in range(len(dates)):
+                if i < max_appearances:
+                    chronology_data[exercise][i] = dates[i]
         
-        # Create dataframe with exercises as index
-        chronology_df = pd.DataFrame(chronology_data, index=list(exercise_chronology.keys()))
+        # Create dataframe with columns for each session
+        chronology_df = pd.DataFrame({
+            f"Session {i+1}": [chronology_data[exercise][i] if i < len(chronology_data[exercise]) else "" 
+                             for exercise in chronology_data.keys()] 
+            for i in range(max_appearances)
+        }, index=list(chronology_data.keys()))
         
         # Sort exercises by body region for better organization
         region_mapping = {}
