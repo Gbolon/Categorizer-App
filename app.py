@@ -1403,14 +1403,26 @@ def main():
                         st.write("### Standard Exercises by Session")
                         st.write("This table shows which standard exercises were performed in each session (✓ indicates presence)")
                         
-                        # Style the exercise presence dataframe to highlight the table headers
-                        styled_presence_df = exercise_presence_df.style.apply(
-                            lambda _: ['background-color: #f0f2f6' for _ in range(len(exercise_presence_df.columns))],
-                            axis=1
-                        )
+                        # Apply styling to make the checkmarks more visible
+                        def style_checkmarks(val):
+                            color = '#32CD32' if val == '✓' else ''  # Light green for checkmarks
+                            return f'color: {color}; font-size: 16px; text-align: center'
                         
-                        # Display exercise presence matrix with improved styling
-                        st.dataframe(styled_presence_df, use_container_width=True)
+                        # Style the dataframe
+                        if exercise_presence_df is not None and not exercise_presence_df.empty:
+                            styled_presence_df = exercise_presence_df.style.applymap(style_checkmarks)
+                            
+                            # Add a background color to the index for better readability
+                            styled_presence_df = styled_presence_df.set_properties(**{
+                                'background-color': '#f0f2f6',
+                                'font-weight': 'bold',
+                                'text-align': 'left'
+                            }, subset=['index'])
+                            
+                            # Display exercise presence matrix with improved styling
+                            st.dataframe(styled_presence_df, use_container_width=True)
+                        else:
+                            st.info("No exercise presence data available for this user.")
                         
                         # Create tabs for raw value matrices
                         raw_values_tab, session_dates_tab = st.tabs(["Raw Values", "Session Dates"])

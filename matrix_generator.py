@@ -863,17 +863,23 @@ class MatrixGenerator:
         dates_df = pd.DataFrame({f"Session {i}": date for i, date in session_dates.items()}, index=['Session Date'])
         
         # Create standardized exercise presence matrix
-        # Collect all standard exercises from VALID_EXERCISES
-        standard_exercises = []
+        # We need a simpler display of exercises without dominance for better readability
+        
+        # Collect all base exercises from VALID_EXERCISES
+        base_exercises = []
         for region, exercises in VALID_EXERCISES.items():
-            standard_exercises.extend(exercises)
+            for exercise in exercises:
+                # Remove dominance information for display purposes
+                base_name = exercise.split(' (')[0]
+                if base_name not in base_exercises:
+                    base_exercises.append(base_name)
         
         # Remove duplicates and sort
-        standard_exercises = sorted(list(set(standard_exercises)))
+        base_exercises = sorted(list(set(base_exercises)))
         
         # Initialize presence matrix with empty strings
         presence_data = {}
-        for exercise in standard_exercises:
+        for exercise in base_exercises:
             presence_data[exercise] = {}
             for col_id, col_name in column_names.items():
                 presence_data[exercise][col_name] = ""
@@ -882,25 +888,31 @@ class MatrixGenerator:
         for session_num, session_exercises in power_matrix.items():
             col_name = column_names[session_num]
             for exercise in session_exercises:
-                if exercise in standard_exercises:
-                    has_power = pd.notna(power_matrix[session_num].get(exercise, np.nan))
-                    has_accel = pd.notna(accel_matrix[session_num].get(exercise, np.nan))
-                    if has_power or has_accel:
-                        presence_data[exercise][col_name] = "✓"
+                # Extract base exercise name without dominance
+                base_name = exercise.split(' (')[0]
+                has_power = pd.notna(power_matrix[session_num].get(exercise, np.nan))
+                has_accel = pd.notna(accel_matrix[session_num].get(exercise, np.nan))
+                
+                if has_power or has_accel:
+                    presence_data[base_name][col_name] = "✓"
         
         # Convert to DataFrame
         presence_df = pd.DataFrame(presence_data).T
         
-        # Sort exercises by body region for better organization
-        region_order = []
-        for region in VALID_EXERCISES.keys():
-            region_exercises = VALID_EXERCISES[region]
-            for exercise in region_exercises:
-                if exercise in presence_df.index:
-                    region_order.append(exercise)
+        # Organize exercises by body region for better organization
+        region_mapping = {}
+        for region, exercises in VALID_EXERCISES.items():
+            for exercise in exercises:
+                base_name = exercise.split(' (')[0]
+                region_mapping[base_name] = region
         
-        # Reindex the DataFrame with the region-based ordering
-        presence_df = presence_df.reindex(region_order)
+        # Create a series mapping exercise to region for sorting
+        exercise_regions = pd.Series(region_mapping)
+        
+        # Sort presence_df by region and then by exercise name
+        presence_df['region'] = presence_df.index.map(lambda x: exercise_regions.get(x, 'Other'))
+        presence_df = presence_df.sort_values(by=['region', presence_df.index])
+        presence_df = presence_df.drop(columns=['region'])
         
         return power_df, accel_df, dates_df, presence_df
             
