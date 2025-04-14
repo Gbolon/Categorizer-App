@@ -1304,7 +1304,7 @@ def main():
                 #----------------------------------------
                 with fillin_tab:
                     st.markdown("<h2 style='font-size: 1.875em;'>Fill-in View</h2>", unsafe_allow_html=True)
-                    st.write("This tab shows the development categorization and matrices with chronological 'test instances'.")
+                    st.write("This tab aggregates data to create full test sets and categorize development, regardless if they were performed together or not. For session specific scores, see session tab.")
                     
                     selected_user = st.selectbox("Select User", users, key="fillin_user_select")
 
