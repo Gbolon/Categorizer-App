@@ -1436,20 +1436,9 @@ def main():
                         
                         # Style the dataframe for better readability
                         if exercise_presence_df is not None and not exercise_presence_df.empty:
-                            # Add a background color to the index for better readability
-                            styled_chronology_df = exercise_presence_df.style.set_properties(**{
-                                'background-color': '#f0f2f6',
-                                'font-weight': 'bold',
-                                'text-align': 'left'
-                            }, subset=['index'])
-                            
-                            # Center the date values
-                            styled_chronology_df = styled_chronology_df.set_properties(**{
-                                'text-align': 'center'
-                            })
-                            
-                            # Display exercise chronology matrix with improved styling
-                            st.dataframe(styled_chronology_df, use_container_width=True)
+                            # Apply styling directly to dataframe without subset
+                            st.write("Exercise names will be shown in the left column:")
+                            st.dataframe(exercise_presence_df, use_container_width=True)
                         else:
                             st.info("No exercise chronology data available for this user.")
                         
