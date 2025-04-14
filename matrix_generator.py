@@ -785,7 +785,7 @@ class MatrixGenerator:
             user_name: Name of the user to generate matrices for
             
         Returns:
-            Tuple containing power, acceleration, session date matrices, and standard exercise presence matrix
+            Tuple containing power, acceleration, session date matrices, and exercise chronology matrix
         """
         user_data = df[df['user name'] == user_name].copy()
         
@@ -862,59 +862,66 @@ class MatrixGenerator:
         # Create session dates DataFrame
         dates_df = pd.DataFrame({f"Session {i}": date for i, date in session_dates.items()}, index=['Session Date'])
         
-        # Create standardized exercise presence matrix
-        # We need a simpler display of exercises without dominance for better readability
+        # Create exercise chronology matrix showing when each exercise first appears
+        # For each exercise, track the session dates in chronological order
+        exercise_chronology = {}
         
-        # Collect all base exercises from VALID_EXERCISES
-        base_exercises = []
-        for region, exercises in VALID_EXERCISES.items():
-            for exercise in exercises:
-                # Remove dominance information for display purposes
-                base_name = exercise.split(' (')[0]
-                if base_name not in base_exercises:
-                    base_exercises.append(base_name)
-        
-        # Remove duplicates and sort
-        base_exercises = sorted(list(set(base_exercises)))
-        
-        # Initialize presence matrix with empty strings
-        presence_data = {}
-        for exercise in base_exercises:
-            presence_data[exercise] = {}
-            for col_id, col_name in column_names.items():
-                presence_data[exercise][col_name] = ""
-        
-        # Fill in checkmarks for exercises present in each session
+        # Get all unique exercises performed by this user (keep full names with dominance)
+        all_exercises = set()
         for session_num, session_exercises in power_matrix.items():
-            col_name = column_names[session_num]
             for exercise in session_exercises:
-                # Extract base exercise name without dominance
-                base_name = exercise.split(' (')[0]
-                has_power = pd.notna(power_matrix[session_num].get(exercise, np.nan))
-                has_accel = pd.notna(accel_matrix[session_num].get(exercise, np.nan))
-                
-                if has_power or has_accel:
-                    presence_data[base_name][col_name] = "✓"
+                if pd.notna(power_matrix[session_num].get(exercise, np.nan)) or \
+                   pd.notna(accel_matrix[session_num].get(exercise, np.nan)):
+                    all_exercises.add(exercise)
         
-        # Convert to DataFrame
-        presence_df = pd.DataFrame(presence_data).T
+        # For each exercise, create an ordered list of session dates when it appears
+        for exercise in all_exercises:
+            chronology = []
+            
+            # Look through all sessions chronologically
+            for session_num in sorted(session_mapping.values()):
+                # Check if this exercise has data in this session
+                if (exercise in power_matrix[session_num] and pd.notna(power_matrix[session_num][exercise])) or \
+                   (exercise in accel_matrix[session_num] and pd.notna(accel_matrix[session_num][exercise])):
+                    chronology.append(session_dates[session_num])
+            
+            exercise_chronology[exercise] = chronology
         
-        # Organize exercises by body region for better organization
+        # Create the chronology dataframe
+        max_appearances = max([len(dates) for dates in exercise_chronology.values()]) if exercise_chronology else 0
+        
+        # Initialize with empty strings
+        chronology_data = {f"Session {i+1}": [] for i in range(max_appearances)}
+        
+        # Add each exercise and its chronological dates
+        for exercise, dates in exercise_chronology.items():
+            for i in range(max_appearances):
+                if i < len(dates):
+                    chronology_data[f"Session {i+1}"].append(dates[i])
+                else:
+                    chronology_data[f"Session {i+1}"].append("")
+        
+        # Create dataframe with exercises as index
+        chronology_df = pd.DataFrame(chronology_data, index=list(exercise_chronology.keys()))
+        
+        # Sort exercises by body region for better organization
         region_mapping = {}
         for region, exercises in VALID_EXERCISES.items():
-            for exercise in exercises:
-                base_name = exercise.split(' (')[0]
-                region_mapping[base_name] = region
+            for ex in exercises:
+                # Find all exercises that contain this base exercise name
+                for actual_ex in chronology_df.index:
+                    if ex in actual_ex:
+                        region_mapping[actual_ex] = region
         
         # Create a series mapping exercise to region for sorting
         exercise_regions = pd.Series(region_mapping)
         
-        # Sort presence_df by region and then by exercise name
-        presence_df['region'] = presence_df.index.map(lambda x: exercise_regions.get(x, 'Other'))
-        presence_df = presence_df.sort_values(by=['region', presence_df.index])
-        presence_df = presence_df.drop(columns=['region'])
+        # Sort chronology_df by region and then by exercise name
+        chronology_df['Region'] = chronology_df.index.map(lambda x: exercise_regions.get(x, 'Other'))
+        chronology_df = chronology_df.sort_values(by=['Region', chronology_df.index])
+        chronology_df = chronology_df.drop(columns=['Region'])
         
-        return power_df, accel_df, dates_df, presence_df
+        return power_df, accel_df, dates_df, chronology_df
             
     def _calculate_overall_development(self, power_dev_df, accel_dev_df):
         """Calculate overall development categorization for each test instance."""

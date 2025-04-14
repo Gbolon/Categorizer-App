@@ -1399,30 +1399,28 @@ def main():
                     power_df, accel_df, dates_df, exercise_presence_df = matrix_generator.generate_session_matrices(source_df, selected_user)
                     
                     if power_df is not None and not power_df.empty:
-                        # First display the standard exercise table
-                        st.write("### Standard Exercises by Session")
-                        st.write("This table shows which standard exercises were performed in each session (✓ indicates presence)")
+                        # First display the chronological exercise table
+                        st.write("### Exercise Chronology")
+                        st.write("This table shows when each exercise was performed by the user. Each column represents the sequential occurrence of an exercise, with dates shown.")
                         
-                        # Apply styling to make the checkmarks more visible
-                        def style_checkmarks(val):
-                            color = '#32CD32' if val == '✓' else ''  # Light green for checkmarks
-                            return f'color: {color}; font-size: 16px; text-align: center'
-                        
-                        # Style the dataframe
+                        # Style the dataframe for better readability
                         if exercise_presence_df is not None and not exercise_presence_df.empty:
-                            styled_presence_df = exercise_presence_df.style.applymap(style_checkmarks)
-                            
                             # Add a background color to the index for better readability
-                            styled_presence_df = styled_presence_df.set_properties(**{
+                            styled_chronology_df = exercise_presence_df.style.set_properties(**{
                                 'background-color': '#f0f2f6',
                                 'font-weight': 'bold',
                                 'text-align': 'left'
                             }, subset=['index'])
                             
-                            # Display exercise presence matrix with improved styling
-                            st.dataframe(styled_presence_df, use_container_width=True)
+                            # Center the date values
+                            styled_chronology_df = styled_chronology_df.set_properties(**{
+                                'text-align': 'center'
+                            })
+                            
+                            # Display exercise chronology matrix with improved styling
+                            st.dataframe(styled_chronology_df, use_container_width=True)
                         else:
-                            st.info("No exercise presence data available for this user.")
+                            st.info("No exercise chronology data available for this user.")
                         
                         # Create tabs for raw value matrices
                         raw_values_tab, session_dates_tab = st.tabs(["Raw Values", "Session Dates"])
@@ -1477,11 +1475,11 @@ def main():
                             )
                         with col4:
                             st.download_button(
-                                label="Download Exercise Presence",
-                                data=download_matrix(exercise_presence_df, "exercise_presence"),
-                                file_name=f"{selected_user}_exercise_presence.csv",
+                                label="Download Exercise Chronology",
+                                data=download_matrix(exercise_presence_df, "exercise_chronology"),
+                                file_name=f"{selected_user}_exercise_chronology.csv",
                                 mime="text/csv",
-                                key="exercise_presence_download"
+                                key="exercise_chronology_download"
                             )
                     else:
                         st.warning(f"No session data available for {selected_user} with the current filters.")
