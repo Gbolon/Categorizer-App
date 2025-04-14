@@ -866,60 +866,74 @@ class MatrixGenerator:
         # For each exercise, track the session dates in chronological order
         exercise_chronology = {}
         
-        # Get all unique exercises performed by this user (keep full names with dominance)
-        all_exercises = set()
-        for session_num, session_exercises in power_matrix.items():
-            for exercise in session_exercises:
-                if pd.notna(power_matrix[session_num].get(exercise, np.nan)) or \
-                   pd.notna(accel_matrix[session_num].get(exercise, np.nan)):
-                    all_exercises.add(exercise)
-        
-        # For each exercise, create an ordered list of session dates when it appears
-        for exercise in all_exercises:
-            chronology = []
+        try:
+            # Get all unique exercises performed by this user (keep full names with dominance)
+            all_exercises = set()
+            for session_num, session_exercises in power_matrix.items():
+                for exercise in session_exercises:
+                    if pd.notna(power_matrix[session_num].get(exercise, np.nan)) or \
+                       pd.notna(accel_matrix[session_num].get(exercise, np.nan)):
+                        all_exercises.add(exercise)
             
-            # Look through all sessions chronologically
-            for session_num in sorted(session_mapping.values()):
-                # Check if this exercise has data in this session
-                if (exercise in power_matrix[session_num] and pd.notna(power_matrix[session_num][exercise])) or \
-                   (exercise in accel_matrix[session_num] and pd.notna(accel_matrix[session_num][exercise])):
-                    chronology.append(session_dates[session_num])
+            # For each exercise, create an ordered list of session dates when it appears
+            for exercise in all_exercises:
+                chronology = []
+                
+                # Look through all sessions chronologically
+                for session_num in sorted(session_mapping.values()):
+                    # Check if this exercise has data in this session
+                    if (exercise in power_matrix[session_num] and pd.notna(power_matrix[session_num][exercise])) or \
+                       (exercise in accel_matrix[session_num] and pd.notna(accel_matrix[session_num][exercise])):
+                        chronology.append(session_dates[session_num])
+                
+                exercise_chronology[exercise] = chronology
             
-            exercise_chronology[exercise] = chronology
+            # Create the chronology dataframe
+            if not exercise_chronology:
+                # Return empty DataFrame if no exercises found
+                return power_df, accel_df, dates_df, pd.DataFrame()
+                
+            # Get maximum number of appearances
+            max_appearances = max([len(dates) for dates in exercise_chronology.values()])
+            
+            # Create empty dataframe with exercises as rows and sessions as columns
+            exercise_list = sorted(exercise_chronology.keys())
+            session_cols = [f"Session {i+1}" for i in range(max_appearances)]
+            chronology_df = pd.DataFrame("", index=exercise_list, columns=session_cols)
+            
+            # Fill in the dates
+            for exercise, dates in exercise_chronology.items():
+                for i, date in enumerate(dates):
+                    if i < max_appearances:  # Ensure we don't exceed column count
+                        chronology_df.at[exercise, f"Session {i+1}"] = date
+            
+        except Exception as e:
+            print(f"Error in exercise chronology generation: {str(e)}")
+            # Return empty DataFrame on error
+            return power_df, accel_df, dates_df, pd.DataFrame()
         
-        # Create the chronology dataframe
-        max_appearances = max([len(dates) for dates in exercise_chronology.values()]) if exercise_chronology else 0
-        
-        # Initialize with empty strings
-        chronology_data = {f"Session {i+1}": [] for i in range(max_appearances)}
-        
-        # Add each exercise and its chronological dates
-        for exercise, dates in exercise_chronology.items():
-            for i in range(max_appearances):
-                if i < len(dates):
-                    chronology_data[f"Session {i+1}"].append(dates[i])
-                else:
-                    chronology_data[f"Session {i+1}"].append("")
-        
-        # Create dataframe with exercises as index
-        chronology_df = pd.DataFrame(chronology_data, index=list(exercise_chronology.keys()))
-        
-        # Sort exercises by body region for better organization
-        region_mapping = {}
-        for region, exercises in VALID_EXERCISES.items():
-            for ex in exercises:
-                # Find all exercises that contain this base exercise name
-                for actual_ex in chronology_df.index:
-                    if ex in actual_ex:
-                        region_mapping[actual_ex] = region
-        
-        # Create a series mapping exercise to region for sorting
-        exercise_regions = pd.Series(region_mapping)
-        
-        # Sort chronology_df by region and then by exercise name
-        chronology_df['Region'] = chronology_df.index.map(lambda x: exercise_regions.get(x, 'Other'))
-        chronology_df = chronology_df.sort_values(by=['Region', chronology_df.index])
-        chronology_df = chronology_df.drop(columns=['Region'])
+        try:
+            # Sort exercises by body region for better organization
+            if not chronology_df.empty:
+                region_mapping = {}
+                for region, exercises in VALID_EXERCISES.items():
+                    for ex in exercises:
+                        # Find all exercises that contain this base exercise name
+                        for actual_ex in chronology_df.index:
+                            if ex in actual_ex:
+                                region_mapping[actual_ex] = region
+                
+                # Create a series mapping exercise to region for sorting
+                if region_mapping:
+                    exercise_regions = pd.Series(region_mapping)
+                    
+                    # Sort chronology_df by region and then by exercise name
+                    chronology_df['Region'] = chronology_df.index.map(lambda x: exercise_regions.get(x, 'Other'))
+                    chronology_df = chronology_df.sort_values(by=['Region', chronology_df.index])
+                    chronology_df = chronology_df.drop(columns=['Region'])
+        except Exception as e:
+            print(f"Error in sorting exercise chronology: {str(e)}")
+            # If sorting fails, just return the unsorted dataframe
         
         return power_df, accel_df, dates_df, chronology_df
             
