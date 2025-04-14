@@ -1342,9 +1342,94 @@ def main():
                                 )
                         
             #############################################
-            # TAB 6: REPORT GENERATOR
+            # TAB 6: SESSION VIEW
             #############################################
             with tab6:
+                st.markdown("<h2 style='font-size: 1.875em;'>Session View</h2>", unsafe_allow_html=True)
+                st.write("This view displays exercises grouped by actual screening sessions chronologically.")
+                
+                # Session view explanation
+                with st.expander("About Session View", expanded=True):
+                    st.markdown("""
+                    ### Session View vs. Individual View
+                    
+                    - **Session View**: Displays exercises grouped by actual screening session IDs ("session id") and chronologically ordered
+                      by session date ("session createdAt"). Each column represents an actual screening session.
+                    
+                    - **Individual View**: Groups exercises chronologically across all dates without regard to screening sessions.
+                      Exercises are automatically organized into chronological "test instances" based on the earliest available slot.
+                    
+                    This view is useful for analyzing actual screening sessions and understanding what exercises were performed
+                    during each specific screening event.
+                    """)
+                
+                # Get list of users
+                users = processed_df['user name'].unique().tolist()
+                users.sort()
+                
+                selected_user = st.selectbox("Select User", users, key="session_view_user_select")
+                
+                if selected_user:
+                    # Use filtered data if any filtering is applied
+                    source_df = analysis_df if filtering_applied else processed_df
+                    
+                    # Generate session matrices
+                    power_df, accel_df, dates_df = matrix_generator.generate_session_matrices(source_df, selected_user)
+                    
+                    if power_df is not None and not power_df.empty:
+                        # Display session dates if available
+                        if dates_df is not None:
+                            st.write("Session Dates")
+                            st.dataframe(dates_df)
+                        
+                        # Display power matrix
+                        st.write("Power Matrix (Raw Values)")
+                        st.dataframe(power_df)
+                        
+                        # Display acceleration matrix
+                        st.write("Acceleration Matrix (Raw Values)")
+                        st.dataframe(accel_df)
+                        
+                        # Add export functionality
+                        st.write("### Export Session Data")
+                        
+                        def download_matrix(matrix, name):
+                            return matrix.to_csv().encode('utf-8')
+                        
+                        # Session Downloads
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            if dates_df is not None:
+                                st.download_button(
+                                    label="Download Session Dates",
+                                    data=download_matrix(dates_df, "session_dates"),
+                                    file_name=f"{selected_user}_session_dates.csv",
+                                    mime="text/csv",
+                                    key="session_dates_download"
+                                )
+                        with col2:
+                            st.download_button(
+                                label="Download Power Matrix",
+                                data=download_matrix(power_df, "session_power"),
+                                file_name=f"{selected_user}_session_power_matrix.csv",
+                                mime="text/csv",
+                                key="session_power_download"
+                            )
+                        with col3:
+                            st.download_button(
+                                label="Download Acceleration Matrix",
+                                data=download_matrix(accel_df, "session_accel"),
+                                file_name=f"{selected_user}_session_accel_matrix.csv",
+                                mime="text/csv",
+                                key="session_accel_download"
+                            )
+                    else:
+                        st.warning(f"No session data available for {selected_user} with the current filters.")
+                
+            #############################################
+            # TAB 7: REPORT GENERATOR
+            #############################################
+            with tab7:
                 # Report Generator Section
                 st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
                 st.write("Generate comprehensive reports with interactive analysis")
@@ -1496,9 +1581,9 @@ def main():
                             st.dataframe(styled_standards, use_container_width=True)
                             
             #############################################
-            # TAB 7: INFORMATION
+            # TAB 8: INFORMATION
             #############################################
-            with tab7:
+            with tab8:
                 st.markdown("<h2 style='font-size: 1.875em;'>Information</h2>", unsafe_allow_html=True)
                 
                 # Application Overview Section
@@ -1658,7 +1743,13 @@ def main():
                     - Development categorization
                     - Graph visualizations of progress
                     
-                    #### 6. Report Generator
+                    #### 6. Session View
+                    Displays exercises grouped by actual screening sessions:
+                    - Data organized by session ID and chronologically by session date
+                    - Shows what exercises were performed during specific screening events
+                    - Useful for understanding the structure of actual testing sessions
+                    
+                    #### 7. Report Generator
                     Creates comprehensive reports for sharing or documentation:
                     - Interactive HTML reports with separate pages for each section
                     - Comprehensive data visualizations
@@ -1707,7 +1798,9 @@ def main():
                     | `power - high` | Power measurement (in watts) |
                     | `acceleration - high` | Acceleration measurement (in m/s²) |
                     | `resistance` | Weight/resistance used (optional, for filtering) |
-                    | `session name` | Test session identifier (optional) |
+                    | `session name` | Test session name (optional) |
+                    | `session id` | Unique session identifier (used in Session View) |
+                    | `session createdAt` | Timestamp when the session was created (used in Session View) |
                     
                     Missing values for power or acceleration will result in those exercises being excluded from analysis.
                     """)

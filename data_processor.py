@@ -41,6 +41,13 @@ class DataProcessor:
             invalid_sex = ~non_empty_sex.str.lower().isin(['male', 'female'])
             if invalid_sex.any():
                 return False, "Invalid values in sex column. Must be 'male' or 'female' when specified"
+                
+        # Check for required session view columns (warning only)
+        session_columns = ['session id', 'session createdAt']
+        missing_session_cols = [col for col in session_columns if col not in df.columns]
+        if missing_session_cols:
+            print(f"WARNING: Missing session columns needed for Session View: {', '.join(missing_session_cols)}")
+            print("The Session View tab may not work correctly without these columns.")
 
         return True, "Data validation successful"
 
@@ -137,8 +144,26 @@ class DataProcessor:
             axis=1
         )
 
-        # Convert timestamp
+        # Convert timestamps
         processed_df['exercise createdAt'] = pd.to_datetime(processed_df['exercise createdAt'])
+        
+        # Handle session columns if they exist
+        if 'session createdAt' in processed_df.columns:
+            processed_df['session createdAt'] = pd.to_datetime(processed_df['session createdAt'])
+        else:
+            # Create a dummy session createdAt column using exercise createdAt for Session View
+            processed_df['session createdAt'] = processed_df['exercise createdAt']
+            print("Notice: Using exercise createdAt as a substitute for missing session createdAt column")
+            
+        if 'session id' not in processed_df.columns:
+            # Create a dummy session id using any available session identifiers or a default value
+            if 'session name' in processed_df.columns:
+                processed_df['session id'] = processed_df['session name']
+                print("Notice: Using session name as a substitute for missing session id column")
+            else:
+                # Create a sequential session ID for each unique date per user
+                processed_df['session id'] = processed_df.groupby(['user name', processed_df['exercise createdAt'].dt.date]).ngroup()
+                print("Notice: Created artificial session IDs based on exercise dates")
 
         # Sort by user and timestamp
         processed_df = processed_df.sort_values(['user name', 'exercise createdAt'])
