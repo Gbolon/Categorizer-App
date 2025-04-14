@@ -1395,6 +1395,32 @@ def main():
                     # Use filtered data if any filtering is applied
                     source_df = analysis_df if filtering_applied else processed_df
                     
+                    # First display the user's most common session types
+                    st.write("### Most Common Session Types")
+                    st.write("These are the most frequent test sessions performed by this user:")
+                    
+                    # Get top 3 session types for this user
+                    top_sessions_df = matrix_generator.get_user_top_session_types(source_df, selected_user)
+                    
+                    # Display top sessions with styling
+                    if not top_sessions_df.empty:
+                        # Add percentage column
+                        total_sessions = top_sessions_df['Count'].sum()
+                        top_sessions_df['Percentage'] = (top_sessions_df['Count'] / total_sessions * 100).round(1).astype(str) + '%'
+                        
+                        # Style the dataframe
+                        styled_sessions = top_sessions_df.style.set_properties(**{
+                            'background-color': '#f0f2f6',
+                            'font-weight': 'bold',
+                            'text-align': 'center'
+                        })
+                        
+                        st.dataframe(styled_sessions, use_container_width=True)
+                    else:
+                        st.info("No session type data available for this user.")
+                    
+                    st.markdown("---")
+                    
                     # Generate session matrices
                     power_df, accel_df, dates_df, exercise_presence_df = matrix_generator.generate_session_matrices(source_df, selected_user)
                     

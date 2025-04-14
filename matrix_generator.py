@@ -1453,6 +1453,35 @@ class MatrixGenerator:
         """
         return self.get_region_metrics(df, 'Torso', max_tests)
         
+    def get_user_top_session_types(self, df, user_name, top_n=3):
+        """
+        Get the top N most frequently performed test types for a specific user
+        from the 'session name' column, counting the number of unique session IDs 
+        for each session name.
+        
+        Args:
+            df: The processed dataframe
+            user_name: Name of the user to analyze
+            top_n: Number of top session types to return (default 3)
+            
+        Returns:
+            DataFrame with columns 'Session Type' and 'Count' sorted by count in descending order
+        """
+        # Filter data for the specific user
+        user_data = df[df['user name'] == user_name]
+        
+        if user_data.empty:
+            return pd.DataFrame(columns=['Session Type', 'Count'])
+        
+        # Group by session name and count unique session IDs
+        session_counts = user_data.groupby('session name')['session id'].nunique().reset_index()
+        session_counts.columns = ['Session Type', 'Count']
+        
+        # Sort by count in descending order and take top N
+        top_sessions = session_counts.sort_values('Count', ascending=False).head(top_n)
+        
+        return top_sessions
+    
     def calculate_improvement_thresholds(self, df):
         """
         Calculate the improvement thresholds for each body region.
