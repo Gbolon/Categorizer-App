@@ -1427,7 +1427,7 @@ def main():
                     st.markdown("---")
                     
                     # Generate session matrices
-                    power_df, accel_df, dates_df, exercise_presence_df = matrix_generator.generate_session_matrices(source_df, selected_user)
+                    power_df, accel_df, power_dev_df, accel_dev_df, dates_df, exercise_presence_df = matrix_generator.generate_session_matrices(source_df, selected_user)
                     
                     if power_df is not None and not power_df.empty:
                         # First display the chronological exercise table
@@ -1442,8 +1442,8 @@ def main():
                         else:
                             st.info("No exercise chronology data available for this user.")
                         
-                        # Create tabs for raw value matrices
-                        raw_values_tab, session_dates_tab = st.tabs(["Raw Values", "Session Dates"])
+                        # Create tabs for raw value matrices and development scores
+                        raw_values_tab, development_tab, session_dates_tab = st.tabs(["Raw Values", "Development Scores", "Session Dates"])
                         
                         with raw_values_tab:
                             # Display power matrix
@@ -1453,6 +1453,37 @@ def main():
                             # Display acceleration matrix
                             st.write("Acceleration Matrix (m/s²)")
                             st.dataframe(accel_df, use_container_width=True)
+                        
+                        with development_tab:
+                            st.write("### Development Scores (% of Goal Standards)")
+                            st.write("These matrices show each value as a percentage of the goal standard for the exercise, based on the user's sex.")
+                            
+                            # Display power development matrix
+                            st.write("Power Development (% of Goal)")
+                            
+                            # Apply styling to highlight values based on their development level
+                            def highlight_development(val):
+                                if pd.isna(val):
+                                    return ''
+                                elif val >= 85:  # Goal Hit or Elite
+                                    return 'background-color: lightgreen'
+                                elif val >= 70:  # Above Average
+                                    return 'background-color: #E8F8E8'  # Very pale green
+                                elif val >= 55:  # Average
+                                    return 'background-color: #F0F0F0'  # Light gray
+                                elif val >= 40:  # Under Developed
+                                    return 'background-color: #FFEBEB'  # Very pale red
+                                else:  # Severely Under Developed
+                                    return 'background-color: #FFCCCC'  # Pale red
+                                
+                            # Style and display the power development matrix
+                            styled_power_dev = power_dev_df.style.applymap(highlight_development)
+                            st.dataframe(styled_power_dev, use_container_width=True)
+                            
+                            # Display acceleration development matrix
+                            st.write("Acceleration Development (% of Goal)")
+                            styled_accel_dev = accel_dev_df.style.applymap(highlight_development)
+                            st.dataframe(styled_accel_dev, use_container_width=True)
                         
                         with session_dates_tab:
                             # Display session dates if available

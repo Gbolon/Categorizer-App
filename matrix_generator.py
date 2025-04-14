@@ -785,8 +785,16 @@ class MatrixGenerator:
             user_name: Name of the user to generate matrices for
             
         Returns:
-            Tuple containing power, acceleration, session date matrices, and exercise chronology matrix
+            Tuple containing:
+            - power_df: Raw power values matrix
+            - accel_df: Raw acceleration values matrix
+            - power_dev_df: Power development percentage matrix (% of goal standards)
+            - accel_dev_df: Acceleration development percentage matrix (% of goal standards)
+            - dates_df: Session dates matrix
+            - exercise_chronology_df: Exercise chronology matrix
         """
+        from goal_standards import calculate_development_score
+        
         user_data = df[df['user name'] == user_name].copy()
         
         # Initialize matrices
@@ -796,7 +804,18 @@ class MatrixGenerator:
         
         # Return empty matrices if no data
         if user_data.empty:
-            return None, None, None, None
+            return None, None, None, None, None, None
+            
+        # Try to get user sex for development scores
+        user_sex = None
+        if 'sex' in user_data.columns and not user_data['sex'].empty:
+            user_sex = user_data['sex'].iloc[0]
+            if pd.isna(user_sex) or user_sex.strip() == '':
+                # If sex is missing, default to male - this should be configurable
+                user_sex = 'male'
+        else:
+            # Default to male if no sex column - this should be configurable
+            user_sex = 'male'
             
         # Sort by session date
         user_data = user_data.sort_values('session createdAt')
@@ -849,6 +868,30 @@ class MatrixGenerator:
         power_df = pd.DataFrame(power_matrix)
         accel_df = pd.DataFrame(accel_matrix)
         
+        # Create development matrices based on raw values
+        power_dev_matrix = {}
+        accel_dev_matrix = {}
+        
+        # Calculate development scores for each exercise and session
+        for session_num in power_matrix:
+            power_dev_matrix[session_num] = {}
+            accel_dev_matrix[session_num] = {}
+            
+            for exercise in power_matrix[session_num]:
+                # Calculate power development score
+                power_value = power_matrix[session_num][exercise]
+                power_dev_score = calculate_development_score(power_value, exercise, user_sex, 'power')
+                power_dev_matrix[session_num][exercise] = power_dev_score
+                
+                # Calculate acceleration development score
+                accel_value = accel_matrix[session_num][exercise]
+                accel_dev_score = calculate_development_score(accel_value, exercise, user_sex, 'acceleration')
+                accel_dev_matrix[session_num][exercise] = accel_dev_score
+                
+        # Convert development matrices to DataFrames
+        power_dev_df = pd.DataFrame(power_dev_matrix)
+        accel_dev_df = pd.DataFrame(accel_dev_matrix)
+        
         # Use consistent column names with session dates
         column_names = {}
         for i in range(1, len(session_dates) + 1):
@@ -858,6 +901,10 @@ class MatrixGenerator:
             power_df = power_df.rename(columns=column_names)
         if not accel_df.empty:
             accel_df = accel_df.rename(columns=column_names)
+        if not power_dev_df.empty:
+            power_dev_df = power_dev_df.rename(columns=column_names)
+        if not accel_dev_df.empty:
+            accel_dev_df = accel_dev_df.rename(columns=column_names)
         
         # Create session dates DataFrame
         dates_df = pd.DataFrame({f"Session {i}": date for i, date in session_dates.items()}, index=['Session Date'])
@@ -891,7 +938,7 @@ class MatrixGenerator:
             # Create the chronology dataframe
             if not exercise_chronology:
                 # Return empty DataFrame if no exercises found
-                return power_df, accel_df, dates_df, pd.DataFrame()
+                return power_df, accel_df, power_dev_df, accel_dev_df, dates_df, pd.DataFrame()
                 
             # Get maximum number of appearances
             max_appearances = max([len(dates) for dates in exercise_chronology.values()])
@@ -910,7 +957,7 @@ class MatrixGenerator:
         except Exception as e:
             print(f"Error in exercise chronology generation: {str(e)}")
             # Return empty DataFrame on error
-            return power_df, accel_df, dates_df, pd.DataFrame()
+            return power_df, accel_df, power_dev_df, accel_dev_df, dates_df, pd.DataFrame()
         
         # Simply sort by exercise name alphabetically without region grouping
         try:
@@ -920,7 +967,7 @@ class MatrixGenerator:
             print(f"Error in sorting exercise chronology: {str(e)}")
             # If sorting fails, just return the unsorted dataframe
         
-        return power_df, accel_df, dates_df, chronology_df
+        return power_df, accel_df, power_dev_df, accel_dev_df, dates_df, chronology_df
             
     def _calculate_overall_development(self, power_dev_df, accel_dev_df):
         """Calculate overall development categorization for each test instance."""
