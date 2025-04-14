@@ -986,230 +986,230 @@ def main():
                     for i, region in enumerate(VALID_EXERCISES.keys()):
                         with region_tabs[i]:
                             st.markdown(f"<h3 style='font-size: 1.5em;'>{region} Region Analysis</h3>", unsafe_allow_html=True)
-                        st.write(f"Separate power and acceleration metrics for {region.lower()} region movements (multi-test users only)")
-                        
-                        # Initialize all underperformer variables
-                        power_underperformers_1_to_2 = None
-                        power_underperformers_2_to_3 = None
-                        accel_underperformers_1_to_2 = None
-                        accel_underperformers_2_to_3 = None
-                        
-                        # Get region metrics once, using filtered data if any filtering is enabled
-                        if filtering_applied:
-                            region_metrics = matrix_generator.get_region_metrics(analysis_df, region)
-                            # If filtering enabled, show info message
-                            filter_msg = f"Showing {region} region analysis with "
-                            if start_date > min_date or end_date < max_date:
-                                filter_msg += f"date range: {start_date} to {end_date}"
-                                if min_days_between_tests > 0 or standardize_resistance:
-                                    filter_msg += " and "
-                            if min_days_between_tests > 0:
-                                filter_msg += f"minimum {min_days_between_tests} days between tests"
-                                if standardize_resistance:
-                                    filter_msg += " and "
-                            if standardize_resistance:
-                                filter_msg += "standard resistance filter"
-                            filter_msg += " applied"
-                            st.info(filter_msg)
-                        else:
-                            region_metrics = matrix_generator.get_region_metrics(processed_df, region)
-                        
-                        # Extract underperformers for all periods
-                        if region_metrics[2] is not None and isinstance(region_metrics[2], dict):  # Power metrics
-                            if 'underperformers_1_to_2' in region_metrics[2]:
-                                power_underperformers_1_to_2 = region_metrics[2]['underperformers_1_to_2']
-                            if 'underperformers_2_to_3' in region_metrics[2]:
-                                power_underperformers_2_to_3 = region_metrics[2]['underperformers_2_to_3']
-                        
-                        if region_metrics[3] is not None and isinstance(region_metrics[3], dict):  # Acceleration metrics
-                            if 'underperformers_1_to_2' in region_metrics[3]:
-                                accel_underperformers_1_to_2 = region_metrics[3]['underperformers_1_to_2']
-                            if 'underperformers_2_to_3' in region_metrics[3]:
-                                accel_underperformers_2_to_3 = region_metrics[3]['underperformers_2_to_3']
-                        
-                        # Get data metrics for display
-                        # Unpack the values carefully, handling different return formats
-                        if region_metrics[0] is None or (isinstance(region_metrics[0], pd.DataFrame) and region_metrics[0].empty):
-                            # No metrics available
-                            power_df, accel_df, power_changes, accel_changes = None, None, None, None
-                            lowest_power_exercise, lowest_power_value = None, None
-                            lowest_accel_exercise, lowest_accel_value = None, None
-                        else:
-                            # Handle either 4 or 8 returned values
-                            power_df, accel_df = region_metrics[0], region_metrics[1]
-                            power_changes, accel_changes = region_metrics[2], region_metrics[3]
+                            st.write(f"Separate power and acceleration metrics for {region.lower()} region movements (multi-test users only)")
                             
-                            # Check if we have the additional values for lowest changes
-                            if len(region_metrics) >= 8:
-                                lowest_power_exercise = region_metrics[4]
-                                lowest_power_value = region_metrics[5]
-                                lowest_accel_exercise = region_metrics[6]
-                                lowest_accel_value = region_metrics[7]
+                            # Initialize all underperformer variables
+                            power_underperformers_1_to_2 = None
+                            power_underperformers_2_to_3 = None
+                            accel_underperformers_1_to_2 = None
+                            accel_underperformers_2_to_3 = None
+                            
+                            # Get region metrics once, using filtered data if any filtering is enabled
+                            if filtering_applied:
+                                region_metrics = matrix_generator.get_region_metrics(analysis_df, region)
+                                # If filtering enabled, show info message
+                                filter_msg = f"Showing {region} region analysis with "
+                                if start_date > min_date or end_date < max_date:
+                                    filter_msg += f"date range: {start_date} to {end_date}"
+                                    if min_days_between_tests > 0 or standardize_resistance:
+                                        filter_msg += " and "
+                                if min_days_between_tests > 0:
+                                    filter_msg += f"minimum {min_days_between_tests} days between tests"
+                                    if standardize_resistance:
+                                        filter_msg += " and "
+                                if standardize_resistance:
+                                    filter_msg += "standard resistance filter"
+                                filter_msg += " applied"
+                                st.info(filter_msg)
                             else:
+                                region_metrics = matrix_generator.get_region_metrics(processed_df, region)
+                            
+                            # Extract underperformers for all periods
+                            if region_metrics[2] is not None and isinstance(region_metrics[2], dict):  # Power metrics
+                                if 'underperformers_1_to_2' in region_metrics[2]:
+                                    power_underperformers_1_to_2 = region_metrics[2]['underperformers_1_to_2']
+                                if 'underperformers_2_to_3' in region_metrics[2]:
+                                    power_underperformers_2_to_3 = region_metrics[2]['underperformers_2_to_3']
+                            
+                            if region_metrics[3] is not None and isinstance(region_metrics[3], dict):  # Acceleration metrics
+                                if 'underperformers_1_to_2' in region_metrics[3]:
+                                    accel_underperformers_1_to_2 = region_metrics[3]['underperformers_1_to_2']
+                                if 'underperformers_2_to_3' in region_metrics[3]:
+                                    accel_underperformers_2_to_3 = region_metrics[3]['underperformers_2_to_3']
+                            
+                            # Get data metrics for display
+                            # Unpack the values carefully, handling different return formats
+                            if region_metrics[0] is None or (isinstance(region_metrics[0], pd.DataFrame) and region_metrics[0].empty):
+                                # No metrics available
+                                power_df, accel_df, power_changes, accel_changes = None, None, None, None
                                 lowest_power_exercise, lowest_power_value = None, None
                                 lowest_accel_exercise, lowest_accel_value = None, None
-                
-                        # First display the development tables
-                        if (power_df is not None and isinstance(power_df, pd.DataFrame) and not power_df.empty and 
-                            accel_df is not None and isinstance(accel_df, pd.DataFrame) and not accel_df.empty):
-                            # Create two columns for power and acceleration
-                            col1, col2 = st.columns(2)
+                            else:
+                                # Handle either 4 or 8 returned values
+                                power_df, accel_df = region_metrics[0], region_metrics[1]
+                                power_changes, accel_changes = region_metrics[2], region_metrics[3]
+                                
+                                # Check if we have the additional values for lowest changes
+                                if len(region_metrics) >= 8:
+                                    lowest_power_exercise = region_metrics[4]
+                                    lowest_power_value = region_metrics[5]
+                                    lowest_accel_exercise = region_metrics[6]
+                                    lowest_accel_value = region_metrics[7]
+                                else:
+                                    lowest_power_exercise, lowest_power_value = None, None
+                                    lowest_accel_exercise, lowest_accel_value = None, None
                             
-                            with col1:
-                                st.write(f"**{region} Region Power Development (%)**")
+                            # First display the development tables
+                            if (power_df is not None and isinstance(power_df, pd.DataFrame) and not power_df.empty and 
+                                accel_df is not None and isinstance(accel_df, pd.DataFrame) and not accel_df.empty):
+                                # Create two columns for power and acceleration
+                                col1, col2 = st.columns(2)
                                 
-                                # Apply formatting without highlighting
-                                styled_power = power_df.style.format("{:.1f}%")
-                                st.dataframe(styled_power)
+                                with col1:
+                                    st.write(f"**{region} Region Power Development (%)**")
+                                    
+                                    # Apply formatting without highlighting
+                                    styled_power = power_df.style.format("{:.1f}%")
+                                    st.dataframe(styled_power)
+                                    
+                                    # Display only the lowest change exercise (removing duplicate average changes)
+                                    if lowest_power_exercise is not None and lowest_power_value is not None:
+                                        st.write("**Exercise with Lowest Change:**")
+                                        if lowest_power_value < 0:
+                                            st.markdown(f"**{lowest_power_exercise}**: <span style='color:red'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
+                                        else:
+                                            st.markdown(f"**{lowest_power_exercise}**: <span style='color:green'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
                                 
-                                # Display only the lowest change exercise (removing duplicate average changes)
-                                if lowest_power_exercise is not None and lowest_power_value is not None:
-                                    st.write("**Exercise with Lowest Change:**")
-                                    if lowest_power_value < 0:
-                                        st.markdown(f"**{lowest_power_exercise}**: <span style='color:red'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
+                                with col2:
+                                    st.write(f"**{region} Region Acceleration Development (%)**")
+                                    
+                                    # Apply formatting without highlighting
+                                    styled_accel = accel_df.style.format("{:.1f}%")
+                                    st.dataframe(styled_accel)
+                                    
+                                    # Display only the lowest change exercise (removing duplicate average changes)
+                                    if lowest_accel_exercise is not None and lowest_accel_value is not None:
+                                        st.write("**Exercise with Lowest Change:**")
+                                        if lowest_accel_value < 0:
+                                            st.markdown(f"**{lowest_accel_exercise}**: <span style='color:red'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
+                                        else:
+                                            st.markdown(f"**{lowest_accel_exercise}**: <span style='color:green'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
+                            else:
+                                st.info(f"Not enough multi-test user data to display detailed {region.lower()} region analysis.")
+                            
+                            # Then display Improvement Thresholds for this region
+                            if region in improvement_thresholds:
+                                region_thresholds = improvement_thresholds[region]
+                                st.markdown("<h4 style='font-size: 1.3em;'>Group Improvement Thresholds</h4>", unsafe_allow_html=True)
+                                st.write("These thresholds represent the average improvement across all users for this region. Users below these thresholds may be underperforming relative to the group.")
+                                
+                                # Create columns for power and acceleration thresholds
+                                threshold_col1, threshold_col2 = st.columns(2)
+                                
+                                with threshold_col1:
+                                    st.markdown("**Power Improvement Thresholds:**")
+                                    
+                                    # Test 1 to Test 2 Power Threshold
+                                    if not pd.isna(region_thresholds['power_1_to_2']):
+                                        power_value = region_thresholds['power_1_to_2']
+                                        color = "green" if power_value >= 0 else "red"
+                                        st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
                                     else:
-                                        st.markdown(f"**{lowest_power_exercise}**: <span style='color:green'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
-                            
-                            with col2:
-                                st.write(f"**{region} Region Acceleration Development (%)**")
-                                
-                                # Apply formatting without highlighting
-                                styled_accel = accel_df.style.format("{:.1f}%")
-                                st.dataframe(styled_accel)
-                                
-                                # Display only the lowest change exercise (removing duplicate average changes)
-                                if lowest_accel_exercise is not None and lowest_accel_value is not None:
-                                    st.write("**Exercise with Lowest Change:**")
-                                    if lowest_accel_value < 0:
-                                        st.markdown(f"**{lowest_accel_exercise}**: <span style='color:red'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
+                                        st.markdown("**Test 1 → Test 2:** Not enough data")
+                                        
+                                    # Test 2 to Test 3 Power Threshold
+                                    if not pd.isna(region_thresholds['power_2_to_3']):
+                                        power_value = region_thresholds['power_2_to_3']
+                                        color = "green" if power_value >= 0 else "red"
+                                        st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
                                     else:
-                                        st.markdown(f"**{lowest_accel_exercise}**: <span style='color:green'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
-                        else:
-                            st.info(f"Not enough multi-test user data to display detailed {region.lower()} region analysis.")
-                            
-                        # Then display Improvement Thresholds for this region
-                        if region in improvement_thresholds:
-                            region_thresholds = improvement_thresholds[region]
-                            st.markdown("<h4 style='font-size: 1.3em;'>Group Improvement Thresholds</h4>", unsafe_allow_html=True)
-                            st.write("These thresholds represent the average improvement across all users for this region. Users below these thresholds may be underperforming relative to the group.")
-                            
-                            # Create columns for power and acceleration thresholds
-                            threshold_col1, threshold_col2 = st.columns(2)
-                            
-                            with threshold_col1:
-                                st.markdown("**Power Improvement Thresholds:**")
+                                        st.markdown("**Test 2 → Test 3:** Not enough data")
                                 
-                                # Test 1 to Test 2 Power Threshold
-                                if not pd.isna(region_thresholds['power_1_to_2']):
-                                    power_value = region_thresholds['power_1_to_2']
-                                    color = "green" if power_value >= 0 else "red"
-                                    st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
-                                else:
-                                    st.markdown("**Test 1 → Test 2:** Not enough data")
+                                with threshold_col2:
+                                    st.markdown("**Acceleration Improvement Thresholds:**")
                                     
-                                # Test 2 to Test 3 Power Threshold
-                                if not pd.isna(region_thresholds['power_2_to_3']):
-                                    power_value = region_thresholds['power_2_to_3']
-                                    color = "green" if power_value >= 0 else "red"
-                                    st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{power_value:.1f}%</span>", unsafe_allow_html=True)
-                                else:
-                                    st.markdown("**Test 2 → Test 3:** Not enough data")
-                            
-                            with threshold_col2:
-                                st.markdown("**Acceleration Improvement Thresholds:**")
+                                    # Test 1 to Test 2 Acceleration Threshold
+                                    if not pd.isna(region_thresholds['accel_1_to_2']):
+                                        accel_value = region_thresholds['accel_1_to_2']
+                                        color = "green" if accel_value >= 0 else "red"
+                                        st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
+                                    else:
+                                        st.markdown("**Test 1 → Test 2:** Not enough data")
+                                        
+                                    # Test 2 to Test 3 Acceleration Threshold
+                                    if not pd.isna(region_thresholds['accel_2_to_3']):
+                                        accel_value = region_thresholds['accel_2_to_3']
+                                        color = "green" if accel_value >= 0 else "red"
+                                        st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
+                                    else:
+                                        st.markdown("**Test 2 → Test 3:** Not enough data")
                                 
-                                # Test 1 to Test 2 Acceleration Threshold
-                                if not pd.isna(region_thresholds['accel_1_to_2']):
-                                    accel_value = region_thresholds['accel_1_to_2']
-                                    color = "green" if accel_value >= 0 else "red"
-                                    st.markdown(f"**Test 1 → Test 2:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
-                                else:
-                                    st.markdown("**Test 1 → Test 2:** Not enough data")
-                                    
-                                # Test 2 to Test 3 Acceleration Threshold
-                                if not pd.isna(region_thresholds['accel_2_to_3']):
-                                    accel_value = region_thresholds['accel_2_to_3']
-                                    color = "green" if accel_value >= 0 else "red"
-                                    st.markdown(f"**Test 2 → Test 3:** <span style='color:{color}; font-size:1.1em;'>{accel_value:.1f}%</span>", unsafe_allow_html=True)
-                                else:
-                                    st.markdown("**Test 2 → Test 3:** Not enough data")
+                                # Create combined underperformers table with checkboxes
+                                st.markdown("<h4 style='font-size: 1.3em;'>Underperforming Users</h4>", unsafe_allow_html=True)
                                 
-                            # Create combined underperformers table with checkboxes
-                            st.markdown("<h4 style='font-size: 1.3em;'>Underperforming Users</h4>", unsafe_allow_html=True)
-                            
-                            # Test 1 to Test 2
-                            if (not pd.isna(region_thresholds['power_1_to_2']) and not pd.isna(region_thresholds['accel_1_to_2']) and 
-                                (power_underperformers_1_to_2 or accel_underperformers_1_to_2)):
-                                st.write("**Test 1 → Test 2 Underperformers:**")
-                                underperformers_table_1_to_2 = create_underperformers_table(
-                                    region, "1_to_2", power_underperformers_1_to_2, accel_underperformers_1_to_2)
-                                if underperformers_table_1_to_2 is not None:
-                                    st.dataframe(underperformers_table_1_to_2)
-                                    
-                                    # Add download buttons for detailed CSV data
-                                    col1, col2 = st.columns(2)
-                                    with col1:
-                                        if power_underperformers_1_to_2:
-                                            csv_data = generate_underperformers_csv(
-                                                region, "Power", "1_to_2", power_underperformers_1_to_2)
-                                            st.download_button(
-                                                label="Download Power Details",
-                                                data=csv_data,
-                                                file_name=f"{region}_power_underperformers_test1to2.csv",
-                                                mime="text/csv",
-                                                key=f"{region}_power_test1to2_download"
-                                            )
-                                    with col2:
-                                        if accel_underperformers_1_to_2:
-                                            csv_data = generate_underperformers_csv(
-                                                region, "Acceleration", "1_to_2", accel_underperformers_1_to_2)
-                                            st.download_button(
-                                                label="Download Acceleration Details",
-                                                data=csv_data,
-                                                file_name=f"{region}_accel_underperformers_test1to2.csv",
-                                                mime="text/csv",
-                                                key=f"{region}_accel_test1to2_download"
-                                            )
-                                else:
-                                    st.info("No underperforming users")
-                            
-                            # Test 2 to Test 3
-                            if (not pd.isna(region_thresholds['power_2_to_3']) and not pd.isna(region_thresholds['accel_2_to_3']) and 
-                                (power_underperformers_2_to_3 or accel_underperformers_2_to_3)):
-                                st.write("**Test 2 → Test 3 Underperformers:**")
-                                underperformers_table_2_to_3 = create_underperformers_table(
-                                    region, "2_to_3", power_underperformers_2_to_3, accel_underperformers_2_to_3)
-                                if underperformers_table_2_to_3 is not None:
-                                    st.dataframe(underperformers_table_2_to_3)
-                                    
-                                    # Add download buttons for detailed CSV data
-                                    col1, col2 = st.columns(2)
-                                    with col1:
-                                        if power_underperformers_2_to_3:
-                                            csv_data = generate_underperformers_csv(
-                                                region, "Power", "2_to_3", power_underperformers_2_to_3)
-                                            st.download_button(
-                                                label="Download Power Details",
-                                                data=csv_data,
-                                                file_name=f"{region}_power_underperformers_test2to3.csv",
-                                                mime="text/csv",
-                                                key=f"{region}_power_test2to3_download"
-                                            )
-                                    with col2:
-                                        if accel_underperformers_2_to_3:
-                                            csv_data = generate_underperformers_csv(
-                                                region, "Acceleration", "2_to_3", accel_underperformers_2_to_3)
-                                            st.download_button(
-                                                label="Download Acceleration Details",
-                                                data=csv_data,
-                                                file_name=f"{region}_accel_underperformers_test2to3.csv",
-                                                mime="text/csv",
-                                                key=f"{region}_accel_test2to3_download"
-                                            )
-                                else:
-                                    st.info("No underperforming users")
-                                    
-                            st.markdown("<hr>", unsafe_allow_html=True)
+                                # Test 1 to Test 2
+                                if (not pd.isna(region_thresholds['power_1_to_2']) and not pd.isna(region_thresholds['accel_1_to_2']) and 
+                                    (power_underperformers_1_to_2 or accel_underperformers_1_to_2)):
+                                    st.write("**Test 1 → Test 2 Underperformers:**")
+                                    underperformers_table_1_to_2 = create_underperformers_table(
+                                        region, "1_to_2", power_underperformers_1_to_2, accel_underperformers_1_to_2)
+                                    if underperformers_table_1_to_2 is not None:
+                                        st.dataframe(underperformers_table_1_to_2)
+                                        
+                                        # Add download buttons for detailed CSV data
+                                        col1, col2 = st.columns(2)
+                                        with col1:
+                                            if power_underperformers_1_to_2:
+                                                csv_data = generate_underperformers_csv(
+                                                    region, "Power", "1_to_2", power_underperformers_1_to_2)
+                                                st.download_button(
+                                                    label="Download Power Details",
+                                                    data=csv_data,
+                                                    file_name=f"{region}_power_underperformers_test1to2.csv",
+                                                    mime="text/csv",
+                                                    key=f"{region}_power_test1to2_download"
+                                                )
+                                        with col2:
+                                            if accel_underperformers_1_to_2:
+                                                csv_data = generate_underperformers_csv(
+                                                    region, "Acceleration", "1_to_2", accel_underperformers_1_to_2)
+                                                st.download_button(
+                                                    label="Download Acceleration Details",
+                                                    data=csv_data,
+                                                    file_name=f"{region}_accel_underperformers_test1to2.csv",
+                                                    mime="text/csv",
+                                                    key=f"{region}_accel_test1to2_download"
+                                                )
+                                    else:
+                                        st.info("No underperforming users")
+                                
+                                # Test 2 to Test 3
+                                if (not pd.isna(region_thresholds['power_2_to_3']) and not pd.isna(region_thresholds['accel_2_to_3']) and 
+                                    (power_underperformers_2_to_3 or accel_underperformers_2_to_3)):
+                                    st.write("**Test 2 → Test 3 Underperformers:**")
+                                    underperformers_table_2_to_3 = create_underperformers_table(
+                                        region, "2_to_3", power_underperformers_2_to_3, accel_underperformers_2_to_3)
+                                    if underperformers_table_2_to_3 is not None:
+                                        st.dataframe(underperformers_table_2_to_3)
+                                        
+                                        # Add download buttons for detailed CSV data
+                                        col1, col2 = st.columns(2)
+                                        with col1:
+                                            if power_underperformers_2_to_3:
+                                                csv_data = generate_underperformers_csv(
+                                                    region, "Power", "2_to_3", power_underperformers_2_to_3)
+                                                st.download_button(
+                                                    label="Download Power Details",
+                                                    data=csv_data,
+                                                    file_name=f"{region}_power_underperformers_test2to3.csv",
+                                                    mime="text/csv",
+                                                    key=f"{region}_power_test2to3_download"
+                                                )
+                                        with col2:
+                                            if accel_underperformers_2_to_3:
+                                                csv_data = generate_underperformers_csv(
+                                                    region, "Acceleration", "2_to_3", accel_underperformers_2_to_3)
+                                                st.download_button(
+                                                    label="Download Acceleration Details",
+                                                    data=csv_data,
+                                                    file_name=f"{region}_accel_underperformers_test2to3.csv",
+                                                    mime="text/csv",
+                                                    key=f"{region}_accel_test2to3_download"
+                                                )
+                                    else:
+                                        st.info("No underperforming users")
+                                        
+                                st.markdown("<hr>", unsafe_allow_html=True)
 
             #############################################
             # TAB 5: INDIVIDUAL ANALYSIS
