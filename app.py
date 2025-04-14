@@ -1644,7 +1644,7 @@ def main():
                                     data=download_matrix(dates_df, "session_dates"),
                                     file_name=f"{selected_user}_session_dates.csv",
                                     mime="text/csv",
-                                    key="session_dates_download"
+                                    key="data_tab_session_dates_download"
                                 )
                         with col2:
                             st.download_button(
@@ -1652,7 +1652,7 @@ def main():
                                 data=download_matrix(power_df, "session_power"),
                                 file_name=f"{selected_user}_session_power_matrix.csv",
                                 mime="text/csv",
-                                key="session_power_download"
+                                key="data_tab_session_power_download"
                             )
                         with col3:
                             st.download_button(
@@ -1660,7 +1660,7 @@ def main():
                                 data=download_matrix(accel_df, "session_accel"),
                                 file_name=f"{selected_user}_session_accel_matrix.csv",
                                 mime="text/csv",
-                                key="session_accel_download"
+                                key="data_tab_session_accel_download"
                             )
                         with col4:
                             st.download_button(
@@ -1668,7 +1668,7 @@ def main():
                                 data=download_matrix(exercise_presence_df, "exercise_chronology"),
                                 file_name=f"{selected_user}_exercise_chronology.csv",
                                 mime="text/csv",
-                                key="exercise_chronology_download"
+                                key="data_tab_exercise_chronology_download"
                             )
                     else:
                         st.warning(f"No session data available for {selected_user} with the current filters.")
