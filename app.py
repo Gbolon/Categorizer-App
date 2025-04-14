@@ -1396,28 +1396,49 @@ def main():
                     source_df = analysis_df if filtering_applied else processed_df
                     
                     # Generate session matrices
-                    power_df, accel_df, dates_df = matrix_generator.generate_session_matrices(source_df, selected_user)
+                    power_df, accel_df, dates_df, exercise_presence_df = matrix_generator.generate_session_matrices(source_df, selected_user)
                     
                     if power_df is not None and not power_df.empty:
-                        # Display session dates if available
-                        if dates_df is not None:
-                            st.write("Session Dates")
-                            st.dataframe(dates_df)
-                            
-                            # Create a info text with session dates for reference
-                            date_info = []
-                            for col in dates_df.columns:
-                                date_info.append(f"{col}: {dates_df.loc['Session Date', col]}")
-                            
-                            st.info("Session Timestamps: " + " | ".join(date_info))
+                        # First display the chronological exercise table
+                        st.write("### Exercise Chronology")
+                        st.write("This table shows when each exercise was performed by the user. Each column represents the sequential occurrence of an exercise, with dates shown.")
                         
-                        # Display power matrix
-                        st.write("Power Matrix (Raw Values)")
-                        st.dataframe(power_df)
+                        # Style the dataframe for better readability
+                        if exercise_presence_df is not None and not exercise_presence_df.empty:
+                            # Add a background color to the index for better readability
+                            styled_chronology_df = exercise_presence_df.style.set_properties(**{
+                                'background-color': '#f0f2f6',
+                                'font-weight': 'bold',
+                                'text-align': 'left'
+                            }, subset=['index'])
+                            
+                            # Center the date values
+                            styled_chronology_df = styled_chronology_df.set_properties(**{
+                                'text-align': 'center'
+                            })
+                            
+                            # Display exercise chronology matrix with improved styling
+                            st.dataframe(styled_chronology_df, use_container_width=True)
+                        else:
+                            st.info("No exercise chronology data available for this user.")
                         
-                        # Display acceleration matrix
-                        st.write("Acceleration Matrix (Raw Values)")
-                        st.dataframe(accel_df)
+                        # Create tabs for raw value matrices
+                        raw_values_tab, session_dates_tab = st.tabs(["Raw Values", "Session Dates"])
+                        
+                        with raw_values_tab:
+                            # Display power matrix
+                            st.write("Power Matrix (Watts)")
+                            st.dataframe(power_df, use_container_width=True)
+                            
+                            # Display acceleration matrix
+                            st.write("Acceleration Matrix (m/s²)")
+                            st.dataframe(accel_df, use_container_width=True)
+                        
+                        with session_dates_tab:
+                            # Display session dates if available
+                            if dates_df is not None:
+                                st.write("Session Dates")
+                                st.dataframe(dates_df, use_container_width=True)
                         
                         # Add export functionality
                         st.write("### Export Session Data")
@@ -1426,7 +1447,7 @@ def main():
                             return matrix.to_csv().encode('utf-8')
                         
                         # Session Downloads
-                        col1, col2, col3 = st.columns(3)
+                        col1, col2, col3, col4 = st.columns(4)
                         with col1:
                             if dates_df is not None:
                                 st.download_button(
@@ -1451,6 +1472,14 @@ def main():
                                 file_name=f"{selected_user}_session_accel_matrix.csv",
                                 mime="text/csv",
                                 key="session_accel_download"
+                            )
+                        with col4:
+                            st.download_button(
+                                label="Download Exercise Chronology",
+                                data=download_matrix(exercise_presence_df, "exercise_chronology"),
+                                file_name=f"{selected_user}_exercise_chronology.csv",
+                                mime="text/csv",
+                                key="exercise_chronology_download"
                             )
                     else:
                         st.warning(f"No session data available for {selected_user} with the current filters.")
