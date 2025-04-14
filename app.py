@@ -776,34 +776,50 @@ def main():
                 font-size: 0.8rem;
                 font-weight: 500;
             }
-            
-            /* Make tabs scrollable */
-            div[data-testid="stHorizontalBlock"] {
-                overflow-x: auto;
-                flex-wrap: nowrap;
-                white-space: nowrap;
-                padding-bottom: 5px;
-            }
-            
-            /* Tab button styling */
-            button[role="tab"] {
-                min-width: fit-content;
-                padding-left: 10px;
-                padding-right: 10px;
-            }
-            
-            /* Remove scrollbar but keep functionality */
-            div[data-testid="stHorizontalBlock"]::-webkit-scrollbar {
-                height: 5px;
-            }
-            div[data-testid="stHorizontalBlock"]::-webkit-scrollbar-track {
-                background: transparent;
-            }
-            div[data-testid="stHorizontalBlock"]::-webkit-scrollbar-thumb {
-                background-color: rgba(0, 0, 0, 0.1);
-                border-radius: 10px;
-            }
             </style>
+            
+            <script>
+            // JavaScript to make tabs scrollable
+            document.addEventListener('DOMContentLoaded', function() {
+                // Function to apply scrollable behavior to tab lists
+                function makeTabsScrollable() {
+                    // Find all tab lists
+                    const tabLists = document.querySelectorAll('[role="tablist"]');
+                    
+                    tabLists.forEach(tabList => {
+                        // Apply scrollable styles
+                        tabList.style.display = 'flex';
+                        tabList.style.flexWrap = 'nowrap';
+                        tabList.style.overflowX = 'auto';
+                        tabList.style.scrollbarWidth = 'thin';
+                        tabList.style.maxWidth = '100%';
+                        tabList.style.paddingBottom = '5px';
+                        
+                        // Style individual tabs
+                        const tabs = tabList.querySelectorAll('[role="tab"]');
+                        tabs.forEach(tab => {
+                            tab.style.whiteSpace = 'nowrap';
+                            tab.style.minWidth = 'fit-content';
+                            tab.style.padding = '8px 16px';
+                        });
+                    });
+                }
+                
+                // Initial application
+                makeTabsScrollable();
+                
+                // Monitor for dynamic changes (Streamlit can re-render components)
+                const observer = new MutationObserver(function(mutations) {
+                    makeTabsScrollable();
+                });
+                
+                // Start observing the document for changes
+                observer.observe(document.body, { 
+                    childList: true, 
+                    subtree: true 
+                });
+            });
+            </script>
             """, unsafe_allow_html=True)
             
             #############################################
