@@ -876,7 +876,26 @@ def main():
 
                     # Display Power development distribution and changes
                     st.write("Multi-Test Users Power Development Distribution")
-                    styled_power_counts = power_counts.style.format("{:.0f}")
+                    # Create custom formatter to hide values in blank row
+                    def hide_blank_row(df):
+                        # Function to format each value
+                        def format_func(x):
+                            if pd.isna(x):
+                                return ""
+                            return f"{int(x)}"
+                            
+                        # Create formatter for specific rows
+                        formatters = {}
+                        for col in df.columns:
+                            # Format all numbers as integers
+                            formatters[col] = format_func
+                            
+                        return df.style.format(formatters).applymap(
+                            lambda x: "", subset=pd.IndexSlice["", :]
+                        )
+                    
+                    # Apply custom formatting
+                    styled_power_counts = hide_blank_row(power_counts)
                     st.dataframe(styled_power_counts, use_container_width=True)
 
                     # Display Power changes directly below power distribution
@@ -893,7 +912,8 @@ def main():
 
                     # Display Acceleration development distribution
                     st.write("Multi-Test Users Acceleration Development Distribution")
-                    styled_accel_counts = accel_counts.style.format("{:.0f}")
+                    # Apply the same custom formatting to acceleration table
+                    styled_accel_counts = hide_blank_row(accel_counts)
                     st.dataframe(styled_accel_counts, use_container_width=True)
 
                     # Display Acceleration changes directly below acceleration distribution
