@@ -42,7 +42,7 @@ class MatrixGenerator:
     def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
-        categories = list(self.development_brackets.keys()) + ['Total Users', 'Average Development Score (%)']
+        categories = list(self.development_brackets.keys()) + ['Total Users', '', 'Average Development Score (%)']
         power_counts = pd.DataFrame(0, index=categories, columns=[])
         accel_counts = pd.DataFrame(0, index=categories, columns=[])
 
