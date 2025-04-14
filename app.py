@@ -250,13 +250,14 @@ def get_athlete_metrics(df):
 
 def get_top_session_types(df):
     """
-    Get the top 3 most frequently performed test types from the 'session name' column.
+    Get the top 3 most frequently performed test types from the 'session name' column,
+    counting the number of unique session IDs for each session name.
     
     Args:
         df: The processed dataframe
         
     Returns:
-        Dictionary with the top 3 most common session names and their counts
+        Dictionary with the top 3 most common session names and their counts of unique sessions
     """
     result = {
         'most_common': "No session data available",
@@ -264,24 +265,24 @@ def get_top_session_types(df):
         'third_most_common': "No data available"
     }
     
-    if 'session name' in df.columns and len(df) > 0:
-        # Get the session name counts
-        session_counts = df['session name'].value_counts()
+    if 'session name' in df.columns and 'session id' in df.columns and len(df) > 0:
+        # Group by session name and count unique session IDs
+        session_unique_counts = df.groupby('session name')['session id'].nunique().sort_values(ascending=False)
         
-        if len(session_counts) >= 1:
-            most_common_session = session_counts.index[0]
-            count = session_counts.iloc[0]
-            result['most_common'] = f"{most_common_session} ({count} instances)"
+        if len(session_unique_counts) >= 1:
+            most_common_session = session_unique_counts.index[0]
+            count = session_unique_counts.iloc[0]
+            result['most_common'] = f"{most_common_session} ({count} unique sessions)"
         
-        if len(session_counts) >= 2:
-            second_most_common = session_counts.index[1]
-            count = session_counts.iloc[1]
-            result['second_most_common'] = f"{second_most_common} ({count} instances)"
+        if len(session_unique_counts) >= 2:
+            second_most_common = session_unique_counts.index[1]
+            count = session_unique_counts.iloc[1]
+            result['second_most_common'] = f"{second_most_common} ({count} unique sessions)"
             
-        if len(session_counts) >= 3:
-            third_most_common = session_counts.index[2]
-            count = session_counts.iloc[2]
-            result['third_most_common'] = f"{third_most_common} ({count} instances)"
+        if len(session_unique_counts) >= 3:
+            third_most_common = session_unique_counts.index[2]
+            count = session_unique_counts.iloc[2]
+            result['third_most_common'] = f"{third_most_common} ({count} unique sessions)"
     
     return result
 
