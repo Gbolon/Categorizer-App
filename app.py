@@ -1399,25 +1399,30 @@ def main():
                     st.write("### Most Common Session Types")
                     st.write("These are the most frequent test sessions performed by this user:")
                     
-                    # Get top 3 session types for this user
-                    top_sessions_df = matrix_generator.get_user_top_session_types(source_df, selected_user)
-                    
-                    # Display top sessions with styling
-                    if not top_sessions_df.empty:
-                        # Add percentage column
-                        total_sessions = top_sessions_df['Count'].sum()
-                        top_sessions_df['Percentage'] = (top_sessions_df['Count'] / total_sessions * 100).round(1).astype(str) + '%'
-                        
-                        # Style the dataframe
-                        styled_sessions = top_sessions_df.style.set_properties(**{
-                            'background-color': '#f0f2f6',
-                            'font-weight': 'bold',
-                            'text-align': 'center'
-                        })
-                        
-                        st.dataframe(styled_sessions, use_container_width=True)
-                    else:
-                        st.info("No session type data available for this user.")
+                    try:
+                        # Check if session name and id columns exist
+                        if 'session name' in source_df.columns and 'session id' in source_df.columns:
+                            # Get top 3 session types for this user
+                            top_sessions_df = matrix_generator.get_user_top_session_types(source_df, selected_user)
+                            
+                            # Display top sessions with styling
+                            if not top_sessions_df.empty:
+                                # Add percentage column if there's data
+                                total_sessions = top_sessions_df['Count'].sum()
+                                if total_sessions > 0:
+                                    top_sessions_df['Percentage'] = (top_sessions_df['Count'] / total_sessions * 100).round(1).astype(str) + '%'
+                                    
+                                    # Style the dataframe
+                                    st.dataframe(top_sessions_df, use_container_width=True)
+                                else:
+                                    st.info("No session count data available for this user.")
+                            else:
+                                st.info("No session type data available for this user.")
+                        else:
+                            st.info("Session name or ID columns not found in the data.")
+                    except Exception as e:
+                        st.error(f"Error displaying session types: {str(e)}")
+                        st.info("Session analysis requires 'session name' and 'session id' columns in the data.")
                     
                     st.markdown("---")
                     

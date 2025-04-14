@@ -1467,20 +1467,38 @@ class MatrixGenerator:
         Returns:
             DataFrame with columns 'Session Type' and 'Count' sorted by count in descending order
         """
+        # Verify required columns exist
+        required_columns = ['user name', 'session name', 'session id']
+        for column in required_columns:
+            if column not in df.columns:
+                print(f"Missing required column: {column}")
+                return pd.DataFrame(columns=['Session Type', 'Count'])
+        
         # Filter data for the specific user
         user_data = df[df['user name'] == user_name]
         
         if user_data.empty:
             return pd.DataFrame(columns=['Session Type', 'Count'])
         
-        # Group by session name and count unique session IDs
-        session_counts = user_data.groupby('session name')['session id'].nunique().reset_index()
-        session_counts.columns = ['Session Type', 'Count']
-        
-        # Sort by count in descending order and take top N
-        top_sessions = session_counts.sort_values('Count', ascending=False).head(top_n)
-        
-        return top_sessions
+        try:
+            # Handle case where session name might be None or NaN
+            user_data = user_data.dropna(subset=['session name', 'session id'])
+            
+            # Ensure session name is a string type
+            user_data['session name'] = user_data['session name'].astype(str)
+            
+            # Group by session name and count unique session IDs
+            session_counts = user_data.groupby('session name')['session id'].nunique().reset_index()
+            session_counts.columns = ['Session Type', 'Count']
+            
+            # Sort by count in descending order and take top N
+            top_sessions = session_counts.sort_values('Count', ascending=False).head(top_n)
+            
+            return top_sessions
+        except Exception as e:
+            print(f"Error generating session types: {str(e)}")
+            # Return empty DataFrame on error
+            return pd.DataFrame(columns=['Session Type', 'Count'])
     
     def calculate_improvement_thresholds(self, df):
         """
