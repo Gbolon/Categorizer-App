@@ -176,7 +176,7 @@ class DataProcessor:
         
     def filter_by_minimum_days(self, df, min_days):
         """
-        Filter dataframe to ensure tests for each user are separated by at least min_days days.
+        Filter dataframe to ensure tests for each exercise+dominance combination are separated by at least min_days days.
         
         Args:
             df: Preprocessed dataframe with exercise data
@@ -195,24 +195,35 @@ class DataProcessor:
         for user_name in df['user name'].unique():
             user_df = df[df['user name'] == user_name].copy()
             
-            # Sort by date
-            user_df = user_df.sort_values('exercise createdAt')
-            
-            # Initialize with the first test
-            valid_tests = [user_df.iloc[0]]
-            last_date = user_df.iloc[0]['exercise createdAt']
-            
-            # Check each subsequent test
-            for _, row in user_df.iloc[1:].iterrows():
-                current_date = row['exercise createdAt']
-                days_diff = (current_date - last_date).days
+            # For each unique exercise+dominance combination
+            for (exercise, dominance), group in user_df.groupby(['exercise name', 'dominance']):
+                # Sort by date
+                group = group.sort_values('exercise createdAt')
                 
-                if days_diff >= min_days:
-                    valid_tests.append(row)
-                    last_date = current_date
-            
-            # Concatenate the valid tests
-            if valid_tests:
-                filtered_df = pd.concat([filtered_df, pd.DataFrame(valid_tests)])
+                # Skip empty groups
+                if len(group) == 0:
+                    continue
+                
+                # Always include first test for this exercise+dominance
+                valid_tests = [group.iloc[0]]
+                last_date = group.iloc[0]['exercise createdAt']
+                
+                # Check each subsequent test of this exercise+dominance
+                for _, row in group.iloc[1:].iterrows():
+                    current_date = row['exercise createdAt']
+                    days_diff = (current_date - last_date).days
+                    
+                    # Only include if minimum days have passed
+                    if days_diff >= min_days:
+                        valid_tests.append(row)
+                        last_date = current_date
+                
+                # Add valid tests for this exercise+dominance to results
+                if valid_tests:
+                    filtered_df = pd.concat([filtered_df, pd.DataFrame(valid_tests)])
+        
+        # Ensure the filtered dataframe maintains the original order as much as possible
+        if not filtered_df.empty:
+            filtered_df = filtered_df.sort_values(['user name', 'exercise createdAt'])
         
         return filtered_df
