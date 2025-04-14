@@ -894,6 +894,10 @@ class MatrixGenerator:
         
         # Use consistent column names with session dates
         column_names = {}
+        print(f"DEBUG: Total sessions found: {len(session_dates)}")
+        for session_num in sorted(session_dates.keys()):
+            print(f"DEBUG: Session {session_num} date: {session_dates[session_num]}")
+        
         for i in range(1, len(session_dates) + 1):
             column_names[i] = f"Session {i} ({session_dates[i]})"
             
