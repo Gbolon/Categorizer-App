@@ -753,16 +753,13 @@ def main():
                 # Calculate improvement thresholds with original data
                 improvement_thresholds = matrix_generator.calculate_improvement_thresholds(processed_df)
             
-            # Create main application tabs
-            tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-                "1. Overview", 
-                "2. Group Development Analysis", 
-                "3. Transition Analysis",
-                "4. Body Region Analysis",
-                "5. Individual Analysis",
-                "6. Session View",
-                "7. Report Generator",
-                "8. Information"
+            # Create top-level tabs for main navigation
+            overview_tab, group_analysis_tab, athlete_analysis_tab, report_tab, info_tab = st.tabs([
+                "1. Overview",
+                "2. Group Analysis",
+                "3. Athlete Analysis", 
+                "4. Report Generator",
+                "5. Information"
             ])
             
             # Add custom CSS for metric font size
@@ -784,9 +781,9 @@ def main():
                 st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
             
             #############################################
-            # TAB 1: OVERVIEW
+            # TOP-LEVEL TAB 1: OVERVIEW
             #############################################
-            with tab1:
+            with overview_tab:
                 st.markdown("<h2 style='font-size: 1.875em;'>Analysis Overview</h2>", unsafe_allow_html=True)
                 
                 # Athlete Metrics
@@ -832,72 +829,83 @@ def main():
                     st.metric("3rd Most Common Session", session_types['third_most_common'])
             
             #############################################
-            # TAB 2: GROUP DEVELOPMENT ANALYSIS
+            # TOP-LEVEL TAB 2: GROUP ANALYSIS
             #############################################
-            with tab2:
-                st.markdown("<h2 style='font-size: 1.875em;'>Group Development Analysis</h2>", unsafe_allow_html=True)
+            with group_analysis_tab:
+                # Create subtabs for different group analysis sections
+                group_dev_tab, transition_tab, body_region_tab = st.tabs([
+                    "Group Development",
+                    "Transition Analysis",
+                    "Body Region Analysis"
+                ])
                 
-                st.markdown("<h3 style='font-size: 1.5em;'>Single Test Users</h3>", unsafe_allow_html=True)
-                
-                # Create two columns for side-by-side layout
-                col1, col2 = st.columns(2)
+                #----------------------------------------
+                # SUBTAB 1: GROUP DEVELOPMENT ANALYSIS
+                #----------------------------------------
+                with group_dev_tab:
+                    st.markdown("<h2 style='font-size: 1.875em;'>Group Development Analysis</h2>", unsafe_allow_html=True)
+                    
+                    st.markdown("<h3 style='font-size: 1.5em;'>Single Test Users</h3>", unsafe_allow_html=True)
+                    
+                    # Create two columns for side-by-side layout
+                    col1, col2 = st.columns(2)
 
-                # Display Single Test Users Distribution in left column
-                with col1:
-                    st.write("Single Test Users Distribution")
-                    styled_single_test = single_test_distribution.style.format("{:.0f}")
-                    st.dataframe(styled_single_test)
+                    # Display Single Test Users Distribution in left column
+                    with col1:
+                        st.write("Single Test Users Distribution")
+                        styled_single_test = single_test_distribution.style.format("{:.0f}")
+                        st.dataframe(styled_single_test)
 
-                # Display average metrics in right column
-                with col2:
-                    st.write("Single Test Users Averages")
-                    st.metric("Average Overall Power Development", f"{power_average:.1f}%")
-                    st.metric("Average Overall Acceleration Development", f"{accel_average:.1f}%")
+                    # Display average metrics in right column
+                    with col2:
+                        st.write("Single Test Users Averages")
+                        st.metric("Average Overall Power Development", f"{power_average:.1f}%")
+                        st.metric("Average Overall Acceleration Development", f"{accel_average:.1f}%")
 
-                # Display Multi-Test User Averages
-                st.markdown("<h3 style='font-size: 1.5em;'>Multi-Test Users</h3>", unsafe_allow_html=True)
-                
-                # Create two columns for the metrics
-                day_col1, day_col2 = st.columns(2)
-                with day_col1:
-                    st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
-                with day_col2:
-                    st.metric("Avg Days\nBetween Tests, with Minimum", f"{avg_constrained_days:.1f}", 
-                             help="Average number of days between tests after minimum days filtering")
+                    # Display Multi-Test User Averages
+                    st.markdown("<h3 style='font-size: 1.5em;'>Multi-Test Users</h3>", unsafe_allow_html=True)
+                    
+                    # Create two columns for the metrics
+                    day_col1, day_col2 = st.columns(2)
+                    with day_col1:
+                        st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
+                    with day_col2:
+                        st.metric("Avg Days\nBetween Tests, with Minimum", f"{avg_constrained_days:.1f}", 
+                                 help="Average number of days between tests after minimum days filtering")
 
-                # Display Power development distribution and changes
-                st.write("Multi-Test Users Power Development Distribution")
-                styled_power_counts = power_counts.style.format("{:.0f}")
-                st.dataframe(styled_power_counts, use_container_width=True)
+                    # Display Power development distribution and changes
+                    st.write("Multi-Test Users Power Development Distribution")
+                    styled_power_counts = power_counts.style.format("{:.0f}")
+                    st.dataframe(styled_power_counts, use_container_width=True)
 
-                # Display Power changes directly below power distribution
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Power Change (Test 1→2)", f"{avg_power_change_1_2:+.1f}%",
-                             delta_color="normal")
-                with col2:
-                    st.metric("Power Change (Test 2→3)", f"{avg_power_change_2_3:+.1f}%",
-                             delta_color="normal")
-                with col3:
-                    st.metric("Power Change (Test 3→4)", f"{avg_power_change_3_4:+.1f}%",
-                             delta_color="normal")
+                    # Display Power changes directly below power distribution
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Power Change (Test 1→2)", f"{avg_power_change_1_2:+.1f}%",
+                                 delta_color="normal")
+                    with col2:
+                        st.metric("Power Change (Test 2→3)", f"{avg_power_change_2_3:+.1f}%",
+                                 delta_color="normal")
+                    with col3:
+                        st.metric("Power Change (Test 3→4)", f"{avg_power_change_3_4:+.1f}%",
+                                 delta_color="normal")
 
-                # Display Acceleration development distribution
-                st.write("Multi-Test Users Acceleration Development Distribution")
-                styled_accel_counts = accel_counts.style.format("{:.0f}")
-                st.dataframe(styled_accel_counts, use_container_width=True)
+                    # Display Acceleration development distribution
+                    st.write("Multi-Test Users Acceleration Development Distribution")
+                    styled_accel_counts = accel_counts.style.format("{:.0f}")
+                    st.dataframe(styled_accel_counts, use_container_width=True)
 
-                # Display Acceleration changes directly below acceleration distribution
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Acceleration Change (Test 1→2)", f"{avg_accel_change_1_2:+.1f}%",
-                             delta_color="normal")
-                with col2:
-                    st.metric("Acceleration Change (Test 2→3)", f"{avg_accel_change_2_3:+.1f}%",
-                             delta_color="normal")
-                with col3:
-                    st.metric("Acceleration Change (Test 3→4)", f"{avg_accel_change_3_4:+.1f}%",
-                             delta_color="normal")
+                    # Display Acceleration changes directly below acceleration distribution
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Acceleration Change (Test 1→2)", f"{avg_accel_change_1_2:+.1f}%",
+                                 delta_color="normal")
+                    with col2:
+                        st.metric("Acceleration Change (Test 2→3)", f"{avg_accel_change_2_3:+.1f}%",
+                                 delta_color="normal")
+                    with col3:
+                        st.metric("Acceleration Change (Test 3→4)", f"{avg_accel_change_3_4:+.1f}%",
+                                 delta_color="normal")
             
             #############################################
             # TAB 3: TRANSITION ANALYSIS
