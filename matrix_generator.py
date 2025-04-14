@@ -1150,12 +1150,24 @@ class MatrixGenerator:
                 if include_users and 'User' in valid_rows.index.names:
                     threshold = changes['test1_to_test2_pct']
                     underperformers = []
+                    
+                    # Filter for users with score < 100% in either test
                     for user in valid_rows.index.get_level_values('User').unique():
                         user_rows = valid_rows.xs(user, level='User', drop_level=False)
+                        
+                        # Check if user has any scores below 100%
                         if not user_rows.empty:
-                            user_change_pct = ((user_rows['Test 2'] - user_rows['Test 1']) / user_rows['Test 1'] * 100).mean()
-                            if user_change_pct < threshold:
-                                underperformers.append((user, user_change_pct))
+                            # Filter to only include rows where either Test 1 or Test 2 is below 100%
+                            filtered_user_rows = user_rows[(user_rows['Test 1'] < 100) | (user_rows['Test 2'] < 100)]
+                            
+                            if not filtered_user_rows.empty:
+                                # Calculate change percentage using filtered rows
+                                user_change_pct = ((filtered_user_rows['Test 2'] - filtered_user_rows['Test 1']) / 
+                                                  filtered_user_rows['Test 1'] * 100).mean()
+                                
+                                if user_change_pct < threshold:
+                                    underperformers.append((user, user_change_pct))
+                                    
                     changes['underperformers_1_to_2'] = sorted(underperformers, key=lambda x: x[1])
             else:
                 changes['test1_to_test2'] = np.nan
@@ -1169,9 +1181,16 @@ class MatrixGenerator:
             # Get valid rows (non-NaN in both columns)
             valid_rows = data_df[data_df['Test 2'].notna() & data_df['Test 3'].notna()]
             if not valid_rows.empty:
-                # Calculate changes
-                changes['test2_to_test3'] = (valid_rows['Test 3'] - valid_rows['Test 2']).mean()
-                changes['test2_to_test3_pct'] = ((valid_rows['Test 3'] - valid_rows['Test 2']) / valid_rows['Test 2'] * 100).mean()
+                # Filter rows to only include those where either Test 2 or Test 3 is below 100%
+                filtered_rows = valid_rows[(valid_rows['Test 2'] < 100) | (valid_rows['Test 3'] < 100)]
+                if not filtered_rows.empty:
+                    # Calculate changes using filtered rows
+                    changes['test2_to_test3'] = (filtered_rows['Test 3'] - filtered_rows['Test 2']).mean()
+                    changes['test2_to_test3_pct'] = ((filtered_rows['Test 3'] - filtered_rows['Test 2']) / filtered_rows['Test 2'] * 100).mean()
+                else:
+                    # No rows where either value is below 100%
+                    changes['test2_to_test3'] = 0
+                    changes['test2_to_test3_pct'] = 0
                 # Store individual user changes for improvement threshold
                 changes['test2_to_test3_individual'] = (valid_rows['Test 3'] - valid_rows['Test 2']) / valid_rows['Test 2'] * 100
                 
@@ -1179,12 +1198,24 @@ class MatrixGenerator:
                 if include_users and 'User' in valid_rows.index.names:
                     threshold = changes['test2_to_test3_pct']
                     underperformers = []
+                    
+                    # Filter for users with score < 100% in either test
                     for user in valid_rows.index.get_level_values('User').unique():
                         user_rows = valid_rows.xs(user, level='User', drop_level=False)
+                        
+                        # Check if user has any scores below 100%
                         if not user_rows.empty:
-                            user_change_pct = ((user_rows['Test 3'] - user_rows['Test 2']) / user_rows['Test 2'] * 100).mean()
-                            if user_change_pct < threshold:
-                                underperformers.append((user, user_change_pct))
+                            # Filter to only include rows where either Test 2 or Test 3 is below 100%
+                            filtered_user_rows = user_rows[(user_rows['Test 2'] < 100) | (user_rows['Test 3'] < 100)]
+                            
+                            if not filtered_user_rows.empty:
+                                # Calculate change percentage using filtered rows
+                                user_change_pct = ((filtered_user_rows['Test 3'] - filtered_user_rows['Test 2']) / 
+                                                  filtered_user_rows['Test 2'] * 100).mean()
+                                
+                                if user_change_pct < threshold:
+                                    underperformers.append((user, user_change_pct))
+                                    
                     changes['underperformers_2_to_3'] = sorted(underperformers, key=lambda x: x[1])
             else:
                 changes['test2_to_test3'] = np.nan
@@ -1424,38 +1455,46 @@ class MatrixGenerator:
             threshold = power_changes['test1_to_test2_pct']
             for user in power_user_data.index:
                 if pd.notna(power_user_data.loc[user, 'Test 1']) and pd.notna(power_user_data.loc[user, 'Test 2']):
-                    change = ((power_user_data.loc[user, 'Test 2'] - power_user_data.loc[user, 'Test 1']) / 
-                              power_user_data.loc[user, 'Test 1'] * 100)
-                    if change < threshold:
-                        power_underperformers_1_to_2.append((user, change))
+                    # Only include users where at least one test is below 100%
+                    if power_user_data.loc[user, 'Test 1'] < 100 or power_user_data.loc[user, 'Test 2'] < 100:
+                        change = ((power_user_data.loc[user, 'Test 2'] - power_user_data.loc[user, 'Test 1']) / 
+                                power_user_data.loc[user, 'Test 1'] * 100)
+                        if change < threshold:
+                            power_underperformers_1_to_2.append((user, change))
         
         if not pd.isna(power_changes.get('test2_to_test3_pct')):
             threshold = power_changes['test2_to_test3_pct']
             for user in power_user_data.index:
                 if pd.notna(power_user_data.loc[user, 'Test 2']) and pd.notna(power_user_data.loc[user, 'Test 3']):
-                    change = ((power_user_data.loc[user, 'Test 3'] - power_user_data.loc[user, 'Test 2']) / 
-                              power_user_data.loc[user, 'Test 2'] * 100)
-                    if change < threshold:
-                        power_underperformers_2_to_3.append((user, change))
+                    # Only include users where at least one test is below 100%
+                    if power_user_data.loc[user, 'Test 2'] < 100 or power_user_data.loc[user, 'Test 3'] < 100:
+                        change = ((power_user_data.loc[user, 'Test 3'] - power_user_data.loc[user, 'Test 2']) / 
+                                power_user_data.loc[user, 'Test 2'] * 100)
+                        if change < threshold:
+                            power_underperformers_2_to_3.append((user, change))
         
         # For acceleration
         if not pd.isna(accel_changes.get('test1_to_test2_pct')):
             threshold = accel_changes['test1_to_test2_pct']
             for user in accel_user_data.index:
                 if pd.notna(accel_user_data.loc[user, 'Test 1']) and pd.notna(accel_user_data.loc[user, 'Test 2']):
-                    change = ((accel_user_data.loc[user, 'Test 2'] - accel_user_data.loc[user, 'Test 1']) / 
-                              accel_user_data.loc[user, 'Test 1'] * 100)
-                    if change < threshold:
-                        accel_underperformers_1_to_2.append((user, change))
+                    # Only include users where at least one test is below 100%
+                    if accel_user_data.loc[user, 'Test 1'] < 100 or accel_user_data.loc[user, 'Test 2'] < 100:
+                        change = ((accel_user_data.loc[user, 'Test 2'] - accel_user_data.loc[user, 'Test 1']) / 
+                                accel_user_data.loc[user, 'Test 1'] * 100)
+                        if change < threshold:
+                            accel_underperformers_1_to_2.append((user, change))
         
         if not pd.isna(accel_changes.get('test2_to_test3_pct')):
             threshold = accel_changes['test2_to_test3_pct']
             for user in accel_user_data.index:
                 if pd.notna(accel_user_data.loc[user, 'Test 2']) and pd.notna(accel_user_data.loc[user, 'Test 3']):
-                    change = ((accel_user_data.loc[user, 'Test 3'] - accel_user_data.loc[user, 'Test 2']) / 
-                              accel_user_data.loc[user, 'Test 2'] * 100)
-                    if change < threshold:
-                        accel_underperformers_2_to_3.append((user, change))
+                    # Only include users where at least one test is below 100%
+                    if accel_user_data.loc[user, 'Test 2'] < 100 or accel_user_data.loc[user, 'Test 3'] < 100:
+                        change = ((accel_user_data.loc[user, 'Test 3'] - accel_user_data.loc[user, 'Test 2']) / 
+                                accel_user_data.loc[user, 'Test 2'] * 100)
+                        if change < threshold:
+                            accel_underperformers_2_to_3.append((user, change))
         
         # Sort underperformers by change value (lowest first)
         power_changes['underperformers_1_to_2'] = sorted(power_underperformers_1_to_2, key=lambda x: x[1])
