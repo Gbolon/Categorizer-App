@@ -1403,6 +1403,13 @@ def main():
                         if dates_df is not None:
                             st.write("Session Dates")
                             st.dataframe(dates_df)
+                            
+                            # Create a info text with session dates for reference
+                            date_info = []
+                            for col in dates_df.columns:
+                                date_info.append(f"{col}: {dates_df.loc['Session Date', col]}")
+                            
+                            st.info("Session Timestamps: " + " | ".join(date_info))
                         
                         # Display power matrix
                         st.write("Power Matrix (Raw Values)")

@@ -849,32 +849,14 @@ class MatrixGenerator:
         power_df = pd.DataFrame(power_matrix)
         accel_df = pd.DataFrame(accel_matrix)
         
-        # Create column pairs with session values and dates for power and acceleration matrices
-        power_cols = []
-        accel_cols = []
+        # Use consistent column names
+        if not power_df.empty:
+            power_df.columns = [f"Session {i}" for i in range(1, len(power_df.columns) + 1)]
+        if not accel_df.empty:
+            accel_df.columns = [f"Session {i}" for i in range(1, len(accel_df.columns) + 1)]
         
-        for i in range(1, len(session_dates) + 1):
-            # Add value columns
-            power_cols.append(f"Session {i}")
-            accel_cols.append(f"Session {i}")
-            
-            # Add timestamp columns
-            date_str = session_dates[i]
-            power_cols.append(f"Date {i}")
-            accel_cols.append(f"Date {i}")
-            
-            # Add timestamp data to matrices
-            power_df[f"Date {i}"] = date_str
-            accel_df[f"Date {i}"] = date_str
-        
-        # Reorder columns to alternate session values and dates
-        power_df = power_df[power_cols]
-        accel_df = accel_df[accel_cols]
-        
-        # Create session dates DataFrame with proper index to match expected column names
-        dates_cols = [f"Session {i}" for i in range(1, len(session_dates) + 1)]
-        dates_data = [session_dates[i] for i in range(1, len(session_dates) + 1)]
-        dates_df = pd.DataFrame([dates_data], columns=dates_cols, index=['Session Date'])
+        # Create a row index for timestamps (will be shown in a separate dataframe)
+        dates_df = pd.DataFrame({f"Session {i}": session_dates[i] for i in range(1, len(session_dates) + 1)}, index=['Session Date'])
         
         return power_df, accel_df, dates_df
             
